@@ -118,8 +118,34 @@ número.
 antigos continuam com as horas dele. O banco inclusive impede apagar
 equipamento que já tem lançamento.
 
+Ocorrências
+-----------
+Segurança e disciplina. Oito tipos, todos em lista fechada:
+
+  Acidente com afastamento      Advertência verbal
+  Acidente sem afastamento      Advertência escrita
+  Quase acidente                Suspensão
+  Desvio comportamental         Elogio
+
+ELOGIO ESTÁ NA LISTA DE PROPÓSITO. Histórico de segurança que só guarda
+o que deu errado vira instrumento de punição e as pessoas param de
+reportar.
+
+TODA OCORRÊNCIA SE PRENDE A ALGUMA COISA: ou a uma pessoa do efetivo, ou
+ao dia. Não existe ocorrência solta — é regra do banco. Se você escolher
+"A obra" num dia que ainda não tem RDO, o sistema avisa e não deixa
+salvar: lance o diário primeiro, ou escolha a pessoa envolvida.
+
+"Dias de afastamento" só aparece em acidente com afastamento e em
+suspensão. Em elogio, a gravidade fica desligada — elogio não tem
+gravidade.
+
+Os quatro números do alto: ocorrências dos últimos 30 dias, acidentes
+dos últimos 12 meses, dias de afastamento acumulados no ano, e quase
+acidentes dos últimos 90 dias.
+
 O que ainda não faz
 -------------------
 Os outros módulos estão marcados "em construção" porque a tela deles
-ainda não existe. O próximo: Ocorrências (segurança), que também se
-liga ao RDO.
+ainda não existe: EPI, Tarefas, Notas fiscais, Medições, Reuniões,
+Documentos e a tela de Alertas.

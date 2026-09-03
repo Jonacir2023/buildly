@@ -103,6 +103,31 @@ lançamento em RDO (`ON DELETE RESTRICT`).
 | `categoria` in (…) | seletor fechado: pesado, leve, apoio, ferramenta |
 | `propriedade` in (…) | seletor fechado: próprio, locado |
 
+## Ocorrências
+
+`ocorrencias` **não tem `obra_id`**: pertence à obra através do contrato
+ou do RDO. Por isso a tela faz duas consultas e junta —
+`contratos!inner` filtrado por `contrato.obra_id`, e `rdos!inner`
+filtrado por `rdo.obra_id` com `contrato_id is null`.
+
+`chk_ocorrencia_vinculo` exige `contrato_id` **ou** `rdo_id`. A tela
+pergunta o vínculo primeiro e, quando é "a obra", confere se existe RDO
+naquele dia antes de deixar salvar.
+
+| Regra do banco | O que o usuário lê |
+|---|---|
+| `chk_ocorrencia_vinculo` | precisa de uma pessoa ou de um dia com RDO |
+| `ocorrencias_tipo_check` | seletor fechado de 8 tipos, elogio incluído |
+| `ocorrencias_gravidade_check` | seletor fechado: baixa, média, alta, crítica |
+| FK `contrato_id` RESTRICT | contrato com ocorrência não se apaga |
+
+### Correção na vw_status_obra
+
+`ocorrencias_30_dias` fazia `JOIN contratos`, então ocorrência ligada só
+ao RDO nunca era contada — justamente o registro sem pessoa
+identificada, como quase acidente da obra. A view passou a contar os
+dois vínculos.
+
 ## Ainda não pronto
 
 Os outros módulos estão desabilitados e marcados "em construção" — a

@@ -180,6 +180,28 @@
       </div>
      </section>
 
+
+     <!-- ============ OCORRÊNCIAS ============ -->
+     <section id="tela-ocorrencias" hidden>
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Ocorrências</p>
+          <h1 id="oc-titulo">—</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-nova-ocorrencia" type="button">+ Ocorrência</button>
+      </div>
+
+      <div class="numeros" id="oc-numeros"></div>
+
+      <label class="busca">
+        <span class="sr">Buscar</span>
+        <input type="search" id="busca-oc" autocomplete="off"
+               placeholder="Buscar por pessoa, tipo ou descrição">
+      </label>
+
+      <div id="oc-lista"></div>
+     </section>
+
      <!-- ============ RDO — lista ============ -->
      <section id="tela-rdo" hidden>
       <div class="mod-topo">
@@ -701,6 +723,74 @@
       <button class="btn btn-primario" type="submit" id="btn-salvar-equipamento">Salvar</button>
       <button class="btn btn-perigo" type="button" id="btn-tirar-frota" hidden>Tirar da frota</button>
       <button class="btn btn-secundario" type="button" id="btn-voltar-frota" hidden>Voltar para a frota</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ OCORRÊNCIA ============ -->
+<div class="folha" id="folha-ocorrencia" hidden role="dialog" aria-modal="true" aria-label="Ocorrência">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-ocorrencia">Nova ocorrência</h2>
+      <button class="icone" id="btn-fechar-ocorrencia" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <form id="form-ocorrencia" novalidate>
+      <label class="campo">
+        <span>Sobre quem *</span>
+        <select id="o-vinculo" required></select>
+      </label>
+      <p class="aviso" id="aviso-vinculo" hidden></p>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Data *</span>
+          <input type="date" id="o-data" required>
+        </label>
+        <label class="campo">
+          <span>Gravidade</span>
+          <select id="o-gravidade">
+            <option value="">— não informada —</option>
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Tipo *</span>
+        <select id="o-tipo" required></select>
+      </label>
+
+      <label class="campo" id="campo-afastamento" hidden>
+        <span>Dias de afastamento</span>
+        <input type="number" id="o-dias" inputmode="numeric" min="0" max="365" value="0">
+      </label>
+
+      <label class="campo">
+        <span>O que aconteceu *</span>
+        <textarea id="o-descricao" rows="3" required
+                  placeholder="Descreva o fato, sem julgamento: o que foi visto, onde e quando"></textarea>
+      </label>
+
+      <label class="campo">
+        <span>Ação tomada</span>
+        <textarea id="o-acao" rows="2"
+                  placeholder="Orientação em campo, encaminhamento ao ambulatório, troca de EPI…"></textarea>
+      </label>
+
+      <label class="campo">
+        <span>Registrado por</span>
+        <input type="text" id="o-registrador">
+      </label>
+
+      <p class="erro" id="erro-ocorrencia" hidden></p>
+
+      <button class="btn btn-primario" type="submit" id="btn-salvar-ocorrencia">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-ocorrencia" hidden>Apagar</button>
     </form>
   </div>
 </div>

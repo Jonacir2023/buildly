@@ -668,3 +668,18 @@ textarea {
   background: var(--surface-2); color: var(--ink); border-radius: var(--r-sm);
   padding: 4px 9px;
 }
+
+/* ---------- ocorrências ---------- */
+#tela-ocorrencias { display: flex; flex-direction: column; gap: var(--e4); }
+
+.chip[data-grav="baixa"]   { background: var(--ok-weak);     color: var(--ok); }
+.chip[data-grav="media"]   { background: var(--warn-weak);   color: var(--warn); }
+.chip[data-grav="alta"]    { background: var(--danger-weak); color: var(--danger); }
+.chip[data-grav="critica"] { background: var(--danger);      color: var(--on-accent); }
+.chip[data-grav="elogio"]  { background: var(--info-weak);   color: var(--info); }
+
+.pessoa .quando {
+  flex: none; font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.pessoa .desc { display: block; font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }

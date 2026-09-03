@@ -33,7 +33,7 @@ const MODULOS = [
   { ic: 'i-efetivo',    nome: 'Efetivo',       desc: 'Pessoas e contratos', pronto: true, tela: 'efetivo', conta: 'efetivo_ativo' },
   { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Experiência e viagem', pronto: false },
   { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: false },
-  { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: false, conta: 'ocorrencias_30_dias' },
+  { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: true, tela: 'ocorrencias', conta: 'ocorrencias_30_dias' },
   { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: false, conta: 'tarefas_abertas' },
   { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: false },
   { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: true, tela: 'equipamentos', conta: 'equipamentos_ativos' },
@@ -122,12 +122,14 @@ function irPara(tela) {
   $('tela-rdo').hidden      = tela !== 'rdo';
   $('tela-rdo-edit').hidden = tela !== 'rdo-edit';
   $('tela-equipamentos').hidden = tela !== 'equipamentos';
+  $('tela-ocorrencias').hidden  = tela !== 'ocorrencias';
   $('btn-voltar').hidden    = tela === 'painel';
   renderModulos(_status);
   window.scrollTo(0, 0);
   if (tela === 'efetivo') carregarEfetivo();
   if (tela === 'rdo')     carregarRDOs();
   if (tela === 'equipamentos') carregarEquipamentos();
+  if (tela === 'ocorrencias')  carregarOcorrencias();
 }
 
 // De dentro do diário, voltar leva à lista de diários — não ao painel.
@@ -215,6 +217,7 @@ async function carregarObras() {
   if (_tela === 'efetivo')      await carregarEfetivo();
   if (_tela === 'equipamentos') await carregarEquipamentos();
   if (_tela === 'rdo')          await carregarRDOs();
+  if (_tela === 'ocorrencias')  await carregarOcorrencias();
 }
 
 /* ============================================================
@@ -313,7 +316,7 @@ function renderNumeros(s) {
 
   const tiles = [
     { rot: 'Efetivo ativo',   val: n(s.efetivo_ativo),
-      sub: plural(n(s.contratos_ativos), 'contrato', 'contratos') },
+      sub: n(s.efetivo_ativo) ? 'com contrato de trabalho ativo' : 'ninguém cadastrado' },
     { rot: 'RDO · 30 dias',   val: n(s.rdos_30_dias),
       sub: s.ultimo_rdo ? 'último em ' + dataBR(s.ultimo_rdo) : 'nenhum lançado' },
     { rot: 'Tarefas abertas', val: n(s.tarefas_abertas),
@@ -1718,7 +1721,7 @@ async function lancarHoje() {
 // As folhas do RDO também fecham no Escape.
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
-  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento']
+  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia']
     .forEach(id => { $(id).hidden = true; });
 });
 
@@ -1999,3 +2002,348 @@ async function mudarFrota(ativo) {
 }
 $('btn-tirar-frota').addEventListener('click', () => mudarFrota(false));
 $('btn-voltar-frota').addEventListener('click', () => mudarFrota(true));
+
+/* ============================================================
+   OCORRÊNCIAS — segurança e disciplina
+   A tabela não tem obra_id: a ocorrência pertence à obra através
+   do contrato ou do RDO. E chk_ocorrencia_vinculo exige um dos
+   dois — ocorrência solta no banco não existe. Por isso a tela
+   começa perguntando "sobre quem".
+   ============================================================ */
+
+const TIPOS_OC = [
+  ['acidente_com_afastamento',  'Acidente com afastamento', 'grave'],
+  ['acidente_sem_afastamento',  'Acidente sem afastamento', 'grave'],
+  ['quase_acidente',            'Quase acidente',           'atencao'],
+  ['desvio_comportamental',     'Desvio comportamental',    'atencao'],
+  ['advertencia_verbal',        'Advertência verbal',       'atencao'],
+  ['advertencia_escrita',       'Advertência escrita',      'atencao'],
+  ['suspensao',                 'Suspensão',                'grave'],
+  ['elogio',                    'Elogio',                   'bom']
+];
+const NOME_TIPO_OC = Object.fromEntries(TIPOS_OC.map(t => [t[0], t[1]]));
+const PESO_TIPO_OC = Object.fromEntries(TIPOS_OC.map(t => [t[0], t[2]]));
+const GRAVIDADE_OC = { baixa:'Baixa', media:'Média', alta:'Alta', critica:'Crítica' };
+
+// Dias de afastamento só existe onde faz sentido. Campo que não se
+// aplica é campo que alguém preenche errado.
+const TEM_AFASTAMENTO = ['acidente_com_afastamento', 'suspensao'];
+
+let _ocorrencias = [];
+let _ocEditando = null;
+
+async function carregarOcorrencias() {
+  $('oc-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('oc-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+
+  // Duas consultas porque o vínculo é um ou outro: as ligadas a pessoa
+  // chegam pelo contrato, e as ligadas só ao dia chegam pelo RDO.
+  const campos = 'id, data, tipo, gravidade, descricao, acao_tomada, ' +
+                 'dias_afastamento, registrado_por, contrato_id, rdo_id';
+  const [porPessoa, porDia] = await Promise.all([
+    db.from('ocorrencias')
+      .select(campos + ', contrato:contratos!inner(id, obra_id, pessoa:pessoas(nome), funcao:funcoes(nome))')
+      .eq('contrato.obra_id', _obra.id).order('data', { ascending: false }).limit(300),
+    db.from('ocorrencias')
+      .select(campos + ', rdo:rdos!inner(id, numero, data, obra_id)')
+      .eq('rdo.obra_id', _obra.id).is('contrato_id', null)
+      .order('data', { ascending: false }).limit(300)
+  ]);
+
+  if (porPessoa.error && porDia.error) {
+    area.innerHTML = vazioHTML('Não consegui ler as ocorrências.', porPessoa.error.message);
+    return;
+  }
+
+  _ocorrencias = [...(porPessoa.data || []), ...(porDia.data || [])]
+    .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+
+  renderOcNumeros();
+  filtrarOc();
+}
+
+function diasAtras(n) {
+  const d = new Date(hojeISO() + 'T00:00:00');
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+function renderOcNumeros() {
+  const d30  = diasAtras(30);
+  const d365 = diasAtras(365);
+  const em30 = _ocorrencias.filter(o => o.data >= d30);
+  const acidentes12m = _ocorrencias.filter(o =>
+    o.data >= d365 && o.tipo.startsWith('acidente_'));
+  const afast = _ocorrencias.filter(o => o.data >= d365)
+    .reduce((s, o) => s + Number(o.dias_afastamento || 0), 0);
+  const quase90 = _ocorrencias.filter(o =>
+    o.data >= diasAtras(90) && o.tipo === 'quase_acidente').length;
+
+  const comAfast = acidentes12m.filter(o => o.tipo === 'acidente_com_afastamento').length;
+
+  const tiles = [
+    { rot: 'Últimos 30 dias', val: em30.length,
+      sub: em30.length ? plural(em30.filter(o=>o.tipo==='elogio').length, 'elogio', 'elogios') : 'nada registrado' },
+    { rot: 'Acidentes · 12 m', val: acidentes12m.length,
+      sub: comAfast ? plural(comAfast, 'com afastamento', 'com afastamento') : 'nenhum com afastamento',
+      urgente: comAfast > 0 },
+    { rot: 'Dias de afastamento', val: afast, sub: 'nos últimos 12 meses', urgente: afast > 0 },
+    { rot: 'Quase acidentes · 90 d', val: quase90,
+      sub: quase90 ? 'cada um é um aviso' : 'nenhum registrado' }
+  ];
+
+  const area = $('oc-numeros');
+  area.innerHTML = '';
+  tiles.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'num';
+    const rot = document.createElement('p'); rot.className = 'rotulo'; rot.textContent = t.rot;
+    const val = document.createElement('b'); val.textContent = t.val;
+    const sub = document.createElement('small'); sub.textContent = t.sub;
+    if (t.urgente) sub.className = 'alerta';
+    div.append(rot, val, sub);
+    area.appendChild(div);
+  });
+}
+
+function quemDaOcorrencia(o) {
+  if (o.contrato && o.contrato.pessoa) return o.contrato.pessoa.nome;
+  if (o.rdo) return 'A obra — RDO nº ' + o.rdo.numero;
+  return 'A obra';
+}
+
+function filtrarOc() {
+  const termo = ($('busca-oc').value || '').trim().toLowerCase();
+  const vistos = termo
+    ? _ocorrencias.filter(o => [quemDaOcorrencia(o), NOME_TIPO_OC[o.tipo], o.descricao]
+        .filter(Boolean).join(' ').toLowerCase().includes(termo))
+    : _ocorrencias;
+
+  const area = $('oc-lista');
+
+  if (!_ocorrencias.length) {
+    area.innerHTML = vazioHTML('Nenhuma ocorrência registrada nesta obra.',
+      'Registre também quase acidente e elogio: o histórico de segurança não é só o que deu errado.');
+    return;
+  }
+  if (!vistos.length) {
+    area.innerHTML = vazioHTML('Nada encontrado com "' + termo + '".');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+
+  vistos.forEach(o => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pessoa';
+    const peso = PESO_TIPO_OC[o.tipo];
+    if (peso === 'grave')   b.dataset.nivel = 'grave';
+    if (peso === 'atencao') b.dataset.nivel = 'atencao';
+
+    const tarja = document.createElement('span'); tarja.className = 'tarja';
+
+    const miolo = document.createElement('span'); miolo.className = 'miolo';
+    const nm = document.createElement('span'); nm.className = 'nm';
+    nm.textContent = quemDaOcorrencia(o);
+    const sub = document.createElement('span'); sub.className = 'sub';
+    sub.textContent = [NOME_TIPO_OC[o.tipo] || o.tipo,
+                       o.contrato && o.contrato.funcao ? o.contrato.funcao.nome : null,
+                       Number(o.dias_afastamento) ? plural(Number(o.dias_afastamento), 'dia de afastamento', 'dias de afastamento') : null]
+                      .filter(Boolean).join(' · ');
+    const desc = document.createElement('span'); desc.className = 'desc';
+    desc.textContent = o.descricao;
+    miolo.append(nm, sub, desc);
+
+    const lado = document.createElement('span'); lado.className = 'lado';
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.dataset.grav = o.tipo === 'elogio' ? 'elogio' : (o.gravidade || '');
+    chip.textContent = o.tipo === 'elogio' ? 'Elogio' : (GRAVIDADE_OC[o.gravidade] || '—');
+    const quando = document.createElement('span'); quando.className = 'quando';
+    quando.textContent = dataBR(o.data);
+    lado.append(chip, quando);
+
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => abrirOcorrencia(o));
+    cx.appendChild(b);
+  });
+}
+
+$('busca-oc').addEventListener('input', filtrarOc);
+
+/* ---------- folha da ocorrência ---------- */
+
+// O vínculo é a primeira pergunta porque o banco não aceita ocorrência
+// solta: ou é de uma pessoa, ou é do dia. A lista traz o efetivo ativo
+// mais a opção da obra.
+async function pintarVinculos(escolhido) {
+  const sel = $('o-vinculo');
+  sel.innerHTML = '';
+
+  const oObra = document.createElement('option');
+  oObra.value = 'obra';
+  oObra.textContent = 'A obra — sem pessoa específica';
+  sel.appendChild(oObra);
+
+  if (!_efetivo.length) await carregarEfetivoSilencioso();
+
+  const g = document.createElement('optgroup');
+  g.label = 'Pessoas do efetivo';
+  _efetivo.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.contrato_id;
+    o.textContent = p.nome + ' · ' + p.funcao;
+    g.appendChild(o);
+  });
+  if (_efetivo.length) sel.appendChild(g);
+
+  sel.value = escolhido || 'obra';
+}
+
+// O efetivo pode não ter sido carregado ainda se a pessoa entrou direto
+// em Ocorrências. Busco sem mexer na tela do efetivo.
+async function carregarEfetivoSilencioso() {
+  const { data } = await db.from('vw_efetivo')
+    .select('contrato_id, nome, funcao').eq('obra', _obra.codigo).order('nome');
+  _efetivo = data || [];
+}
+
+function pintarTiposOc(escolhido) {
+  const sel = $('o-tipo');
+  sel.innerHTML = '<option value="">— escolha —</option>';
+  TIPOS_OC.forEach(([v, rot]) => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = rot;
+    if (v === escolhido) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function ajustarCamposOc() {
+  const tipo = $('o-tipo').value;
+  $('campo-afastamento').hidden = !TEM_AFASTAMENTO.includes(tipo);
+  if ($('campo-afastamento').hidden) $('o-dias').value = 0;
+  // Elogio não tem gravidade. Deixar o seletor lá convida a preencher
+  // uma coisa que não quer dizer nada.
+  const eElogio = tipo === 'elogio';
+  $('o-gravidade').disabled = eElogio;
+  if (eElogio) $('o-gravidade').value = '';
+}
+$('o-tipo').addEventListener('change', ajustarCamposOc);
+
+// Ocorrência da obra precisa do RDO daquele dia — é o que o banco aceita
+// como vínculo. Se não houver diário, aviso em vez de deixar salvar e
+// estourar erro de constraint.
+async function conferirVinculoObra() {
+  const aviso = $('aviso-vinculo');
+  if ($('o-vinculo').value !== 'obra' || !$('o-data').value) { aviso.hidden = true; return null; }
+
+  const { data } = await db.from('rdos').select('id, numero')
+    .eq('obra_id', _obra.id).eq('data', $('o-data').value).maybeSingle();
+
+  if (!data) {
+    aviso.textContent = `Não há RDO do dia ${dataBR($('o-data').value)}. ` +
+      'Ocorrência da obra se prende ao diário daquele dia: lance o RDO primeiro, ' +
+      'ou escolha a pessoa envolvida.';
+    aviso.hidden = false;
+    return null;
+  }
+  aviso.textContent = `Vai ficar ligada ao RDO nº ${data.numero}, do dia ${dataBR(data.data || $('o-data').value)}.`;
+  aviso.hidden = false;
+  return data.id;
+}
+$('o-vinculo').addEventListener('change', conferirVinculoObra);
+$('o-data').addEventListener('change', conferirVinculoObra);
+
+async function abrirOcorrencia(o) {
+  _ocEditando = o || null;
+  $('titulo-ocorrencia').textContent = o ? 'Ocorrência' : 'Nova ocorrência';
+  await pintarVinculos(o ? (o.contrato_id || 'obra') : 'obra');
+  pintarTiposOc(o ? o.tipo : '');
+  $('o-data').value        = o ? o.data : hojeISO();
+  $('o-data').max          = hojeISO();
+  $('o-gravidade').value   = o && o.gravidade ? o.gravidade : '';
+  $('o-dias').value        = o ? Number(o.dias_afastamento || 0) : 0;
+  $('o-descricao').value   = o ? o.descricao : '';
+  $('o-acao').value        = o && o.acao_tomada ? o.acao_tomada : '';
+  $('o-registrador').value = o ? (o.registrado_por || '') : (_perfilNome || '');
+  $('btn-apagar-ocorrencia').hidden = !o;
+  $('erro-ocorrencia').hidden = true;
+  ajustarCamposOc();
+  await conferirVinculoObra();
+  $('folha-ocorrencia').hidden = false;
+}
+
+$('btn-nova-ocorrencia').addEventListener('click', () => abrirOcorrencia(null));
+$('btn-fechar-ocorrencia').addEventListener('click', () => { $('folha-ocorrencia').hidden = true; });
+$('folha-ocorrencia').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-ocorrencia')) $('folha-ocorrencia').hidden = true;
+});
+
+$('form-ocorrencia').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro  = $('erro-ocorrencia');
+  const botao = $('btn-salvar-ocorrencia');
+  erro.hidden = true;
+
+  const tipo      = $('o-tipo').value;
+  const descricao = $('o-descricao').value.trim();
+  const data      = $('o-data').value;
+
+  if (!tipo)      return falhar(erro, 'Escolha o tipo da ocorrência.');
+  if (!data)      return falhar(erro, 'Informe a data.');
+  if (data > hojeISO()) return falhar(erro, 'Não dá para registrar ocorrência de um dia que ainda não chegou.');
+  if (!descricao) return falhar(erro, 'Descreva o que aconteceu.');
+
+  const eObra = $('o-vinculo').value === 'obra';
+  let rdoId = null;
+  if (eObra) {
+    rdoId = await conferirVinculoObra();
+    if (!rdoId) return falhar(erro,
+      'Sem RDO nesse dia, a ocorrência da obra não tem onde se prender. ' +
+      'Lance o diário primeiro, ou escolha a pessoa envolvida.');
+  }
+
+  const dias = TEM_AFASTAMENTO.includes(tipo) ? Number($('o-dias').value || 0) : 0;
+  if (dias < 0 || dias > 365) return falhar(erro, 'Dias de afastamento vai de 0 a 365.');
+
+  const linha = {
+    contrato_id: eObra ? null : $('o-vinculo').value,
+    rdo_id:      eObra ? rdoId : null,
+    data, tipo,
+    gravidade:        tipo === 'elogio' ? null : ($('o-gravidade').value || null),
+    descricao,
+    acao_tomada:      $('o-acao').value.trim() || null,
+    dias_afastamento: dias,
+    registrado_por:   $('o-registrador').value.trim() || null
+  };
+
+  botao.disabled = true; botao.textContent = 'Salvando…';
+  const { error } = _ocEditando
+    ? await db.from('ocorrencias').update(linha).eq('id', _ocEditando.id)
+    : await db.from('ocorrencias').insert(linha);
+  botao.disabled = false; botao.textContent = 'Salvar';
+
+  if (error) {
+    return falhar(erro, /chk_ocorrencia_vinculo/.test(error.message)
+      ? 'A ocorrência precisa estar ligada a uma pessoa ou a um dia com RDO.'
+      : 'Não consegui salvar: ' + error.message);
+  }
+
+  $('folha-ocorrencia').hidden = true;
+  await carregarOcorrencias();
+  await carregarPainel();
+});
+
+$('btn-apagar-ocorrencia').addEventListener('click', async () => {
+  if (!_ocEditando) return;
+  const { error } = await db.from('ocorrencias').delete().eq('id', _ocEditando.id);
+  if (error) return falhar($('erro-ocorrencia'), 'Não consegui apagar: ' + error.message);
+  $('folha-ocorrencia').hidden = true;
+  await carregarOcorrencias();
+  await carregarPainel();
+});

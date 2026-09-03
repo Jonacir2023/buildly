@@ -38,6 +38,13 @@ As views expõem o **código** da obra na coluna `obra`, nunca o nome —
 `vw_efetivo`, `vw_alertas` e `vw_rdo_resumo`. Filtrar por nome devolve
 lista vazia sem erro nenhum. Sempre `_obra.codigo`.
 
+`ocorrencias` **não tem `obra_id`** — pertence à obra pelo contrato ou
+pelo RDO, e `chk_ocorrencia_vinculo` exige um dos dois.
+
+`vw_status_obra.contratos_ativos` conta **`contratos_comerciais`** (a
+obra com o cliente), **não** contrato de trabalho. Quem quer efetivo usa
+`efetivo_ativo`. Já errei isso uma vez lendo o nome da coluna e supondo.
+
 `rdos.numero` **não tem valor automático**: o app calcula `max+1` por obra
 e trata a recusa do índice único recalculando.
 
