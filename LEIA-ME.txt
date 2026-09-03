@@ -62,8 +62,40 @@ Dar baixa: toque na pessoa e use "Dar baixa". O contrato NÃO é apagado —
 vai para o bloco "Desligados", e os RDO já lançados continuam mostrando
 a presença dela. Baixa com data anterior à admissão é recusada.
 
+RDO — o diário de obra
+----------------------
+Toque em "RDO" no painel, ou no botão da faixa do dia.
+
+NÃO EXISTE BOTÃO DE SALVAR. Cada parte grava sozinha na hora: marcou
+falta, gravou; escreveu a atividade, gravou. Um selo verde "gravado"
+pisca no alto a cada gravação. Isso é de propósito: uma tela deste
+tamanho que perde tudo quando o sinal cai no canteiro é inaceitável.
+
+Ao abrir um RDO novo, TODO MUNDO com contrato ativo naquele dia entra
+como presente com 8 horas. Você marca só as exceções. Quem for marcado
+falta, atestado, férias ou folga tem as horas zeradas sozinho — é o erro
+mais comum do apontamento à mão.
+
+O número do diário é sequencial por obra e sai automático. Só existe um
+RDO por dia por obra: se você tentar criar um que já existe, o sistema
+abre o que existe em vez de duplicar.
+
+O que entra no diário:
+  Condições do dia   clima de manhã e à tarde, condição de trabalho,
+                     jornada e apontador
+  DSS                horário, tema e quem ministrou
+  Efetivo do dia     a chamada, com horas normais e extras
+  Atividades         o que foi executado, onde, e o percentual
+  Equipamentos       horas operando e paradas (aparece quando houver
+                     frota cadastrada — essa tela ainda não existe)
+  Fotos              o LINK da foto no Drive, não o arquivo
+  Observações        ocorrências do dia e eventos de meio ambiente
+
+O resumo no alto da chamada mostra "presentes de total · homem-hora",
+e é a mesma conta que aparece na lista de diários.
+
 O que ainda não faz
 -------------------
 Os outros módulos estão marcados "em construção" porque a tela deles
-ainda não existe. O botão do RDO avisa isso quando você toca — não finge
-que abriu. A próxima tela é o RDO.
+ainda não existe. Os próximos: Equipamentos (para o RDO poder apontar
+frota) e Ocorrências.

@@ -405,7 +405,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-text); }
 .folha-topo { display: flex; align-items: center; gap: var(--e3); margin-bottom: var(--e5); }
 .folha-topo h2 { font-family: var(--cond); font-weight: 700; font-size: 24px; margin: 0; }
 .folha-topo .icone { margin-left: auto; }
-.frow-2 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--e3); }
+.frow-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e3); }
+.frow-2.curta-dir { grid-template-columns: 2fr 1fr; }
 
 /* escolher obra */
 .obra-lista { display: flex; flex-direction: column; gap: var(--e2); }
@@ -534,3 +535,117 @@ select {
 /* o trilho marca em qual módulo você está */
 .modulo[aria-current="page"] { border-color: var(--accent-mark); background: var(--accent-weak); }
 .modulo[aria-current="page"] b { color: var(--accent-text); }
+
+/* ============================================================
+   RDO
+   O diário é longo. Cada parte é um cartão com título próprio,
+   para o dedo achar a seção certa rolando no celular.
+   ============================================================ */
+#tela-rdo      { display: flex; flex-direction: column; gap: var(--e4); }
+#tela-rdo-edit { display: flex; flex-direction: column; gap: var(--e4); }
+
+.folha-rdo {
+  background: var(--surface);
+  border-top: 3px solid var(--ink); border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+  border-radius: 0 0 var(--r-lg) var(--r-lg); padding: var(--e4);
+}
+.rdo-cabeca { display: flex; align-items: center; gap: var(--e3); margin-top: var(--e2); }
+.rdo-cabeca h1 {
+  font-family: var(--cond); font-weight: 700; font-size: 24px; margin: 0; line-height: 1.1;
+}
+.rdo-num {
+  font-family: var(--mono); font-weight: 600; font-size: 20px;
+  background: var(--accent-weak); color: var(--accent-text);
+  border-radius: var(--r-md); padding: 6px 12px; flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.gravou {
+  margin-left: auto; flex: none;
+  font-family: var(--mono); font-size: 11px;
+  background: var(--ok-weak); color: var(--ok);
+  border-radius: 99px; padding: 3px 9px;
+}
+
+.cartao {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--e4);
+  display: flex; flex-direction: column; gap: var(--e3);
+}
+.cartao > h2, .cartao .bloco-topo h2 {
+  font-family: var(--cond); font-weight: 700; font-size: 19px; margin: 0;
+}
+.cartao .explica { margin: 0; }
+textarea {
+  font-family: var(--sans); font-size: 16px; line-height: 1.45;
+  min-height: 0; resize: vertical;
+}
+.acoes-rapidas { display: flex; gap: var(--e4); flex-wrap: wrap; }
+
+/* uma pessoa na chamada do dia */
+.chamada { display: flex; flex-direction: column; gap: 1px;
+           background: var(--line); border: 1px solid var(--line);
+           border-radius: var(--r-md); overflow: hidden; }
+.presente-linha {
+  background: var(--surface); padding: var(--e3);
+  display: flex; flex-direction: column; gap: var(--e2);
+}
+.presente-linha .marcacao {
+  display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap;
+}
+.presente-linha .marcacao select { flex: 1 1 150px; min-width: 150px; }
+.presente-linha .quem { min-width: 0; }
+.presente-linha .nm { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.presente-linha .fn { display: block; font-size: 13px; color: var(--ink-soft); }
+.presente-linha select { min-height: 42px; padding: 8px 34px 8px 10px; font-size: 15px; width: auto; }
+.presente-linha .horas { display: flex; gap: var(--e2); align-items: center; }
+.presente-linha .horas label {
+  display: flex; align-items: center; gap: var(--e2);
+  font-family: var(--cond); font-size: 13px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+}
+.presente-linha .horas input {
+  width: 74px; min-height: 42px; padding: 8px 10px; text-align: right;
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+}
+.presente-linha[data-situacao="falta"],
+.presente-linha[data-situacao="falta_justificada"] { background: var(--danger-weak); }
+.presente-linha[data-situacao="atestado"],
+.presente-linha[data-situacao="ferias"],
+.presente-linha[data-situacao="folga"] { background: var(--surface-2); }
+
+/* item de lista simples dentro de um cartão (atividade, foto, equipamento) */
+.item {
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: var(--e3);
+  display: flex; align-items: flex-start; gap: var(--e3);
+  width: 100%; text-align: left; color: var(--ink);
+  font-family: var(--sans); font-size: 15px; cursor: pointer;
+}
+.item:hover { border-color: var(--accent-text); }
+.item .corpo { flex: 1 1 auto; min-width: 0; }
+.item .corpo b { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.item .corpo small { color: var(--ink-soft); font-size: 13px; }
+.item .medida {
+  flex: none; font-family: var(--mono); font-weight: 600; font-size: 13px;
+  background: var(--surface); border-radius: var(--r-sm); padding: 3px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.pilha { display: flex; flex-direction: column; gap: var(--e2); }
+
+/* um RDO na lista */
+.rdo-item {
+  background: var(--surface); padding: var(--e3) var(--e4);
+  display: flex; align-items: center; gap: var(--e3);
+  width: 100%; text-align: left; color: var(--ink);
+  border: none; font-family: var(--sans); font-size: 16px; cursor: pointer;
+}
+.rdo-item:hover { background: var(--surface-2); }
+.rdo-item .n {
+  font-family: var(--mono); font-weight: 600; font-size: 14px;
+  background: var(--surface-2); color: var(--ink-soft);
+  border-radius: var(--r-sm); padding: 4px 9px; flex: none;
+}
+.rdo-item .miolo { flex: 1 1 auto; min-width: 0; }
+.rdo-item .dt { display: block; font-weight: 500; }
+.rdo-item .sub { display: block; font-size: 13px; color: var(--ink-soft); }

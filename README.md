@@ -58,6 +58,31 @@ Regras que viram mensagem em português em vez de erro cru:
 Baixa é lógica: grava `desligamento` e `motivo_desligamento`, some do
 efetivo e aparece em "Desligados". Nada é apagado.
 
+## RDO
+
+Grava por parte, sem botão de salvar: campo do cabeçalho grava no
+`change`/`blur`, presença grava a cada alteração, atividade e foto
+gravam ao confirmar a folha.
+
+`rdos.numero` não tem valor automático no banco — o app calcula
+`max(numero)+1` por obra. Se `uq_rdo_obra_numero` recusar (dois
+aparelhos ao mesmo tempo), a segunda tentativa recalcula.
+
+Ao criar, semeia `rdo_presencas` com quem tinha contrato ativo **naquele
+dia** — `admissao <= data and (desligamento is null or desligamento >=
+data)` — e não com o efetivo de hoje.
+
+| Regra do banco | O que o usuário lê |
+|---|---|
+| `uq_rdo_obra_data` | já existe diário desse dia; abre o que existe |
+| `uq_presenca` | uma linha por pessoa por diário |
+| `uq_rdo_equip` | equipamento já lançado no dia; edite o lançamento |
+| `situacao` in (…) | lista fechada no seletor, nunca texto livre |
+| `percentual 0..100` | barrado na tela antes de mandar |
+
+`vw_rdo_resumo` e `vw_efetivo` expõem `o.codigo` em `obra` — todas as
+consultas filtram pelo código, nunca pelo nome.
+
 ## Ainda não pronto
 
 Os outros módulos estão desabilitados e marcados "em construção" — a

@@ -146,6 +146,147 @@
 
      </section>
 
+     <!-- ============ RDO — lista ============ -->
+     <section id="tela-rdo" hidden>
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Diário de obra</p>
+          <h1 id="rdo-titulo">—</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-novo-rdo" type="button">+ RDO</button>
+      </div>
+      <div id="rdo-lista"></div>
+     </section>
+
+     <!-- ============ RDO — o diário aberto ============ -->
+     <section id="tela-rdo-edit" hidden>
+
+      <div class="folha-rdo">
+        <p class="rotulo" id="rdo-e-obra">—</p>
+        <div class="rdo-cabeca">
+          <span class="rdo-num" id="rdo-e-numero">—</span>
+          <div>
+            <h1 id="rdo-e-data">—</h1>
+            <p id="rdo-e-semana" class="rotulo">—</p>
+          </div>
+          <span class="gravou" id="gravou" hidden>gravado</span>
+        </div>
+      </div>
+
+      <!-- condições do dia -->
+      <section class="cartao">
+        <h2>Condições do dia</h2>
+        <div class="frow-2">
+          <label class="campo">
+            <span>Clima de manhã</span>
+            <select id="r-clima-manha" data-campo="clima_manha"></select>
+          </label>
+          <label class="campo">
+            <span>Clima à tarde</span>
+            <select id="r-clima-tarde" data-campo="clima_tarde"></select>
+          </label>
+        </div>
+        <label class="campo">
+          <span>Condição de trabalho</span>
+          <select id="r-condicao" data-campo="condicao_trabalho">
+            <option value="">— não informada —</option>
+            <option value="praticavel">Praticável</option>
+            <option value="parcialmente_impraticavel">Parcialmente impraticável</option>
+            <option value="impraticavel">Impraticável</option>
+          </select>
+        </label>
+        <div class="frow-2">
+          <label class="campo">
+            <span>Jornada</span>
+            <input type="text" id="r-jornada" data-campo="jornada" placeholder="07:00 às 17:00">
+          </label>
+          <label class="campo">
+            <span>Apontador</span>
+            <input type="text" id="r-apontador" data-campo="apontador">
+          </label>
+        </div>
+      </section>
+
+      <!-- DSS -->
+      <section class="cartao">
+        <h2>DSS — Diálogo de Segurança</h2>
+        <div class="frow-2">
+          <label class="campo">
+            <span>Horário</span>
+            <input type="time" id="r-dss-hora" data-campo="dss_horario">
+          </label>
+          <label class="campo">
+            <span>Ministrado por</span>
+            <input type="text" id="r-dss-quem" data-campo="dss_ministrado_por">
+          </label>
+        </div>
+        <label class="campo">
+          <span>Tema</span>
+          <input type="text" id="r-dss-tema" data-campo="dss_tema"
+                 placeholder="Uso de cinto em trabalho em altura">
+        </label>
+      </section>
+
+      <!-- presença -->
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Efetivo do dia</h2>
+          <span class="rotulo" id="resumo-presenca">—</span>
+        </div>
+        <div class="acoes-rapidas" id="acoes-presenca" hidden>
+          <button class="btn-texto" type="button" id="btn-todos-presentes">Todos presentes, 8h</button>
+        </div>
+        <div id="presenca-lista"></div>
+      </section>
+
+      <!-- atividades -->
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Atividades executadas</h2>
+          <button class="btn-texto" type="button" id="btn-add-atividade">+ Atividade</button>
+        </div>
+        <div id="atividade-lista"></div>
+      </section>
+
+      <!-- equipamentos -->
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Equipamentos</h2>
+          <button class="btn-texto" type="button" id="btn-add-equip" hidden>+ Equipamento</button>
+        </div>
+        <div id="equip-lista"></div>
+      </section>
+
+      <!-- fotos -->
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Fotos</h2>
+          <button class="btn-texto" type="button" id="btn-add-foto">+ Link do Drive</button>
+        </div>
+        <p class="explica">A foto fica no Google Drive. Aqui entra o link dela, para o
+           diário não carregar arquivo pesado no celular da obra.</p>
+        <div id="foto-lista"></div>
+      </section>
+
+      <!-- fechamento -->
+      <section class="cartao">
+        <h2>Observações</h2>
+        <label class="campo">
+          <span>Ocorrências do dia</span>
+          <textarea id="r-obs" data-campo="observacoes" rows="3"
+                    placeholder="Atraso na entrega de concreto, visita da fiscalização…"></textarea>
+        </label>
+        <label class="campo">
+          <span>Meio ambiente</span>
+          <textarea id="r-ambiente" data-campo="eventos_meio_ambiente" rows="2"
+                    placeholder="Derramamento, descarte, licença…"></textarea>
+        </label>
+      </section>
+
+      <p class="erro" id="erro-rdo" hidden></p>
+
+     </section>
+
     </main>
 
     <p class="nota-rodape">
@@ -179,7 +320,7 @@
     </div>
 
     <form id="form-obra" novalidate>
-      <div class="frow-2">
+      <div class="frow-2 curta-dir">
         <label class="campo">
           <span>Código *</span>
           <input type="text" id="obra-codigo" maxlength="12" autocapitalize="characters"
@@ -248,7 +389,7 @@
       </div>
       <p class="dica" id="dica-cpf" hidden></p>
 
-      <div class="frow-2">
+      <div class="frow-2 curta-dir">
         <label class="campo">
           <span>Cidade de origem</span>
           <input type="text" id="p-cidade" autocapitalize="words">
@@ -335,6 +476,113 @@
       </label>
       <p class="erro" id="erro-baixa" hidden></p>
       <button class="btn btn-perigo" type="submit" id="btn-confirma-baixa">Confirmar baixa</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ ATIVIDADE ============ -->
+<div class="folha" id="folha-atividade" hidden role="dialog" aria-modal="true" aria-label="Atividade">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-atividade">Atividade</h2>
+      <button class="icone" id="btn-fechar-atividade" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-atividade" novalidate>
+      <label class="campo">
+        <span>O que foi executado *</span>
+        <textarea id="a-descricao" rows="3" required
+                  placeholder="Concretagem da laje do reservatório, 42 m³"></textarea>
+      </label>
+      <div class="frow-2 curta-dir">
+        <label class="campo">
+          <span>Local</span>
+          <input type="text" id="a-local" placeholder="Bloco B — eixo 4/7">
+        </label>
+        <label class="campo">
+          <span>% executado</span>
+          <input type="number" id="a-percentual" inputmode="decimal" min="0" max="100" step="1">
+        </label>
+      </div>
+      <p class="erro" id="erro-atividade" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-atividade">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-atividade" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ FOTO ============ -->
+<div class="folha" id="folha-foto" hidden role="dialog" aria-modal="true" aria-label="Foto">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Foto do Drive</h2>
+      <button class="icone" id="btn-fechar-foto" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-foto" novalidate>
+      <label class="campo">
+        <span>Link da foto no Drive *</span>
+        <input type="url" id="f-url" required spellcheck="false"
+               placeholder="https://drive.google.com/file/d/…">
+      </label>
+      <label class="campo">
+        <span>Legenda</span>
+        <input type="text" id="f-legenda" placeholder="Armação da sapata S12">
+      </label>
+      <p class="erro" id="erro-foto" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-foto">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-foto" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ EQUIPAMENTO NO RDO ============ -->
+<div class="folha" id="folha-equip" hidden role="dialog" aria-modal="true" aria-label="Equipamento">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Equipamento no dia</h2>
+      <button class="icone" id="btn-fechar-equip" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-equip" novalidate>
+      <label class="campo">
+        <span>Equipamento *</span>
+        <select id="e-equip" required></select>
+      </label>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Horas operando</span>
+          <input type="number" id="e-operando" inputmode="decimal" min="0" step="0.5" value="0">
+        </label>
+        <label class="campo">
+          <span>Horas paradas</span>
+          <input type="number" id="e-paradas" inputmode="decimal" min="0" step="0.5" value="0">
+        </label>
+      </div>
+      <label class="campo">
+        <span>Motivo da parada</span>
+        <input type="text" id="e-motivo" placeholder="Manutenção corretiva, falta de frente">
+      </label>
+      <p class="erro" id="erro-equip" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-equip">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-equip" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ NOVO RDO ============ -->
+<div class="folha" id="folha-novo-rdo" hidden role="dialog" aria-modal="true" aria-label="Novo RDO">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Novo RDO</h2>
+      <button class="icone" id="btn-fechar-novo-rdo" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-novo-rdo" novalidate>
+      <label class="campo">
+        <span>Dia do diário *</span>
+        <input type="date" id="n-data" required>
+      </label>
+      <p class="explica" id="explica-novo-rdo"></p>
+      <p class="erro" id="erro-novo-rdo" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-criar-rdo">Abrir o diário</button>
     </form>
   </div>
 </div>
