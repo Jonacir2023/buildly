@@ -770,3 +770,58 @@ textarea {
 .recado small { color: var(--ink-soft); font-size: 13px; }
 
 .item.apagado { opacity: .6; }
+
+/* ============================================================
+   CHUVA E PARALISAÇÃO
+   As faixas são estados numa ordem (praticável → parcial →
+   impraticável), não categorias soltas. Por isso a ordem é fixa,
+   cada faixa leva o número escrito e existe legenda: quem não
+   distingue verde de âmbar lê o mesmo que os outros.
+   ============================================================ */
+.legenda {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: var(--e2) var(--e4);
+}
+.legenda li {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink-soft);
+}
+.legenda i {
+  width: 12px; height: 12px; border-radius: 3px; flex: none;
+  background: var(--cor); font-style: normal;
+}
+
+.mes-chuva {
+  display: grid; grid-template-columns: 62px minmax(0,1fr);
+  gap: 4px var(--e3); align-items: center;
+  padding: var(--e2) 0;
+}
+.mes-chuva + .mes-chuva { border-top: 1px solid var(--line); }
+.mes-chuva .quando {
+  font-family: var(--cond); font-weight: 600; font-size: 13px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+}
+.barra {
+  display: flex; height: 26px; border-radius: 4px; overflow: hidden;
+  background: transparent; min-width: 0;
+}
+.barra span {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--on-accent); background: var(--cor);
+  border-radius: 3px; min-width: 3px;
+  font-variant-numeric: tabular-nums;
+}
+/* 2px de respiro entre faixas: separa sem inventar borda colorida */
+.barra span + span { margin-left: 2px; }
+.mes-chuva .conta {
+  grid-column: 2; font-family: var(--mono); font-size: 12px;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.mes-chuva .conta b { color: var(--ink); font-weight: 600; }
+.mes-chuva.vazio .barra { border: 1px dashed var(--line-forte); border-radius: 4px; }
+
+.nota-chuva {
+  margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft);
+  border-top: 1px solid var(--line); padding-top: var(--e3);
+}

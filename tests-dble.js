@@ -151,6 +151,28 @@
     });
     return saida;
   }
+  function chuvaMes() {
+    const CH = /(chuva|chuvoso|garoa|chuvisco|temporal|tempestade)/i;
+    const por = {};
+    B.rdos.forEach(r => {
+      const mes = r.data.slice(0,8) + '01';
+      const a = por[mes] || (por[mes] = { obra:'TESTE', mes, dias_com_rdo:0,
+        dias_com_chuva:0, dias_chuva_manha:0, dias_chuva_tarde:0,
+        dias_impraticavel:0, dias_parcial:0, dias_praticavel:0, dias_sem_condicao:0 });
+      const m = CH.test(r.clima_manha || ''), t = CH.test(r.clima_tarde || '');
+      a.dias_com_rdo++;
+      if (m || t) a.dias_com_chuva++;
+      if (m) a.dias_chuva_manha++;
+      if (t) a.dias_chuva_tarde++;
+      if (r.condicao_trabalho === 'impraticavel') a.dias_impraticavel++;
+      else if (r.condicao_trabalho === 'parcialmente_impraticavel') a.dias_parcial++;
+      else if (r.condicao_trabalho === 'praticavel') a.dias_praticavel++;
+      else a.dias_sem_condicao++;
+    });
+    return Object.values(por).map(a => ({ ...a,
+      dias_perdidos: Math.round((a.dias_impraticavel + 0.5*a.dias_parcial) * 10)/10 }));
+  }
+
   function contratoSaldo() {
     return B.contratos_comerciais.map(cc => {
       const itens = B.contrato_itens.filter(i => i.contrato_id === cc.id);
@@ -170,7 +192,7 @@
                      vw_status_obra: statusObra, vw_alertas: () => [],
                      vw_disponibilidade_equipamento: disponibilidade,
                      vw_ficha_epi: fichaEpi, vw_medicao_item: medicaoItem,
-                     vw_contrato_saldo: contratoSaldo };
+                     vw_contrato_saldo: contratoSaldo, vw_chuva_mes: chuvaMes };
 
   function tabela(nome) {
     const cond = [];   // funções de filtro

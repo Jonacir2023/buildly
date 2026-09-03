@@ -1162,9 +1162,14 @@ async function carregarRDOs() {
     .select('rdo_id, numero, data, efetivo, homem_hora, total_horas_extras')
     .eq('obra', _obra.codigo).order('data', { ascending: false }).limit(60);
 
-  if (error) { area.innerHTML = vazioHTML('Não consegui ler os diários.', error.message); return; }
+  if (error) {
+    area.innerHTML = vazioHTML('Não consegui ler os diários.', error.message);
+    $('cartao-chuva').hidden = true;
+    return;
+  }
 
   _rdos = data || [];
+  carregarChuva();
 
   if (!_rdos.length) {
     area.innerHTML = vazioHTML('Nenhum diário lançado nesta obra.',
@@ -4335,3 +4340,103 @@ $('btn-apagar-recado').addEventListener('click', async () => {
 });
 
 ligarCamposDaAta();
+
+/* ============================================================
+   CHUVA E PARALISAÇÃO
+   A conta mora na vw_chuva_mes. Aqui só se desenha.
+
+   As faixas são estados numa ordem — praticável, parcialmente
+   impraticável, impraticável, sem condição informada. Ordem fixa,
+   número escrito em cada faixa e legenda: a cor nunca é a única
+   informação, porque nem todo mundo separa verde de âmbar.
+   ============================================================ */
+
+const FAIXAS_CHUVA = [
+  { campo:'dias_praticavel',    rot:'Praticável',               cor:'var(--ok)' },
+  { campo:'dias_parcial',       rot:'Parcialmente impraticável', cor:'var(--warn)' },
+  { campo:'dias_impraticavel',  rot:'Impraticável',             cor:'var(--danger)' },
+  { campo:'dias_sem_condicao',  rot:'Sem condição informada',    cor:'var(--ink-faint)' }
+];
+
+const MES_CURTO = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function rotuloMes(iso) {
+  const [a, m] = iso.split('-');
+  return MES_CURTO[Number(m) - 1] + '/' + a.slice(2);
+}
+
+async function carregarChuva() {
+  const cartao = $('cartao-chuva');
+  if (!_obra) { cartao.hidden = true; return; }
+
+  const { data, error } = await db.from('vw_chuva_mes')
+    .select('mes, dias_com_rdo, dias_com_chuva, dias_chuva_manha, dias_chuva_tarde, ' +
+            'dias_impraticavel, dias_parcial, dias_praticavel, dias_sem_condicao, dias_perdidos')
+    .eq('obra', _obra.codigo).order('mes', { ascending: false }).limit(12);
+
+  if (error || !data || !data.length) { cartao.hidden = true; return; }
+  cartao.hidden = false;
+
+  const meses = data.slice().reverse();   // do mais antigo para o mais novo
+  const total = (campo) => meses.reduce((s, m) => s + Number(m[campo] || 0), 0);
+  const perdidos = meses.reduce((s, m) => s + Number(m.dias_perdidos || 0), 0);
+
+  // O período entra na frase em vez de disputar a linha do título: em
+  // 390px os dois juntos quebravam em duas linhas cada.
+  $('chuva-resumo').textContent =
+    `Últimos ${plural(meses.length, 'mês', 'meses')} · ` +
+    `${plural(total('dias_com_rdo'), 'dia com diário', 'dias com diário')} · ` +
+    `${plural(total('dias_com_chuva'), 'dia com chuva', 'dias com chuva')} · ` +
+    `${perdidos.toLocaleString('pt-BR')} ${perdidos === 1 ? 'dia perdido' : 'dias perdidos'}`;
+
+  const leg = $('chuva-legenda'); leg.innerHTML = '';
+  FAIXAS_CHUVA.forEach(f => {
+    if (!total(f.campo)) return;          // faixa que não existe no período não entra
+    const li = document.createElement('li');
+    const i = document.createElement('i'); i.style.setProperty('--cor', f.cor);
+    li.append(i, document.createTextNode(f.rot + ' · ' + total(f.campo)));
+    leg.appendChild(li);
+  });
+
+  // Uma escala só para todos os meses: a largura da barra é o número de
+  // dias lançados naquele mês em relação ao mês mais cheio. Assim mês
+  // com meio diário não parece igual a mês inteiro.
+  const maior = Math.max(...meses.map(m => Number(m.dias_com_rdo || 0)), 1);
+
+  const area = $('chuva-meses'); area.innerHTML = '';
+  meses.forEach(m => {
+    const linha = document.createElement('div');
+    linha.className = 'mes-chuva' + (Number(m.dias_com_rdo) ? '' : ' vazio');
+
+    const quando = document.createElement('span');
+    quando.className = 'quando'; quando.textContent = rotuloMes(m.mes);
+
+    const barra = document.createElement('div');
+    barra.className = 'barra';
+    barra.style.width = (100 * Number(m.dias_com_rdo) / maior) + '%';
+
+    FAIXAS_CHUVA.forEach(f => {
+      const n = Number(m[f.campo] || 0);
+      if (!n) return;
+      const s = document.createElement('span');
+      s.style.setProperty('--cor', f.cor);
+      s.style.flex = n;
+      s.title = f.rot + ': ' + plural(n, 'dia', 'dias') + ' em ' + rotuloMes(m.mes);
+      // o número só cabe dentro da faixa quando ela é larga o bastante;
+      // de qualquer jeito ele está escrito na linha de baixo
+      if (n / Number(m.dias_com_rdo) > 0.14) s.textContent = n;
+      barra.appendChild(s);
+    });
+
+    const conta = document.createElement('span');
+    conta.className = 'conta';
+    const b = document.createElement('b');
+    b.textContent = Number(m.dias_perdidos).toLocaleString('pt-BR');
+    conta.append(
+      document.createTextNode(m.dias_com_chuva + ' com chuva · '),
+      b,
+      document.createTextNode(Number(m.dias_perdidos) === 1 ? ' dia perdido' : ' dias perdidos'));
+
+    linha.append(quando, barra, conta);
+    area.appendChild(linha);
+  });
+}

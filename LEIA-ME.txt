@@ -154,6 +154,27 @@ A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
 status vira concluída, e limpa se você reabrir. Isso vale por qualquer
 caminho, não só pela tela.
 
+Chuva e paralisação
+-------------------
+Na tela do RDO, abaixo da lista de diários. Aparece sozinho assim que
+houver diário lançado.
+
+DIA PERDIDO = dia impraticável inteiro + meio dia de cada parcialmente
+impraticável. É o número que sustenta pleito de prorrogação de prazo, e
+sai do RDO lançado — não de estimativa.
+
+A barra de cada mês mostra a composição dos dias: praticável, parcial,
+impraticável e sem condição informada, nessa ordem. A largura da barra é
+o número de dias lançados naquele mês em relação ao mês mais cheio, então
+mês com poucos diários não parece igual a mês inteiro.
+
+Cada faixa tem o número escrito e há legenda: a cor nunca é a única
+informação.
+
+Um aviso útil: "sem condição informada" em cinza é diário lançado sem
+preencher a condição de trabalho. Esse dia não entra na conta de dia
+perdido — se a chuva parou a obra, tem que estar marcado no RDO.
+
 Alertas
 -------
 Experiência de 45 e 90 dias e giro de viagem de quem está no efetivo.

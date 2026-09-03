@@ -128,6 +128,21 @@ ao RDO nunca era contada — justamente o registro sem pessoa
 identificada, como quase acidente da obra. A view passou a contar os
 dois vínculos.
 
+## Chuva e paralisação
+
+`vw_chuva_mes` agrupa `rdos` por obra e mês. A classificação de chuva usa
+`public.e_chuva(text)`, que normaliza caixa e acento por regex — o clima
+é texto livre na tabela e precisa aguentar valor vindo por outro caminho.
+
+`dias_perdidos = impraticável + 0,5 × parcialmente impraticável`, que é a
+convenção do pleito de prorrogação de prazo.
+
+A tela não recalcula nada: desenha o que a view devolve.
+
+O encode das faixas é de **estado ordinal** (praticável → parcial →
+impraticável), não categórico — daí ordem fixa, número escrito em cada
+faixa e legenda, para a cor nunca ser a única informação.
+
 ## Ainda não pronto
 
 Os outros módulos estão desabilitados e marcados "em construção" — a
