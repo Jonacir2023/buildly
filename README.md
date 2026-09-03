@@ -37,7 +37,28 @@ se o RDO de **hoje** já existe (`dias_sem_rdo` não serve: no primeiro dia
 da obra ele vem vazio, e vazio não é atraso). `vw_alertas` traz os prazos
 de experiência e viagem já com os dias restantes.
 
+## Efetivo
+
+Lista de `vw_efetivo` filtrada pelo **código** da obra — a view expõe
+`o.codigo` em `obra`, não o nome. Cadastro e edição vão direto em
+`pessoas` e `contratos`, porque a view não devolve os id.
+
+Três colunas de `contratos` são calculadas pelo banco e o app nunca as
+escreve: `ativo` (`desligamento is null`), `fim_experiencia_1`
+(`admissao + 45`) e `fim_experiencia_2` (`admissao + 90`).
+
+Regras que viram mensagem em português em vez de erro cru:
+
+| Regra do banco | O que o usuário lê |
+|---|---|
+| `uq_contrato_ativo` | já tem contrato ativo; dê baixa antes |
+| `pessoas_cpf_key` | CPF já cadastrado para outra pessoa |
+| `chk_desligamento` | baixa não pode ser antes da admissão |
+
+Baixa é lógica: grava `desligamento` e `motivo_desligamento`, some do
+efetivo e aparece em "Desligados". Nada é apagado.
+
 ## Ainda não pronto
 
-Os módulos estão desabilitados e marcados "em construção" — a tabela
-existe no banco, a tela ainda não. Ordem prevista: Efetivo, depois RDO.
+Os outros módulos estão desabilitados e marcados "em construção" — a
+tabela existe no banco, a tela ainda não. A próxima é o RDO.

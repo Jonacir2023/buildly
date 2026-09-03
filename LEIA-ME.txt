@@ -37,8 +37,33 @@ O que a tela mostra
 Tudo isso sai de duas consultas ao banco (vw_status_obra e vw_alertas).
 Nada é inventado: com o banco vazio, a tela diz que está vazio.
 
+Efetivo
+-------
+Toque em "Efetivo" no painel. A tela lista quem tem contrato ativo nesta
+obra, com função, matrícula, desde quando, e o regime de moradia:
+
+  LOCAL      mora na região, não entra em giro de viagem
+  ALOJADO    mora no alojamento; gera alerta de viagem conforme a função
+             (30 dias para técnica, 60 para liderança, 90 para operacional)
+  AJUDA DE CUSTO   a empresa paga moradia; não entra em giro de viagem
+
+Quem tem prazo apertado (experiência de 45 ou 90 dias, ou viagem) ganha
+tarja vermelha ou âmbar e um selo dizendo o quê e em quantos dias.
+
+Cadastrar: "+ Pessoa". Nome, função e admissão são obrigatórios; o resto
+pode ficar em branco. As datas de experiência não se digitam — o banco
+calcula 45 e 90 dias da admissão, e a tela mostra antes de você salvar.
+
+Se o CPF já existir, o cadastro da pessoa é aproveitado em vez de
+duplicado. Se ela já tiver contrato ativo em qualquer obra, o sistema
+recusa e explica: dê baixa no contrato anterior primeiro.
+
+Dar baixa: toque na pessoa e use "Dar baixa". O contrato NÃO é apagado —
+vai para o bloco "Desligados", e os RDO já lançados continuam mostrando
+a presença dela. Baixa com data anterior à admissão é recusada.
+
 O que ainda não faz
 -------------------
-Os módulos estão marcados "em construção" porque a tela deles ainda não
-existe. O botão do RDO avisa isso quando você toca — não finge que abriu.
-As próximas telas, na ordem: Efetivo (pessoas e contratos), depois RDO.
+Os outros módulos estão marcados "em construção" porque a tela deles
+ainda não existe. O botão do RDO avisa isso quando você toca — não finge
+que abriu. A próxima tela é o RDO.

@@ -296,7 +296,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-text); }
 .linha[data-nivel="atencao"] .tarja { background: var(--warn); }
 .linha[data-nivel="calmo"]   .tarja { background: var(--ok); }
 .linha .miolo { flex: 1 1 auto; min-width: 0; }
-.linha .quem { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linha .quem { display: block; font-weight: 500; overflow-wrap: anywhere; }
 .linha .oque { display: block; font-size: 13px; color: var(--ink-soft); }
 .linha .prazo {
   flex: none; font-family: var(--mono); font-weight: 600; font-size: 13px;
@@ -426,3 +426,111 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-text); }
 .obra-cartao:hover { border-color: var(--accent-text); }
 .obra-cartao.atual { border-color: var(--accent-mark); background: var(--accent-weak); }
 .obra-cartao.atual .cod { background: var(--surface); color: var(--accent-text); }
+
+/* ============================================================
+   EFETIVO
+   A lista reaproveita a gramática dos alertas — tarja, miolo,
+   selo — porque é a mesma pergunta em outra escala: quem está
+   perto de vencer alguma coisa.
+   ============================================================ */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.mod-topo {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--e3); flex-wrap: wrap;
+}
+.mod-topo h1 {
+  font-family: var(--cond); font-weight: 700; font-size: 28px;
+  margin: 2px 0 0; line-height: 1.1;
+}
+.mod-topo .btn { padding: 11px var(--e4); font-size: 15px; }
+
+.busca { display: block; }
+.busca input {
+  background: var(--surface); border: 1px solid var(--line-forte);
+  border-radius: 99px; padding: 12px var(--e4);
+}
+
+/* uma pessoa na lista */
+.pessoa {
+  background: var(--surface); padding: var(--e3) var(--e4);
+  display: flex; align-items: center; gap: var(--e3);
+  width: 100%; text-align: left; color: var(--ink); cursor: pointer;
+  border: none; border-radius: 0; font-family: var(--sans); font-size: 16px;
+}
+.pessoa:hover { background: var(--surface-2); }
+.pessoa .tarja { width: 5px; align-self: stretch; border-radius: 99px; flex: none; background: var(--line-forte); }
+.pessoa[data-nivel="grave"]   .tarja { background: var(--danger); }
+.pessoa[data-nivel="atencao"] .tarja { background: var(--warn); }
+.pessoa .miolo { flex: 1 1 auto; min-width: 0; }
+.pessoa .nm { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.pessoa .sub { display: block; font-size: 13px; color: var(--ink-soft); }
+.pessoa .lado { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+
+.chip {
+  font-family: var(--cond); font-weight: 600; font-size: 12px;
+  letter-spacing: .06em; text-transform: uppercase;
+  border-radius: 99px; padding: 3px 9px; white-space: nowrap;
+  background: var(--surface-2); color: var(--ink-soft);
+}
+.chip[data-regime="viagem_familiar"] { background: var(--info-weak);   color: var(--info); }
+.chip[data-regime="ajuda_moradia"]   { background: var(--accent-weak); color: var(--accent-text); }
+.chip.prazo {
+  font-family: var(--mono); text-transform: none; letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.chip.prazo[data-nivel="grave"]   { background: var(--danger-weak); color: var(--danger); }
+.chip.prazo[data-nivel="atencao"] { background: var(--warn-weak);   color: var(--warn); }
+
+.pessoa.baixada { cursor: default; }
+.pessoa.baixada .nm { color: var(--ink-soft); text-decoration: line-through; }
+
+.btn-abre::before { content: "▸ "; }
+.btn-abre[aria-expanded="true"]::before { content: "▾ "; }
+
+/* ---------- formulário: pedaços novos ---------- */
+.rotulo.secao {
+  border-top: 1px solid var(--line); padding-top: var(--e4); margin-top: var(--e2);
+}
+form > .rotulo.secao:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+                    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+.marca-caixa {
+  display: flex; gap: var(--e3); align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--line-forte);
+  border-radius: var(--r-md); padding: var(--e3) var(--e4); cursor: pointer;
+  min-height: var(--toque);
+}
+.marca-caixa input { width: 22px; height: 22px; min-height: 0; margin: 2px 0 0; flex: none; accent-color: var(--accent); }
+.marca-caixa b { font-family: var(--cond); font-weight: 600; font-size: 16px; display: block; }
+.marca-caixa small { color: var(--ink-soft); font-size: 13px; }
+
+.dica { margin: 0; font-size: 14px; color: var(--info); }
+.explica {
+  margin: 0 0 var(--e5); color: var(--ink-soft); font-size: 15px;
+  background: var(--surface-2); border-radius: var(--r-md); padding: var(--e3) var(--e4);
+}
+.aviso {
+  background: var(--info-weak); color: var(--info);
+  border-left: 3px solid var(--info); border-radius: var(--r-sm);
+  padding: 11px 13px; margin: 0; font-size: 15px;
+}
+.btn-perigo { background: var(--surface); color: var(--danger); border-color: var(--danger); }
+
+#tela-efetivo { display: flex; flex-direction: column; gap: var(--e4); }
+#bloco-desligados { align-items: flex-start; }
+#bloco-desligados #desligados-lista { align-self: stretch; }
+#tela-painel  { display: flex; flex-direction: column; gap: var(--e5); }
+
+/* o trilho marca em qual módulo você está */
+.modulo[aria-current="page"] { border-color: var(--accent-mark); background: var(--accent-weak); }
+.modulo[aria-current="page"] b { color: var(--accent-text); }

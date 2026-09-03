@@ -29,6 +29,7 @@
   <symbol id="i-reuniao" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10.5h7"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M4 5h6l2 2.5h8V19H4z"/><path d="M8 13h8"/></symbol>
   <symbol id="i-baixo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M11 5 4 12l7 7"/><path d="M4 12h16"/></symbol>
   <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14 4h4.5v16H14"/><path d="M10 8l-4 4 4 4M6.5 12H16"/></symbol>
 </svg>
 
@@ -69,6 +70,10 @@
 
     <div class="topo-dir">
       <span class="sinal" id="sinal" hidden>sem sinal</span>
+      <button class="icone" id="btn-voltar" type="button" hidden
+              title="Voltar ao painel" aria-label="Voltar ao painel">
+        <svg class="ic" aria-hidden="true"><use href="#i-voltar"></use></svg>
+      </button>
       <button class="icone" id="btn-sair" type="button" title="Sair" aria-label="Sair">
         <svg class="ic" aria-hidden="true"><use href="#i-sair"></use></svg>
       </button>
@@ -84,6 +89,8 @@
     </nav>
 
     <main class="conteudo">
+
+     <section id="tela-painel">
 
       <!-- FAIXA DO DIA -->
       <section class="faixa" id="faixa" data-estado="vazio" aria-live="polite">
@@ -103,10 +110,41 @@
       <section class="bloco">
         <div class="bloco-topo">
           <h2>Prazos a vencer</h2>
-          <button class="btn-texto" id="btn-todos-alertas" type="button" hidden>Ver todos</button>
+          <span class="rotulo">próximos 7 dias</span>
         </div>
         <div id="alertas-area"></div>
       </section>
+
+     </section>
+
+     <!-- ============ EFETIVO ============ -->
+     <section id="tela-efetivo" hidden>
+
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Efetivo</p>
+          <h1 id="efetivo-titulo">—</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-nova-pessoa" type="button">+ Pessoa</button>
+      </div>
+
+      <div class="numeros" id="efetivo-numeros"></div>
+
+      <label class="busca">
+        <span class="sr">Buscar</span>
+        <input type="search" id="busca-efetivo" autocomplete="off"
+               placeholder="Buscar por nome, matrícula ou função">
+      </label>
+
+      <div id="efetivo-lista"></div>
+
+      <div class="bloco" id="bloco-desligados" hidden>
+        <button class="btn-texto btn-abre" id="btn-desligados" type="button"
+                aria-expanded="false">Desligados (0)</button>
+        <div id="desligados-lista" hidden></div>
+      </div>
+
+     </section>
 
     </main>
 
@@ -175,6 +213,128 @@
       </label>
       <p class="erro" id="erro-obra" hidden></p>
       <button class="btn btn-primario" type="submit" id="btn-salvar-obra">Salvar obra</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ PESSOA (cadastrar / editar) ============ -->
+<div class="folha" id="folha-pessoa" hidden role="dialog" aria-modal="true" aria-label="Pessoa">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-pessoa">Nova pessoa</h2>
+      <button class="icone" id="btn-fechar-pessoa" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <form id="form-pessoa" novalidate>
+
+      <p class="rotulo secao">Quem é</p>
+
+      <label class="campo">
+        <span>Nome completo *</span>
+        <input type="text" id="p-nome" required autocapitalize="words" placeholder="José Carlos da Silva">
+      </label>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>CPF</span>
+          <input type="text" id="p-cpf" inputmode="numeric" maxlength="14"
+                 spellcheck="false" placeholder="000.000.000-00">
+        </label>
+        <label class="campo">
+          <span>Telefone</span>
+          <input type="tel" id="p-telefone" inputmode="tel" placeholder="(00) 00000-0000">
+        </label>
+      </div>
+      <p class="dica" id="dica-cpf" hidden></p>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Cidade de origem</span>
+          <input type="text" id="p-cidade" autocapitalize="words">
+        </label>
+        <label class="campo">
+          <span>UF</span>
+          <input type="text" id="p-uf" maxlength="2" autocapitalize="characters" spellcheck="false">
+        </label>
+      </div>
+
+      <p class="rotulo secao">Contrato nesta obra</p>
+
+      <label class="campo">
+        <span>Função *</span>
+        <select id="p-funcao" required></select>
+      </label>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Admissão *</span>
+          <input type="date" id="p-admissao" required>
+        </label>
+        <label class="campo">
+          <span>Matrícula</span>
+          <input type="text" id="p-matricula" spellcheck="false">
+        </label>
+      </div>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Crachá</span>
+          <input type="text" id="p-cracha" spellcheck="false">
+        </label>
+        <label class="campo">
+          <span>Última viagem</span>
+          <input type="date" id="p-viagem">
+        </label>
+      </div>
+
+      <label class="marca-caixa">
+        <input type="checkbox" id="p-alojado">
+        <span>
+          <b>Mora no alojamento</b>
+          <small id="dica-alojado">Marcando, entra no controle de viagem a cada 90 dias.</small>
+        </span>
+      </label>
+
+      <p class="aviso" id="aviso-experiencia" hidden></p>
+      <p class="erro" id="erro-pessoa" hidden></p>
+
+      <button class="btn btn-primario" type="submit" id="btn-salvar-pessoa">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-desligar" hidden>Dar baixa</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ DAR BAIXA ============ -->
+<div class="folha" id="folha-baixa" hidden role="dialog" aria-modal="true" aria-label="Dar baixa">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Dar baixa</h2>
+      <button class="icone" id="btn-fechar-baixa" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <p class="explica" id="explica-baixa"></p>
+
+    <form id="form-baixa" novalidate>
+      <label class="campo">
+        <span>Data do desligamento *</span>
+        <input type="date" id="b-data" required>
+      </label>
+      <label class="campo">
+        <span>Motivo</span>
+        <select id="b-motivo">
+          <option value="">— não informado —</option>
+          <option>Fim de contrato</option>
+          <option>Pedido de demissão</option>
+          <option>Dispensa sem justa causa</option>
+          <option>Dispensa por justa causa</option>
+          <option>Fim de experiência</option>
+          <option>Transferência de obra</option>
+          <option>Abandono de emprego</option>
+        </select>
+      </label>
+      <p class="erro" id="erro-baixa" hidden></p>
+      <button class="btn btn-perigo" type="submit" id="btn-confirma-baixa">Confirmar baixa</button>
     </form>
   </div>
 </div>
