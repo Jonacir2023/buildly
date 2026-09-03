@@ -31,15 +31,15 @@ const PAPEIS = {
 const MODULOS = [
   { ic: 'i-rdo',        nome: 'RDO',           desc: 'Diário de obra',      pronto: true, tela: 'rdo', conta: 'rdos_30_dias' },
   { ic: 'i-efetivo',    nome: 'Efetivo',       desc: 'Pessoas e contratos', pronto: true, tela: 'efetivo', conta: 'efetivo_ativo' },
-  { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Experiência e viagem', pronto: false },
-  { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: false },
+  { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Experiência e viagem', pronto: true, tela: 'alertas' },
+  { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: true, tela: 'epi', },
   { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: true, tela: 'ocorrencias', conta: 'ocorrencias_30_dias' },
-  { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: false, conta: 'tarefas_abertas' },
-  { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: false },
+  { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: true, tela: 'tarefas', conta: 'tarefas_abertas' },
+  { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: true, tela: 'nfs', },
   { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: true, tela: 'equipamentos', conta: 'equipamentos_ativos' },
-  { ic: 'i-medicao',    nome: 'Medições',      desc: 'Boletim e acumulado', pronto: false },
-  { ic: 'i-reuniao',    nome: 'Reuniões',      desc: 'Pauta e ata',         pronto: false },
-  { ic: 'i-doc',        nome: 'Documentos',    desc: 'Arquivos e mural',    pronto: false }
+  { ic: 'i-medicao',    nome: 'Medições',      desc: 'Boletim e acumulado', pronto: true, tela: 'medicoes', },
+  { ic: 'i-reuniao',    nome: 'Reuniões',      desc: 'Pauta e ata',         pronto: true, tela: 'reunioes', },
+  { ic: 'i-doc',        nome: 'Documentos',    desc: 'Arquivos e mural',    pronto: true, tela: 'documentos', }
 ];
 
 /* ---------- datas ----------
@@ -123,6 +123,17 @@ function irPara(tela) {
   $('tela-rdo-edit').hidden = tela !== 'rdo-edit';
   $('tela-equipamentos').hidden = tela !== 'equipamentos';
   $('tela-ocorrencias').hidden  = tela !== 'ocorrencias';
+  $('tela-tarefas').hidden = tela !== 'tarefas';
+  $('tela-alertas').hidden = tela !== 'alertas';
+  $('tela-nfs').hidden = tela !== 'nfs';
+  $('tela-nf-edit').hidden = tela !== 'nf-edit';
+  $('tela-documentos').hidden = tela !== 'documentos';
+  $('tela-reunioes').hidden = tela !== 'reunioes';
+  $('tela-ata').hidden = tela !== 'ata';
+  $('tela-medicoes').hidden = tela !== 'medicoes';
+  $('tela-contrato').hidden = tela !== 'contrato';
+  $('tela-medicao').hidden  = tela !== 'medicao';
+  $('tela-epi').hidden = tela !== 'epi';
   $('btn-voltar').hidden    = tela === 'painel';
   renderModulos(_status);
   window.scrollTo(0, 0);
@@ -130,6 +141,13 @@ function irPara(tela) {
   if (tela === 'rdo')     carregarRDOs();
   if (tela === 'equipamentos') carregarEquipamentos();
   if (tela === 'ocorrencias')  carregarOcorrencias();
+  if (tela === 'tarefas') carregarTarefas();
+  if (tela === 'alertas') carregarAlertas();
+  if (tela === 'nfs') carregarNFs();
+  if (tela === 'documentos') carregarDocumentos();
+  if (tela === 'reunioes') carregarReunioes();
+  if (tela === 'medicoes') carregarMedicoes();
+  if (tela === 'epi') carregarEPI();
 }
 
 // De dentro do diário, voltar leva à lista de diários — não ao painel.
@@ -141,6 +159,18 @@ $('btn-voltar').addEventListener('click', async () => {
     await carregarPainel();
     return;
   }
+  if (_tela === 'nf-edit') {
+    _nf = null;
+    irPara('nfs');
+    await carregarPainel();
+    return;
+  }
+  if (_tela === 'medicao')  { _medicao = null; irPara('contrato');
+                              await abrirContrato(_contrato.id); return; }
+  if (_tela === 'contrato') { _contrato = null; irPara('medicoes');
+                              await carregarPainel(); return; }
+  if (_tela === 'ata')      { _reuniao = null; irPara('reunioes');
+                              await carregarPainel(); return; }
   irPara('painel');
 });
 
@@ -218,6 +248,13 @@ async function carregarObras() {
   if (_tela === 'equipamentos') await carregarEquipamentos();
   if (_tela === 'rdo')          await carregarRDOs();
   if (_tela === 'ocorrencias')  await carregarOcorrencias();
+  if (_tela === 'tarefas') await carregarTarefas();
+  if (_tela === 'alertas') await carregarAlertas();
+  if (_tela === 'nfs') await carregarNFs();
+  if (_tela === 'documentos') await carregarDocumentos();
+  if (_tela === 'reunioes') await carregarReunioes();
+  if (_tela === 'medicoes') await carregarMedicoes();
+  if (_tela === 'epi') await carregarEPI();
 }
 
 /* ============================================================
@@ -418,7 +455,11 @@ function renderModulos(s) {
     b.type = 'button';
     if (!m.pronto) { b.disabled = true; b.title = m.nome + ' — tela em construção'; }
     else {
-      if (_tela === m.tela || (_tela === 'rdo-edit' && m.tela === 'rdo'))
+      if (_tela === m.tela ||
+          (_tela === 'rdo-edit' && m.tela === 'rdo') ||
+          (_tela === 'nf-edit'  && m.tela === 'nfs') ||
+          (['contrato','medicao'].includes(_tela) && m.tela === 'medicoes') ||
+          (_tela === 'ata' && m.tela === 'reunioes'))
         b.setAttribute('aria-current', 'page');
       b.addEventListener('click', () => irPara(m.tela));
     }
@@ -1721,7 +1762,10 @@ async function lancarHoje() {
 // As folhas do RDO também fecham no Escape.
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
-  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia']
+  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia','folha-tarefa','folha-entrega','folha-epi',
+   'folha-nova-nf','folha-item','folha-contrato','folha-ct-item',
+   'folha-nova-medicao','folha-reuniao','folha-participante','folha-topico',
+   'folha-documento','folha-recado']
     .forEach(id => { $(id).hidden = true; });
 });
 
@@ -2347,3 +2391,1947 @@ $('btn-apagar-ocorrencia').addEventListener('click', async () => {
   await carregarOcorrencias();
   await carregarPainel();
 });
+
+/* ============================================================
+   TAREFAS
+   O status manda no que aparece: aberta e em andamento primeiro,
+   porque é o que exige alguma coisa de alguém hoje.
+   ============================================================ */
+
+const STATUS_TF = {
+  aberta:'Aberta', em_andamento:'Em andamento', concluida:'Concluída', cancelada:'Cancelada'
+};
+const PRIORIDADE_TF = { baixa:'Baixa', media:'Média', alta:'Alta' };
+const SETORES = ['Suprimentos','Transporte','Planejamento','Administração','Segurança',
+                 'Produção','Qualidade','Meio ambiente'];
+
+let _tarefas = [];
+let _tfFiltro = 'pendentes';
+let _tfEditando = null;
+
+async function carregarTarefas() {
+  $('tf-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('tf-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const { data, error } = await db.from('tarefas')
+    .select('id, assunto, descricao, criador, responsavel, setor, prioridade, status, ' +
+            'data_lancamento, data_termino, concluido_em, origem')
+    .eq('obra_id', _obra.id).order('data_lancamento', { ascending: false }).limit(400);
+
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler as tarefas.', error.message); return; }
+
+  _tarefas = data || [];
+  renderTfNumeros();
+  renderTfFiltros();
+  filtrarTarefas();
+}
+
+const tfPendente = (t) => t.status === 'aberta' || t.status === 'em_andamento';
+const tfAtrasada = (t) => tfPendente(t) && t.data_termino && t.data_termino < hojeISO();
+
+function renderTfNumeros() {
+  const pend = _tarefas.filter(tfPendente);
+  const atr  = _tarefas.filter(tfAtrasada);
+  const alta = pend.filter(t => t.prioridade === 'alta').length;
+  const conc30 = _tarefas.filter(t =>
+    t.status === 'concluida' && t.concluido_em && t.concluido_em.slice(0,10) >= diasAtras(30)).length;
+
+  const tiles = [
+    { rot:'Abertas', val: pend.length, sub: pend.length ? 'exigem alguém' : 'nada pendente' },
+    { rot:'Atrasadas', val: atr.length, sub: atr.length ? 'passaram do prazo' : 'nenhuma no vermelho',
+      urgente: atr.length > 0 },
+    { rot:'Prioridade alta', val: alta, sub: alta ? 'entre as abertas' : 'nenhuma' },
+    { rot:'Concluídas · 30 d', val: conc30, sub: 'no último mês' }
+  ];
+  const area = $('tf-numeros'); area.innerHTML = '';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className = 'num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    const s = document.createElement('small'); s.textContent=t.sub;
+    if (t.urgente) s.className='alerta';
+    d.append(r,v,s); area.appendChild(d);
+  });
+}
+
+function renderTfFiltros() {
+  const opcoes = [
+    ['pendentes', 'Pendentes', _tarefas.filter(tfPendente).length],
+    ['atrasadas', 'Atrasadas', _tarefas.filter(tfAtrasada).length],
+    ['concluida', 'Concluídas', _tarefas.filter(t=>t.status==='concluida').length],
+    ['todas',     'Todas',      _tarefas.length]
+  ];
+  const area = $('tf-filtros'); area.innerHTML = '';
+  opcoes.forEach(([v, rot, n]) => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='filtro';
+    b.setAttribute('aria-pressed', String(_tfFiltro === v));
+    b.textContent = rot + ' (' + n + ')';
+    b.addEventListener('click', () => { _tfFiltro = v; renderTfFiltros(); filtrarTarefas(); });
+    area.appendChild(b);
+  });
+}
+
+function filtrarTarefas() {
+  const termo = ($('busca-tf').value || '').trim().toLowerCase();
+  let vistos = _tarefas;
+  if (_tfFiltro === 'pendentes') vistos = vistos.filter(tfPendente);
+  if (_tfFiltro === 'atrasadas') vistos = vistos.filter(tfAtrasada);
+  if (_tfFiltro === 'concluida') vistos = vistos.filter(t => t.status === 'concluida');
+  if (termo) vistos = vistos.filter(t =>
+    [t.assunto, t.responsavel, t.setor, t.descricao].filter(Boolean).join(' ')
+      .toLowerCase().includes(termo));
+
+  const area = $('tf-lista');
+  if (!_tarefas.length) {
+    area.innerHTML = vazioHTML('Nenhuma tarefa nesta obra.',
+      'Tarefa é o que ficou combinado e precisa de alguém e de uma data.');
+    return;
+  }
+  if (!vistos.length) { area.innerHTML = vazioHTML('Nada neste filtro.'); return; }
+
+  // Pendente antes de encerrada, e dentro disso o prazo mais curto primeiro.
+  vistos = vistos.slice().sort((a, b) => {
+    if (tfPendente(a) !== tfPendente(b)) return tfPendente(a) ? -1 : 1;
+    const pa = a.data_termino || '9999-12-31', pb = b.data_termino || '9999-12-31';
+    return pa < pb ? -1 : pa > pb ? 1 : 0;
+  });
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(t => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='pessoa' + (tfPendente(t) ? '' : ' encerrada');
+    if (tfAtrasada(t)) b.dataset.nivel = 'grave';
+    else if (tfPendente(t) && t.prioridade === 'alta') b.dataset.nivel = 'atencao';
+
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = t.assunto;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [t.responsavel, t.setor,
+      t.data_termino ? (tfAtrasada(t) ? 'venceu em ' : 'prazo ') + dataBR(t.data_termino) : null]
+      .filter(Boolean).join(' · ') || 'sem responsável definido';
+    miolo.append(nm, sub);
+
+    const lado = document.createElement('span'); lado.className='lado';
+    const st = document.createElement('span'); st.className='chip'; st.dataset.st = t.status;
+    st.textContent = STATUS_TF[t.status] || t.status;
+    lado.appendChild(st);
+    if (tfPendente(t)) {
+      const pr = document.createElement('span'); pr.className='chip'; pr.dataset.prio = t.prioridade;
+      pr.textContent = PRIORIDADE_TF[t.prioridade] || t.prioridade;
+      lado.appendChild(pr);
+    }
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => abrirTarefa(t));
+    cx.appendChild(b);
+  });
+}
+
+$('busca-tf').addEventListener('input', filtrarTarefas);
+
+function pintarSetores(escolhido) {
+  const sel = $('t-setor');
+  sel.innerHTML = '<option value="">— sem setor —</option>';
+  const lista = SETORES.slice();
+  if (escolhido && !lista.includes(escolhido)) lista.push(escolhido);
+  lista.sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(s => {
+    const o = document.createElement('option'); o.value=s; o.textContent=s;
+    if (s === escolhido) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// A data de conclusão é carimbada pelo banco quando o status vira
+// concluída. Aviso na tela para ninguém procurar um campo que não existe.
+function avisarTarefa() {
+  const av = $('aviso-tarefa');
+  const st = $('t-status').value;
+  if (st === 'concluida') {
+    av.textContent = 'Ao salvar como concluída, o banco carimba a data e a hora sozinho.';
+    av.hidden = false;
+  } else { av.hidden = true; }
+}
+$('t-status').addEventListener('change', avisarTarefa);
+
+function abrirTarefa(t) {
+  _tfEditando = t || null;
+  $('titulo-tarefa').textContent = t ? 'Tarefa' : 'Nova tarefa';
+  $('t-assunto').value     = t ? t.assunto : '';
+  $('t-descricao').value   = t && t.descricao ? t.descricao : '';
+  $('t-responsavel').value = t && t.responsavel ? t.responsavel : '';
+  $('t-criador').value     = t ? (t.criador || '') : (_perfilNome || '');
+  pintarSetores(t ? t.setor : null);
+  $('t-prioridade').value  = t ? t.prioridade : 'media';
+  $('t-status').value      = t ? t.status : 'aberta';
+  $('t-lancamento').value  = t ? t.data_lancamento : hojeISO();
+  $('t-termino').value     = t && t.data_termino ? t.data_termino : '';
+  $('btn-apagar-tarefa').hidden = !t;
+  $('erro-tarefa').hidden = true;
+  avisarTarefa();
+  $('folha-tarefa').hidden = false;
+  if (!t) $('t-assunto').focus();
+}
+
+$('btn-nova-tarefa').addEventListener('click', () => abrirTarefa(null));
+$('btn-fechar-tarefa').addEventListener('click', () => { $('folha-tarefa').hidden = true; });
+$('folha-tarefa').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-tarefa')) $('folha-tarefa').hidden = true;
+});
+
+$('form-tarefa').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-tarefa'); erro.hidden = true;
+  const assunto = $('t-assunto').value.trim();
+  if (!assunto) return falhar(erro, 'A tarefa precisa de um assunto.');
+
+  const lanc = $('t-lancamento').value || hojeISO();
+  const prazo = $('t-termino').value || null;
+  if (prazo && prazo < lanc)
+    return falhar(erro, 'O prazo não pode ser antes da data de lançamento.');
+
+  // concluido_em não vai daqui: é o gatilho do banco que carimba.
+  const linha = {
+    assunto,
+    descricao:   $('t-descricao').value.trim() || null,
+    criador:     $('t-criador').value.trim() || null,
+    responsavel: $('t-responsavel').value.trim() || null,
+    setor:       $('t-setor').value || null,
+    prioridade:  $('t-prioridade').value,
+    status:      $('t-status').value,
+    data_lancamento: lanc,
+    data_termino:    prazo
+  };
+
+  const { error } = _tfEditando
+    ? await db.from('tarefas').update(linha).eq('id', _tfEditando.id)
+    : await db.from('tarefas').insert({ ...linha, obra_id: _obra.id, origem: 'pauta' });
+
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-tarefa').hidden = true;
+  await carregarTarefas();
+  await carregarPainel();
+});
+
+$('btn-apagar-tarefa').addEventListener('click', async () => {
+  if (!_tfEditando) return;
+  const { error } = await db.from('tarefas').delete().eq('id', _tfEditando.id);
+  if (error) return falhar($('erro-tarefa'), 'Não consegui apagar: ' + error.message);
+  $('folha-tarefa').hidden = true;
+  await carregarTarefas();
+  await carregarPainel();
+});
+
+/* ============================================================
+   ALERTAS
+   A vw_alertas só enxerga 7 dias — é a janela do painel. Aqui a
+   conta é refeita sobre o efetivo até 60 dias, que é o prazo em
+   que ainda dá para agir: marcar viagem, decidir a experiência.
+   ============================================================ */
+const HORIZONTE_ALERTA = 60;
+
+async function carregarAlertas() {
+  $('al-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('al-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const { data, error } = await db.from('vw_efetivo')
+    .select('contrato_id, nome, funcao, fim_experiencia_1, fim_experiencia_2, proxima_viagem, regime')
+    .eq('obra', _obra.codigo).order('nome');
+
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler o efetivo.', error.message); return; }
+
+  const linhas = [];
+  (data || []).forEach(p => {
+    const junta = (rot, iso) => {
+      const d = diasAte(iso);
+      if (d == null || d > HORIZONTE_ALERTA || d < -30) return;
+      linhas.push({ nome: p.nome, funcao: p.funcao, rot, vencimento: iso, dias: d });
+    };
+    junta('Experiência 45 dias', p.fim_experiencia_1);
+    junta('Experiência 90 dias', p.fim_experiencia_2);
+    junta('Viagem', p.proxima_viagem);
+  });
+  linhas.sort((a, b) => a.dias - b.dias);
+
+  renderAlNumeros(linhas);
+
+  if (!linhas.length) {
+    area.innerHTML = vazioHTML(
+      `Nenhum prazo nos próximos ${HORIZONTE_ALERTA} dias.`,
+      'Experiência e viagem aparecem aqui conforme o efetivo for entrando.');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  linhas.forEach(a => {
+    const l = document.createElement('div'); l.className = 'linha';
+    l.dataset.nivel = a.dias <= 3 ? 'grave' : a.dias <= 7 ? 'atencao' : 'calmo';
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const quem = document.createElement('span'); quem.className='quem'; quem.textContent = a.nome;
+    const oque = document.createElement('span'); oque.className='oque';
+    oque.textContent = [a.rot, a.funcao, dataBR(a.vencimento)].filter(Boolean).join(' · ');
+    miolo.append(quem, oque);
+    const prazo = document.createElement('span'); prazo.className='prazo';
+    prazo.textContent = prazoTexto(a.dias);
+    l.append(tarja, miolo, prazo);
+    cx.appendChild(l);
+  });
+}
+
+function renderAlNumeros(linhas) {
+  const ate7  = linhas.filter(a => a.dias <= 7).length;
+  const ate30 = linhas.filter(a => a.dias <= 30).length;
+  const exp   = linhas.filter(a => a.rot.startsWith('Experiência')).length;
+  const viag  = linhas.filter(a => a.rot === 'Viagem').length;
+  const tiles = [
+    { rot:'Até 7 dias',  val: ate7,  sub: ate7 ? 'decidir agora' : 'nada urgente', urgente: ate7>0 },
+    { rot:'Até 30 dias', val: ate30, sub: 'dá para programar' },
+    { rot:'Experiência', val: exp,   sub: '45 e 90 dias' },
+    { rot:'Viagem',      val: viag,  sub: 'giro do alojamento' }
+  ];
+  const area = $('al-numeros'); area.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    const s = document.createElement('small'); s.textContent=t.sub;
+    if (t.urgente) s.className='alerta';
+    d.append(r,v,s); area.appendChild(d);
+  });
+}
+
+/* ============================================================
+   EPI — ficha de entrega
+   O catálogo de EPI é do banco inteiro; a entrega é por contrato.
+   A troca prevista sai da vw_ficha_epi: data da entrega mais os
+   dias de validade da peça.
+   ============================================================ */
+
+const MOTIVO_EPI = {
+  primeira_entrega:'Primeira entrega', troca:'Troca',
+  danificado:'Danificado', perda:'Perda', vencimento:'Vencimento'
+};
+
+let _fichas = [];
+let _catalogo = [];
+let _epiFiltro = 'todas';
+let _entregaEditando = null;
+let _epiCatEditando = null;
+
+async function carregarEPI() {
+  $('epi-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('epi-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const [fichas, cat] = await Promise.all([
+    db.from('vw_ficha_epi')
+      .select('contrato_id, nome, epi, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
+      .eq('obra', _obra.codigo).order('data_entrega', { ascending: false }).limit(500),
+    db.from('epis').select('id, nome, ca, validade_uso_dias, ativo').order('nome')
+  ]);
+
+  if (fichas.error) { area.innerHTML = vazioHTML('Não consegui ler as fichas.', fichas.error.message); return; }
+  _fichas   = fichas.data || [];
+  _catalogo = cat.error ? [] : (cat.data || []);
+
+  renderEpiNumeros();
+  renderEpiFiltros();
+  filtrarEPI();
+  renderCatalogo();
+}
+
+const trocaVencida  = (f) => f.troca_prevista && f.troca_prevista < hojeISO();
+const trocaChegando = (f) => f.troca_prevista && !trocaVencida(f) &&
+                             diasAte(f.troca_prevista) <= 15;
+
+function renderEpiNumeros() {
+  const semAss = _fichas.filter(f => !f.assinatura_ok).length;
+  const vencidas = _fichas.filter(trocaVencida).length;
+  const em30 = _fichas.filter(f => f.data_entrega >= diasAtras(30)).length;
+  const pessoas = new Set(_fichas.map(f => f.contrato_id)).size;
+  const tiles = [
+    { rot:'Entregas · 30 d', val: em30, sub: plural(pessoas, 'pessoa atendida', 'pessoas atendidas') },
+    { rot:'Sem assinatura', val: semAss,
+      sub: semAss ? 'não provam fornecimento' : 'todas assinadas', urgente: semAss > 0 },
+    { rot:'Troca vencida', val: vencidas,
+      sub: vencidas ? 'substituir' : 'nenhuma vencida', urgente: vencidas > 0 },
+    { rot:'No catálogo', val: _catalogo.filter(e => e.ativo).length, sub: 'tipos de EPI ativos' }
+  ];
+  const area = $('epi-numeros'); area.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    const s = document.createElement('small'); s.textContent=t.sub;
+    if (t.urgente) s.className='alerta';
+    d.append(r,v,s); area.appendChild(d);
+  });
+}
+
+function renderEpiFiltros() {
+  const opcoes = [
+    ['todas',    'Todas',           _fichas.length],
+    ['semass',   'Sem assinatura',  _fichas.filter(f=>!f.assinatura_ok).length],
+    ['vencidas', 'Troca vencida',   _fichas.filter(trocaVencida).length]
+  ];
+  const area = $('epi-filtros'); area.innerHTML='';
+  opcoes.forEach(([v, rot, n]) => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='filtro';
+    b.setAttribute('aria-pressed', String(_epiFiltro === v));
+    b.textContent = rot + ' (' + n + ')';
+    b.addEventListener('click', () => { _epiFiltro = v; renderEpiFiltros(); filtrarEPI(); });
+    area.appendChild(b);
+  });
+}
+
+function filtrarEPI() {
+  const termo = ($('busca-epi').value || '').trim().toLowerCase();
+  let vistos = _fichas;
+  if (_epiFiltro === 'semass')   vistos = vistos.filter(f => !f.assinatura_ok);
+  if (_epiFiltro === 'vencidas') vistos = vistos.filter(trocaVencida);
+  if (termo) vistos = vistos.filter(f =>
+    [f.nome, f.epi, f.ca].filter(Boolean).join(' ').toLowerCase().includes(termo));
+
+  const area = $('epi-lista');
+  if (!_fichas.length) {
+    area.innerHTML = vazioHTML('Nenhuma entrega registrada nesta obra.',
+      'A ficha de EPI é o que prova que a empresa forneceu a proteção.');
+    return;
+  }
+  if (!vistos.length) { area.innerHTML = vazioHTML('Nada neste filtro.'); return; }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(f => {
+    const l = document.createElement('div'); l.className='pessoa';
+    if (trocaVencida(f) || !f.assinatura_ok) l.dataset.nivel='grave';
+    else if (trocaChegando(f)) l.dataset.nivel='atencao';
+
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = f.nome;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [f.epi + (Number(f.quantidade) > 1 ? ' ×' + f.quantidade : ''),
+                       f.ca ? 'CA ' + f.ca : null,
+                       dataBR(f.data_entrega),
+                       f.troca_prevista ? 'troca ' + dataBR(f.troca_prevista) : null]
+                      .filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+
+    const lado = document.createElement('span'); lado.className='lado';
+    const mv = document.createElement('span'); mv.className='chip'; mv.dataset.motivo=f.motivo;
+    mv.textContent = MOTIVO_EPI[f.motivo] || f.motivo;
+    lado.appendChild(mv);
+    if (!f.assinatura_ok) {
+      const a = document.createElement('span'); a.className='chip semass';
+      a.textContent = 'sem assinatura'; lado.appendChild(a);
+    }
+    l.append(tarja, miolo, lado);
+    cx.appendChild(l);
+  });
+}
+
+$('busca-epi').addEventListener('input', filtrarEPI);
+
+function renderCatalogo() {
+  $('btn-catalogo').textContent = 'Catálogo de EPI (' + _catalogo.filter(e=>e.ativo).length + ')';
+  const area = $('catalogo-lista');
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+
+  const novo = document.createElement('button');
+  novo.type='button'; novo.className='btn btn-secundario';
+  novo.textContent = '+ Novo tipo de EPI';
+  novo.addEventListener('click', () => abrirEpiCatalogo(null));
+  cx.appendChild(novo);
+
+  _catalogo.forEach(e => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='item' + (e.ativo ? '' : ' apagado');
+    const corpo = document.createElement('span'); corpo.className='corpo';
+    const t = document.createElement('b'); t.textContent = e.nome + (e.ativo ? '' : ' (inativo)');
+    const s = document.createElement('small');
+    s.textContent = [e.ca ? 'CA ' + e.ca : null,
+                     e.validade_uso_dias ? 'troca a cada ' + e.validade_uso_dias + ' dias' : 'sem troca programada']
+                    .filter(Boolean).join(' · ');
+    corpo.append(t, s); b.appendChild(corpo);
+    b.addEventListener('click', () => abrirEpiCatalogo(e));
+    cx.appendChild(b);
+  });
+}
+
+$('btn-catalogo').addEventListener('click', () => {
+  const area = $('catalogo-lista');
+  area.hidden = !area.hidden;
+  $('btn-catalogo').setAttribute('aria-expanded', String(!area.hidden));
+});
+
+/* ---------- catálogo ---------- */
+function abrirEpiCatalogo(e) {
+  _epiCatEditando = e || null;
+  $('titulo-epi-cat').textContent = e ? e.nome : 'Novo EPI';
+  $('ec-nome').value = e ? e.nome : '';
+  $('ec-ca').value = e && e.ca ? e.ca : '';
+  $('ec-validade').value = e && e.validade_uso_dias ? e.validade_uso_dias : '';
+  $('btn-desativar-epi').hidden = !e || !e.ativo;
+  $('erro-epi-cat').hidden = true;
+  $('folha-epi').hidden = false;
+}
+$('btn-fechar-epi').addEventListener('click', () => { $('folha-epi').hidden = true; });
+$('folha-epi').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-epi')) $('folha-epi').hidden = true;
+});
+
+$('form-epi').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-epi-cat'); erro.hidden = true;
+  const nome = $('ec-nome').value.trim();
+  if (!nome) return falhar(erro, 'Diga o nome do EPI.');
+  const dias = $('ec-validade').value === '' ? null : Number($('ec-validade').value);
+  if (dias != null && dias < 1) return falhar(erro, 'Os dias de troca têm que ser maiores que zero.');
+
+  const linha = { nome, ca: $('ec-ca').value.trim() || null, validade_uso_dias: dias };
+  const { error } = _epiCatEditando
+    ? await db.from('epis').update(linha).eq('id', _epiCatEditando.id)
+    : await db.from('epis').insert({ ...linha, ativo: true });
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-epi').hidden = true;
+  await carregarEPI();
+});
+
+$('btn-desativar-epi').addEventListener('click', async () => {
+  if (!_epiCatEditando) return;
+  await db.from('epis').update({ ativo: false }).eq('id', _epiCatEditando.id);
+  $('folha-epi').hidden = true;
+  await carregarEPI();
+});
+
+/* ---------- entrega ---------- */
+// Se a pessoa já recebeu esse EPI, o motivo padrão deixa de ser
+// "primeira entrega" — e a tela mostra quando foi a última.
+async function dicaDaEntrega() {
+  const dica = $('dica-troca');
+  const contrato = $('ep-contrato').value, epiId = $('ep-epi').value;
+  dica.hidden = true;
+  if (!contrato || !epiId) return;
+
+  const epi = _catalogo.find(e => e.id === epiId);
+  const anteriores = _fichas.filter(f => f.contrato_id === contrato && epi && f.epi === epi.nome);
+  if (!anteriores.length) {
+    if (epi && epi.validade_uso_dias)
+      { dica.textContent = `Primeira entrega. Troca prevista em ${epi.validade_uso_dias} dias.`; dica.hidden = false; }
+    return;
+  }
+  const ultima = anteriores[0];
+  dica.textContent = `Já recebeu em ${dataBR(ultima.data_entrega)}` +
+    (ultima.troca_prevista ? ` — troca prevista para ${dataBR(ultima.troca_prevista)}.` : '.');
+  dica.hidden = false;
+  if ($('ep-motivo').value === 'primeira_entrega') $('ep-motivo').value = 'troca';
+}
+$('ep-contrato').addEventListener('change', dicaDaEntrega);
+$('ep-epi').addEventListener('change', dicaDaEntrega);
+
+async function abrirEntrega() {
+  if (!_efetivo.length) await carregarEfetivoSilencioso();
+  _entregaEditando = null;
+
+  const sc = $('ep-contrato');
+  sc.innerHTML = '<option value="">— escolha —</option>';
+  _efetivo.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.contrato_id; o.textContent = p.nome + ' · ' + p.funcao;
+    sc.appendChild(o);
+  });
+
+  const se = $('ep-epi');
+  se.innerHTML = '<option value="">— escolha —</option>';
+  _catalogo.filter(e => e.ativo).forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.id; o.textContent = e.nome + (e.ca ? ' · CA ' + e.ca : '');
+    se.appendChild(o);
+  });
+
+  $('ep-data').value = hojeISO();
+  $('ep-data').max = hojeISO();
+  $('ep-qtd').value = 1;
+  $('ep-motivo').value = 'primeira_entrega';
+  $('ep-entregador').value = _perfilNome || '';
+  $('ep-assinatura').checked = false;
+  $('ep-obs').value = '';
+  $('dica-troca').hidden = true;
+  $('erro-entrega').hidden = true;
+  $('btn-apagar-entrega').hidden = true;
+  $('folha-entrega').hidden = false;
+}
+
+$('btn-nova-entrega').addEventListener('click', abrirEntrega);
+$('btn-fechar-entrega').addEventListener('click', () => { $('folha-entrega').hidden = true; });
+$('folha-entrega').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-entrega')) $('folha-entrega').hidden = true;
+});
+
+$('form-entrega').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-entrega'); erro.hidden = true;
+  const contrato = $('ep-contrato').value, epiId = $('ep-epi').value;
+  if (!contrato) return falhar(erro, 'Escolha para quem é a entrega.');
+  if (!epiId)    return falhar(erro, 'Escolha o EPI. Se não estiver na lista, cadastre no catálogo.');
+  const qtd = Number($('ep-qtd').value || 0);
+  if (!(qtd > 0)) return falhar(erro, 'A quantidade tem que ser pelo menos 1.');
+
+  const { error } = await db.from('epi_entregas').insert({
+    contrato_id: contrato, epi_id: epiId,
+    data_entrega: $('ep-data').value || hojeISO(),
+    quantidade: qtd,
+    motivo: $('ep-motivo').value,
+    entregue_por: $('ep-entregador').value.trim() || null,
+    assinatura_ok: $('ep-assinatura').checked,
+    observacao: $('ep-obs').value.trim() || null
+  });
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-entrega').hidden = true;
+  await carregarEPI();
+});
+
+/* ============================================================
+   NOTAS FISCAIS
+   O total da nota NÃO é somado aqui: um gatilho no banco recalcula
+   a cada item. Se o app somasse, qualquer gravação por outro
+   caminho deixaria o total mentindo.
+   ============================================================ */
+
+const CATEGORIAS_NF = ['Material','Serviço','Locação','Combustível','Alimentação',
+                       'Transporte','Manutenção','EPI','Outros'];
+
+let _nfs = [];
+let _nf = null;
+let _nfItens = [];
+let _itemEditando = null;
+
+const reais = (v) => Number(v || 0).toLocaleString('pt-BR',
+  { style:'currency', currency:'BRL' });
+
+async function carregarNFs() {
+  $('nf-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('nf-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const { data, error } = await db.from('nfs')
+    .select('id, numero, serie, data, fornecedor, categoria, responsavel, total')
+    .eq('obra_id', _obra.id).order('data', { ascending: false }).limit(400);
+
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler as notas.', error.message); return; }
+  _nfs = data || [];
+  renderNfNumeros();
+  filtrarNFs();
+}
+
+function renderNfNumeros() {
+  const soma = (l) => l.reduce((s, n) => s + Number(n.total || 0), 0);
+  const em30 = _nfs.filter(n => n.data >= diasAtras(30));
+  const semItem = _nfs.filter(n => Number(n.total || 0) === 0).length;
+  const tiles = [
+    { rot:'Notas · 30 d', val: em30.length, sub: reais(soma(em30)) },
+    { rot:'No ano', val: _nfs.filter(n => n.data >= diasAtras(365)).length,
+      sub: reais(soma(_nfs.filter(n => n.data >= diasAtras(365)))) },
+    { rot:'Fornecedores', val: new Set(_nfs.map(n => n.fornecedor)).size, sub: 'diferentes' },
+    { rot:'Sem itens', val: semItem,
+      sub: semItem ? 'total zerado' : 'todas com item', urgente: semItem > 0 }
+  ];
+  const area = $('nf-numeros'); area.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    const s = document.createElement('small'); s.className = t.urgente ? 'alerta' : 'dinheiro';
+    s.textContent=t.sub;
+    d.append(r,v,s); area.appendChild(d);
+  });
+}
+
+function filtrarNFs() {
+  const termo = ($('busca-nf').value || '').trim().toLowerCase();
+  const vistos = termo
+    ? _nfs.filter(n => [n.numero, n.serie, n.fornecedor, n.categoria]
+        .filter(Boolean).join(' ').toLowerCase().includes(termo))
+    : _nfs;
+
+  const area = $('nf-lista');
+  if (!_nfs.length) {
+    area.innerHTML = vazioHTML('Nenhuma nota lançada nesta obra.',
+      'Lance o cabeçalho e depois os itens — o total se soma sozinho.');
+    return;
+  }
+  if (!vistos.length) { area.innerHTML = vazioHTML('Nada encontrado com "' + termo + '".'); return; }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(n => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='pessoa';
+    if (Number(n.total || 0) === 0) b.dataset.nivel = 'atencao';
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const pref = document.createElement('span'); pref.className='pref';
+    pref.textContent = 'nº ' + n.numero + (n.serie ? '/' + n.serie : '');
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = n.fornecedor;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [dataBR(n.data), n.categoria, n.responsavel].filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+    const lado = document.createElement('span'); lado.className='lado';
+    const val = document.createElement('span'); val.className='chip disp';
+    val.textContent = reais(n.total);
+    lado.appendChild(val);
+    b.append(tarja, pref, miolo, lado);
+    b.addEventListener('click', () => abrirNF(n.id));
+    cx.appendChild(b);
+  });
+}
+$('busca-nf').addEventListener('input', filtrarNFs);
+
+/* ---------- criar ---------- */
+$('btn-nova-nf').addEventListener('click', () => {
+  $('nn-numero').value = ''; $('nn-serie').value = '';
+  $('nn-fornecedor').value = ''; $('nn-data').value = hojeISO();
+  $('nn-data').max = hojeISO();
+  $('erro-nova-nf').hidden = true;
+  $('folha-nova-nf').hidden = false;
+  $('nn-numero').focus();
+});
+$('btn-fechar-nova-nf').addEventListener('click', () => { $('folha-nova-nf').hidden = true; });
+$('folha-nova-nf').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-nova-nf')) $('folha-nova-nf').hidden = true;
+});
+
+$('form-nova-nf').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-nova-nf'); erro.hidden = true;
+  const numero = $('nn-numero').value.trim();
+  const fornecedor = $('nn-fornecedor').value.trim();
+  const data = $('nn-data').value;
+  if (!numero)     return falhar(erro, 'Informe o número da nota.');
+  if (!fornecedor) return falhar(erro, 'Informe o fornecedor.');
+  if (!data)       return falhar(erro, 'Informe a data da nota.');
+
+  const { data: nova, error } = await db.from('nfs').insert({
+    obra_id: _obra.id, numero, serie: $('nn-serie').value.trim() || null,
+    fornecedor, data
+  }).select('id').single();
+
+  if (error) {
+    // uq_nf é NULLS NOT DISTINCT: duas notas sem série, mesmo número e
+    // mesmo fornecedor, também batem de frente.
+    return falhar(erro, /uq_nf\b/.test(error.message)
+      ? `Já existe a nota ${numero}${$('nn-serie').value.trim() ? '/'+$('nn-serie').value.trim() : ' (sem série)'} desse fornecedor.`
+      : 'Não consegui criar: ' + error.message);
+  }
+  $('folha-nova-nf').hidden = true;
+  await carregarNFs();
+  await abrirNF(nova.id);
+});
+
+/* ---------- nota aberta ---------- */
+async function abrirNF(id) {
+  irPara('nf-edit');
+  const { data, error } = await db.from('nfs').select('*').eq('id', id).single();
+  if (error || !data) { falhar($('erro-nf-edit'), 'Não consegui abrir a nota.'); return; }
+  _nf = data;
+
+  $('nf-e-obra').textContent = _obra.codigo + ' · ' + _obra.nome;
+  $('nf-e-numero').textContent = 'nº ' + data.numero + (data.serie ? '/' + data.serie : '');
+  $('nf-e-fornecedor').textContent = data.fornecedor;
+  $('nf-e-data').textContent = dataBR(data.data);
+
+  const sel = $('nf-categoria');
+  sel.innerHTML = '<option value="">— sem categoria —</option>';
+  const lista = CATEGORIAS_NF.slice();
+  if (data.categoria && !lista.includes(data.categoria)) lista.push(data.categoria);
+  lista.forEach(cat => {
+    const o = document.createElement('option'); o.value=cat; o.textContent=cat;
+    if (cat === data.categoria) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  document.querySelectorAll('#tela-nf-edit [data-nf]').forEach(el => {
+    const c = el.dataset.nf;
+    if (c !== 'categoria') el.value = data[c] == null ? '' : data[c];
+  });
+
+  await carregarItens();
+}
+
+// Mesma regra do RDO: grava campo a campo, sem botão de salvar.
+function ligarCamposDaNF() {
+  document.querySelectorAll('#tela-nf-edit [data-nf]').forEach(el => {
+    const evento = el.tagName === 'SELECT' ? 'change' : 'blur';
+    el.addEventListener(evento, async () => {
+      if (!_nf) return;
+      const campo = el.dataset.nf;
+      let valor = el.value === '' ? null : el.value;
+      if (['numero','fornecedor','data'].includes(campo) && !valor) {
+        el.value = _nf[campo] || '';
+        return falhar($('erro-nf-edit'), 'Número, fornecedor e data não podem ficar em branco.');
+      }
+      if ((_nf[campo] == null ? '' : String(_nf[campo])) === (valor == null ? '' : valor)) return;
+
+      const { error } = await db.from('nfs').update({ [campo]: valor }).eq('id', _nf.id);
+      if (error) {
+        el.value = _nf[campo] == null ? '' : _nf[campo];
+        return falhar($('erro-nf-edit'), /uq_nf\b/.test(error.message)
+          ? 'Já existe outra nota com esse número, série e fornecedor.'
+          : 'Não consegui gravar: ' + error.message);
+      }
+      _nf[campo] = valor;
+      $('erro-nf-edit').hidden = true;
+      if (campo === 'numero' || campo === 'serie')
+        $('nf-e-numero').textContent = 'nº ' + _nf.numero + (_nf.serie ? '/' + _nf.serie : '');
+      if (campo === 'fornecedor') $('nf-e-fornecedor').textContent = _nf.fornecedor;
+      if (campo === 'data') $('nf-e-data').textContent = dataBR(_nf.data);
+      avisarGravadoNF();
+    });
+  });
+}
+
+let _relogioNF = null;
+function avisarGravadoNF() {
+  const s = $('nf-gravou'); s.hidden = false;
+  clearTimeout(_relogioNF);
+  _relogioNF = setTimeout(() => { s.hidden = true; }, 1800);
+}
+
+async function carregarItens() {
+  const { data } = await db.from('nf_itens')
+    .select('id, seq, descricao, unidade, quantidade, preco_unitario, total_item')
+    .eq('nf_id', _nf.id).order('seq');
+  _nfItens = data || [];
+
+  const area = $('nf-itens');
+  if (!_nfItens.length) {
+    area.innerHTML = vazioHTML('Nota sem itens.', 'O total só existe depois que os itens entram.');
+  } else {
+    area.innerHTML = '<div class="pilha"></div>';
+    const cx = area.firstElementChild;
+    _nfItens.forEach(i => {
+      const b = document.createElement('button');
+      b.type='button'; b.className='item';
+      const corpo = document.createElement('span'); corpo.className='corpo';
+      const t = document.createElement('b'); t.textContent = i.seq + '. ' + i.descricao;
+      const s = document.createElement('small');
+      s.textContent = Number(i.quantidade).toLocaleString('pt-BR') +
+        (i.unidade ? ' ' + i.unidade : '') + ' × ' + reais(i.preco_unitario);
+      corpo.append(t, s);
+      const m = document.createElement('span'); m.className='medida';
+      m.textContent = reais(i.total_item);
+      b.append(corpo, m);
+      b.addEventListener('click', () => abrirItem(i));
+      cx.appendChild(b);
+    });
+  }
+
+  // O total vem do banco, recalculado pelo gatilho. Não somo aqui:
+  // dois lugares somando é um lugar para discordar.
+  const { data: nf } = await db.from('nfs').select('total').eq('id', _nf.id).single();
+  $('nf-total').textContent = reais(nf ? nf.total : 0);
+  if (nf) _nf.total = nf.total;
+}
+
+function abrirItem(i) {
+  _itemEditando = i || null;
+  $('titulo-item').textContent = i ? 'Item ' + i.seq : 'Novo item';
+  $('it-descricao').value = i ? i.descricao : '';
+  $('it-qtd').value       = i ? i.quantidade : '';
+  $('it-unidade').value   = i && i.unidade ? i.unidade : '';
+  $('it-preco').value     = i ? i.preco_unitario : '';
+  $('btn-apagar-item').hidden = !i;
+  $('erro-item').hidden = true;
+  calcularItem();
+  $('folha-item').hidden = false;
+}
+
+function calcularItem() {
+  const q = Number($('it-qtd').value || 0), p = Number($('it-preco').value || 0);
+  $('dica-item').textContent = (q > 0 && p >= 0)
+    ? 'Total do item: ' + reais(Math.round(q * p * 100) / 100)
+    : '';
+}
+['it-qtd','it-preco'].forEach(id => $(id).addEventListener('input', calcularItem));
+
+$('btn-add-item').addEventListener('click', () => abrirItem(null));
+$('btn-fechar-item').addEventListener('click', () => { $('folha-item').hidden = true; });
+$('folha-item').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-item')) $('folha-item').hidden = true;
+});
+
+$('form-item').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-item'); erro.hidden = true;
+  const descricao = $('it-descricao').value.trim();
+  const q = Number($('it-qtd').value), p = Number($('it-preco').value);
+  if (!descricao) return falhar(erro, 'Descreva o item.');
+  if (!(q > 0))   return falhar(erro, 'A quantidade tem que ser maior que zero.');
+  if (!(p >= 0))  return falhar(erro, 'O preço não pode ser negativo.');
+
+  // total_item é calculado pelo banco — nunca mando.
+  const linha = { descricao, unidade: $('it-unidade').value.trim() || null,
+                  quantidade: q, preco_unitario: p };
+  const { error } = _itemEditando
+    ? await db.from('nf_itens').update(linha).eq('id', _itemEditando.id)
+    : await db.from('nf_itens').insert({ ...linha, nf_id: _nf.id,
+        seq: _nfItens.reduce((m, i) => Math.max(m, i.seq), 0) + 1 });
+
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-item').hidden = true;
+  await carregarItens();
+  await carregarNFs();
+  avisarGravadoNF();
+});
+
+$('btn-apagar-item').addEventListener('click', async () => {
+  if (!_itemEditando) return;
+  await db.from('nf_itens').delete().eq('id', _itemEditando.id);
+  $('folha-item').hidden = true;
+  await carregarItens();
+  await carregarNFs();
+});
+
+ligarCamposDaNF();
+
+/* ============================================================
+   MEDIÇÕES
+   Três níveis: contrato comercial → itens → boletim mensal.
+   O acumulado de cada item não é somado aqui: a vw_medicao_item
+   já traz anterior, atual, acumulado e saldo, com janela sobre o
+   número da medição. Refazer essa conta no app seria dois lugares
+   para discordar.
+   ============================================================ */
+
+let _contratos = [];
+let _contrato  = null;
+let _ctItens   = [];
+let _medicoes  = [];
+let _medicao   = null;
+let _mdItens   = [];
+let _ccEditando = null;
+let _ciEditando = null;
+
+async function carregarMedicoes() {
+  $('md-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('md-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const [cts, saldos] = await Promise.all([
+    db.from('contratos_comerciais')
+      .select('id, tipo, nome, empresa, especialidade, numero_contrato, ativo')
+      .eq('obra_id', _obra.id).order('nome'),
+    db.from('vw_contrato_saldo')
+      .select('contrato_id, valor_contratado, valor_medido, valor_saldo, medicoes_lancadas')
+      .eq('obra', _obra.codigo)
+  ]);
+
+  if (cts.error) { area.innerHTML = vazioHTML('Não consegui ler os contratos.', cts.error.message); return; }
+  _contratos = cts.data || [];
+  const saldo = {};
+  (saldos.error ? [] : (saldos.data || [])).forEach(s => { saldo[s.contrato_id] = s; });
+
+  const somaOnde = (tipo, campo) => _contratos.filter(c => c.tipo === tipo)
+    .reduce((s, c) => s + Number((saldo[c.id] || {})[campo] || 0), 0);
+
+  const tiles = [
+    { rot:'Contratos', val: _contratos.filter(c=>c.ativo).length, sub:'ativos nesta obra' },
+    { rot:'A receber', val: reais(somaOnde('cliente','valor_saldo')),
+      sub: 'de ' + reais(somaOnde('cliente','valor_contratado')) },
+    { rot:'A pagar', val: reais(somaOnde('empreiteiro','valor_saldo')),
+      sub: 'de ' + reais(somaOnde('empreiteiro','valor_contratado')) },
+    { rot:'Medições', val: Object.values(saldo).reduce((s,x)=>s+Number(x.medicoes_lancadas||0),0),
+      sub:'lançadas no total' }
+  ];
+  const nums = $('md-numeros'); nums.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    if (String(t.val).startsWith('R$')) v.style.fontSize = '19px';
+    const s = document.createElement('small'); s.className='dinheiro'; s.textContent=t.sub;
+    d.append(r,v,s); nums.appendChild(d);
+  });
+
+  if (!_contratos.length) {
+    area.innerHTML = vazioHTML('Nenhum contrato nesta obra.',
+      'A medição mede um contrato: primeiro o contrato e seus itens, depois o boletim do mês.');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  _contratos.forEach(c => {
+    const s = saldo[c.id] || {};
+    const b = document.createElement('button');
+    b.type='button'; b.className='pessoa' + (c.ativo ? '' : ' encerrada');
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = c.nome;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [c.empresa, c.numero_contrato,
+      plural(Number(s.medicoes_lancadas||0), 'medição', 'medições')].filter(Boolean).join(' · ');
+    const desc = document.createElement('span'); desc.className='desc';
+    desc.textContent = 'Contratado ' + reais(s.valor_contratado) +
+                       ' · medido ' + reais(s.valor_medido) +
+                       ' · saldo ' + reais(s.valor_saldo);
+    miolo.append(nm, sub, desc);
+    const lado = document.createElement('span'); lado.className='lado';
+    const tp = document.createElement('span'); tp.className='chip'; tp.dataset.tipo=c.tipo;
+    tp.textContent = c.tipo === 'cliente' ? 'Cliente' : 'Empreiteiro';
+    lado.appendChild(tp);
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => abrirContrato(c.id));
+    cx.appendChild(b);
+  });
+}
+
+/* ---------- contrato ---------- */
+function abrirFolhaContrato(c) {
+  _ccEditando = c || null;
+  $('titulo-contrato').textContent = c ? c.nome : 'Novo contrato';
+  $('cc-tipo').value = c ? c.tipo : 'cliente';
+  $('cc-nome').value = c ? c.nome : '';
+  $('cc-empresa').value = c && c.empresa ? c.empresa : '';
+  $('cc-especialidade').value = c && c.especialidade ? c.especialidade : '';
+  $('cc-numero').value = c && c.numero_contrato ? c.numero_contrato : '';
+  $('btn-encerrar-contrato').hidden = !c || !c.ativo;
+  $('erro-contrato-folha').hidden = true;
+  $('folha-contrato').hidden = false;
+}
+$('btn-novo-contrato').addEventListener('click', () => abrirFolhaContrato(null));
+$('btn-fechar-contrato').addEventListener('click', () => { $('folha-contrato').hidden = true; });
+$('folha-contrato').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-contrato')) $('folha-contrato').hidden = true;
+});
+
+$('form-contrato').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-contrato-folha'); erro.hidden = true;
+  const nome = $('cc-nome').value.trim();
+  if (!nome) return falhar(erro, 'O contrato precisa de um nome.');
+  const linha = {
+    tipo: $('cc-tipo').value, nome,
+    empresa: $('cc-empresa').value.trim(),
+    especialidade: $('cc-especialidade').value.trim(),
+    numero_contrato: $('cc-numero').value.trim()
+  };
+  const { error } = _ccEditando
+    ? await db.from('contratos_comerciais').update(linha).eq('id', _ccEditando.id)
+    : await db.from('contratos_comerciais').insert({ ...linha, obra_id: _obra.id, ativo: true });
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-contrato').hidden = true;
+  await carregarMedicoes();
+  if (_contrato && _ccEditando) await abrirContrato(_ccEditando.id);
+});
+
+$('btn-encerrar-contrato').addEventListener('click', async () => {
+  if (!_ccEditando) return;
+  await db.from('contratos_comerciais').update({ ativo: false }).eq('id', _ccEditando.id);
+  $('folha-contrato').hidden = true;
+  await carregarMedicoes();
+});
+
+async function abrirContrato(id) {
+  irPara('contrato');
+  const [ct, itens, meds, saldo] = await Promise.all([
+    db.from('contratos_comerciais').select('*').eq('id', id).single(),
+    db.from('contrato_itens')
+      .select('id, item, descricao, unidade, quantidade, valor_unitario, valor_total')
+      .eq('contrato_id', id).order('item'),
+    db.from('medicoes')
+      .select('id, numero, mes_referencia, data_inicio, data_fim, fechada')
+      .eq('contrato_id', id).order('numero', { ascending: false }),
+    db.from('vw_contrato_saldo').select('*').eq('contrato_id', id).maybeSingle()
+  ]);
+
+  if (ct.error) { falhar($('erro-contrato'), 'Não consegui abrir o contrato.'); return; }
+  _contrato = ct.data; _ctItens = itens.data || []; _medicoes = meds.data || [];
+
+  $('ct-e-obra').textContent = _obra.codigo + ' · ' + _obra.nome;
+  $('ct-e-nome').textContent = _contrato.nome;
+  $('ct-e-empresa').textContent =
+    [(_contrato.tipo === 'cliente' ? 'Cliente' : 'Empreiteiro'),
+     _contrato.empresa, _contrato.numero_contrato].filter(Boolean).join(' · ');
+
+  const s = saldo.data || {};
+  const tiles = [
+    { rot:'Contratado', val: reais(s.valor_contratado), sub: plural(_ctItens.length,'item','itens') },
+    { rot:'Medido',     val: reais(s.valor_medido),     sub: plural(_medicoes.length,'medição','medições') },
+    { rot:'Saldo',      val: reais(s.valor_saldo),      sub: 'a medir' },
+    { rot:'Avanço',     val: Number(s.valor_contratado) > 0
+        ? Math.round(100 * Number(s.valor_medido) / Number(s.valor_contratado)) + '%' : '—',
+      sub: 'do valor contratado' }
+  ];
+  const nums = $('ct-numeros'); nums.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    if (String(t.val).startsWith('R$')) v.style.fontSize = '19px';
+    const sm = document.createElement('small'); sm.textContent=t.sub;
+    d.append(r,v,sm); nums.appendChild(d);
+  });
+
+  renderCtItens();
+  renderCtMedicoes();
+}
+
+function renderCtItens() {
+  const area = $('ct-itens');
+  if (!_ctItens.length) {
+    area.innerHTML = vazioHTML('Contrato sem itens.',
+      'Sem item não há o que medir: a planilha de medição sai daqui.');
+    return;
+  }
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+  _ctItens.forEach(i => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='item';
+    const corpo = document.createElement('span'); corpo.className='corpo';
+    const t = document.createElement('b');
+    t.textContent = (i.item ? i.item + ' — ' : '') + i.descricao;
+    const s = document.createElement('small');
+    s.textContent = Number(i.quantidade).toLocaleString('pt-BR') +
+      (i.unidade ? ' ' + i.unidade : '') + ' × ' + reais(i.valor_unitario);
+    corpo.append(t, s);
+    const m = document.createElement('span'); m.className='medida';
+    m.textContent = reais(i.valor_total);
+    b.append(corpo, m);
+    b.addEventListener('click', () => abrirCtItem(i));
+    cx.appendChild(b);
+  });
+}
+
+function renderCtMedicoes() {
+  const area = $('ct-medicoes');
+  if (!_medicoes.length) {
+    area.innerHTML = vazioHTML('Nenhuma medição lançada neste contrato.');
+    return;
+  }
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+  _medicoes.forEach(m => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='item';
+    const corpo = document.createElement('span'); corpo.className='corpo';
+    const t = document.createElement('b'); t.textContent = 'Medição nº ' + m.numero + ' · ' + m.mes_referencia;
+    const s = document.createElement('small');
+    s.textContent = dataBR(m.data_inicio) + ' a ' + dataBR(m.data_fim);
+    corpo.append(t, s);
+    const c = document.createElement('span');
+    c.className = 'chip ' + (m.fechada ? 'fechada' : 'aberta');
+    c.textContent = m.fechada ? 'Fechada' : 'Aberta';
+    b.append(corpo, c);
+    b.addEventListener('click', () => abrirMedicao(m.id));
+    cx.appendChild(b);
+  });
+}
+
+function abrirCtItem(i) {
+  _ciEditando = i || null;
+  $('titulo-ct-item').textContent = i ? 'Item do contrato' : 'Novo item';
+  $('ci-descricao').value = i ? i.descricao : '';
+  $('ci-item').value      = i && i.item ? i.item : '';
+  $('ci-qtd').value       = i ? i.quantidade : '';
+  $('ci-unidade').value   = i && i.unidade ? i.unidade : '';
+  $('ci-valor').value     = i ? i.valor_unitario : '';
+  $('btn-apagar-ct-item').hidden = !i;
+  $('erro-ct-item').hidden = true;
+  calcularCtItem();
+  $('folha-ct-item').hidden = false;
+}
+function calcularCtItem() {
+  const q = Number($('ci-qtd').value || 0), v = Number($('ci-valor').value || 0);
+  $('dica-ct-item').textContent = (q > 0 && v >= 0)
+    ? 'Valor do item: ' + reais(Math.round(q * v * 100) / 100) : '';
+}
+['ci-qtd','ci-valor'].forEach(id => $(id).addEventListener('input', calcularCtItem));
+
+$('btn-add-ct-item').addEventListener('click', () => abrirCtItem(null));
+$('btn-fechar-ct-item').addEventListener('click', () => { $('folha-ct-item').hidden = true; });
+$('folha-ct-item').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-ct-item')) $('folha-ct-item').hidden = true;
+});
+
+$('form-ct-item').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-ct-item'); erro.hidden = true;
+  const descricao = $('ci-descricao').value.trim();
+  const q = Number($('ci-qtd').value), v = Number($('ci-valor').value);
+  if (!descricao)  return falhar(erro, 'Descreva o item.');
+  if (!(q >= 0))   return falhar(erro, 'A quantidade não pode ser negativa.');
+  if (!(v >= 0))   return falhar(erro, 'O valor unitário não pode ser negativo.');
+
+  // valor_total é calculado pelo banco.
+  const linha = { item: $('ci-item').value.trim(), descricao,
+                  unidade: $('ci-unidade').value.trim(), quantidade: q, valor_unitario: v };
+  const { error } = _ciEditando
+    ? await db.from('contrato_itens').update(linha).eq('id', _ciEditando.id)
+    : await db.from('contrato_itens').insert({ ...linha, contrato_id: _contrato.id });
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-ct-item').hidden = true;
+  await abrirContrato(_contrato.id);
+});
+
+$('btn-apagar-ct-item').addEventListener('click', async () => {
+  if (!_ciEditando) return;
+  const { error } = await db.from('contrato_itens').delete().eq('id', _ciEditando.id);
+  if (error) return falhar($('erro-ct-item'),
+    'Não consegui apagar. Se o item já foi medido, o banco impede — e está certo: ' +
+    'apagar levaria a medição junto.');
+  $('folha-ct-item').hidden = true;
+  await abrirContrato(_contrato.id);
+});
+
+/* ---------- boletim de medição ---------- */
+$('btn-add-medicao').addEventListener('click', () => {
+  const hoje = new Date(hojeISO() + 'T00:00:00');
+  const mes = hojeISO().slice(0, 7);
+  const primeiro = mes + '-01';
+  const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().slice(0, 10);
+  $('nm-mes').value = mes;
+  $('nm-inicio').value = primeiro;
+  $('nm-fim').value = ultimo;
+  $('erro-nova-medicao').hidden = true;
+  $('folha-nova-medicao').hidden = false;
+});
+$('btn-fechar-nova-medicao').addEventListener('click', () => { $('folha-nova-medicao').hidden = true; });
+$('folha-nova-medicao').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-nova-medicao')) $('folha-nova-medicao').hidden = true;
+});
+// Mudar o mês reposiciona o período: quase sempre é o mês cheio.
+$('nm-mes').addEventListener('change', () => {
+  const m = $('nm-mes').value;
+  if (!m) return;
+  const [a, mm] = m.split('-').map(Number);
+  $('nm-inicio').value = m + '-01';
+  $('nm-fim').value = new Date(a, mm, 0).toISOString().slice(0, 10);
+});
+
+$('form-nova-medicao').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-nova-medicao'); erro.hidden = true;
+  const mes = $('nm-mes').value, ini = $('nm-inicio').value, fim = $('nm-fim').value;
+  if (!mes)  return falhar(erro, 'Informe o mês de referência.');
+  if (!ini || !fim) return falhar(erro, 'Informe o início e o fim do período.');
+  if (fim < ini)    return falhar(erro, 'O fim do período não pode ser antes do início.');
+
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    const { data: ultimo } = await db.from('medicoes').select('numero')
+      .eq('contrato_id', _contrato.id).order('numero', { ascending: false }).limit(1).maybeSingle();
+    const numero = (ultimo ? ultimo.numero : 0) + 1;
+
+    const { data: nova, error } = await db.from('medicoes').insert({
+      contrato_id: _contrato.id, numero, mes_referencia: mes,
+      data_inicio: ini, data_fim: fim
+    }).select('id').single();
+
+    if (!error) {
+      $('folha-nova-medicao').hidden = true;
+      await abrirMedicao(nova.id);
+      return;
+    }
+    if (/medicoes_contrato_id_numero_key|unique/i.test(error.message)) continue;
+    return falhar(erro, 'Não consegui criar: ' + error.message);
+  }
+  falhar(erro, 'Duas medições foram criadas ao mesmo tempo. Tente de novo.');
+});
+
+async function abrirMedicao(id) {
+  irPara('medicao');
+  const { data: m, error } = await db.from('medicoes').select('*').eq('id', id).single();
+  if (error || !m) return;
+  _medicao = m;
+
+  $('md-e-contrato').textContent = _contrato ? _contrato.nome : '';
+  $('md-e-numero').textContent = 'nº ' + m.numero;
+  $('md-e-mes').textContent = m.mes_referencia;
+  $('md-e-periodo').textContent = dataBR(m.data_inicio) + ' a ' + dataBR(m.data_fim);
+  $('btn-fechar-medicao').textContent = m.fechada ? 'Reabrir medição' : 'Fechar medição';
+
+  const av = $('aviso-medicao');
+  av.hidden = !m.fechada;
+  if (m.fechada) av.textContent =
+    'Medição fechada. Os campos ficam travados — reabra para corrigir.';
+
+  await carregarItensMedicao();
+}
+
+async function carregarItensMedicao() {
+  // A view faz a conta acumulada com janela sobre o número da medição.
+  // Peço o contrato inteiro e fico com as linhas desta medição.
+  const { data, error } = await db.from('vw_medicao_item')
+    .select('medicao_id, item_id, item, descricao, unidade, qtd_contratada, valor_unitario, ' +
+            'qtd_anterior, qtd_atual, qtd_acumulada, qtd_saldo, valor_atual, valor_acumulado')
+    .eq('contrato_id', _contrato.id);
+
+  const area = $('md-e-itens');
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler a medição.', error.message); return; }
+
+  _mdItens = (data || []).filter(i => i.medicao_id === _medicao.id)
+    .sort((a, b) => String(a.item).localeCompare(String(b.item), 'pt-BR', { numeric: true }));
+
+  const totalAtual = _mdItens.reduce((s, i) => s + Number(i.valor_atual || 0), 0);
+  const totalAcum  = _mdItens.reduce((s, i) => s + Number(i.valor_acumulado || 0), 0);
+  const estourados = _mdItens.filter(i => Number(i.qtd_saldo) < 0).length;
+
+  const tiles = [
+    { rot:'Nesta medição', val: reais(totalAtual), sub: plural(_mdItens.length,'item','itens') },
+    { rot:'Acumulado', val: reais(totalAcum), sub:'desde a primeira' },
+    { rot:'Itens medidos', val: _mdItens.filter(i => Number(i.qtd_atual) > 0).length,
+      sub:'com quantidade neste mês' },
+    { rot:'Acima do contrato', val: estourados,
+      sub: estourados ? 'saldo negativo' : 'nenhum estourado', urgente: estourados > 0 }
+  ];
+  const nums = $('md-e-numeros'); nums.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    if (String(t.val).startsWith('R$')) v.style.fontSize = '19px';
+    const s = document.createElement('small'); s.textContent=t.sub;
+    if (t.urgente) s.className='alerta';
+    d.append(r,v,s); nums.appendChild(d);
+  });
+
+  if (!_mdItens.length) {
+    area.innerHTML = vazioHTML('O contrato não tem itens.',
+      'Volte ao contrato e lance os itens: a medição mede o que está contratado.');
+    return;
+  }
+
+  area.innerHTML = '<div class="chamada"></div>';
+  const cx = area.firstElementChild;
+  _mdItens.forEach(i => cx.appendChild(linhaMedicao(i)));
+}
+
+function linhaMedicao(i) {
+  const l = document.createElement('div');
+  l.className = 'medida-linha';
+  l.dataset.estouro = Number(i.qtd_saldo) < 0 ? 'sim' : 'nao';
+
+  const oque = document.createElement('div'); oque.className = 'oque';
+  oque.textContent = (i.item ? i.item + ' — ' : '') + i.descricao;
+  const s = document.createElement('small');
+  s.textContent = 'Contratado ' + Number(i.qtd_contratada).toLocaleString('pt-BR') +
+    (i.unidade ? ' ' + i.unidade : '') + ' × ' + reais(i.valor_unitario) +
+    ' · anterior ' + Number(i.qtd_anterior).toLocaleString('pt-BR');
+  oque.appendChild(s);
+
+  const conta = document.createElement('div'); conta.className = 'conta';
+  const rot = document.createElement('label');
+  rot.textContent = 'Neste mês';
+  const inp = document.createElement('input');
+  inp.type = 'number'; inp.min = '0'; inp.step = '0.001'; inp.inputMode = 'decimal';
+  inp.value = Number(i.qtd_atual);
+  inp.disabled = _medicao.fechada;
+  inp.setAttribute('aria-label', 'Quantidade medida de ' + i.descricao);
+  rot.appendChild(inp);
+
+  const acum = document.createElement('span');
+  const pintarAcum = () => {
+    acum.innerHTML = '';
+    const b = document.createElement('b');
+    b.textContent = reais(i.valor_atual);
+    acum.append('Acum. ' + Number(i.qtd_acumulada).toLocaleString('pt-BR') +
+                ' · saldo ' + Number(i.qtd_saldo).toLocaleString('pt-BR') + ' · ');
+    acum.appendChild(b);
+  };
+  pintarAcum();
+
+  inp.addEventListener('change', async () => {
+    let q = Number(inp.value || 0);
+    if (!(q >= 0)) { q = 0; inp.value = 0; }
+    await gravarMedicaoItem(i, q);
+  });
+
+  conta.append(rot, acum);
+  l.append(oque, conta);
+  return l;
+}
+
+async function gravarMedicaoItem(i, quantidade) {
+  // uq (medicao_id, item_id): existe uma linha por item por medição.
+  const { data: ja } = await db.from('medicao_itens').select('id')
+    .eq('medicao_id', _medicao.id).eq('item_id', i.item_id).maybeSingle();
+
+  const r = ja
+    ? await db.from('medicao_itens').update({ quantidade }).eq('id', ja.id)
+    : await db.from('medicao_itens').insert({ medicao_id: _medicao.id, item_id: i.item_id, quantidade });
+
+  if (r.error) { falhar($('erro-contrato'), 'Não consegui gravar: ' + r.error.message); return; }
+  const s = $('md-gravou'); s.hidden = false;
+  setTimeout(() => { s.hidden = true; }, 1800);
+  await carregarItensMedicao();
+}
+
+$('btn-fechar-medicao').addEventListener('click', async () => {
+  if (!_medicao) return;
+  await db.from('medicoes').update({ fechada: !_medicao.fechada }).eq('id', _medicao.id);
+  await abrirMedicao(_medicao.id);
+});
+
+/* ============================================================
+   REUNIÕES — pauta, ata e o que virou tarefa
+   ============================================================ */
+
+let _reunioes = [];
+let _reuniao = null;
+let _participantes = [];
+let _topicos = [];
+let _ptEditando = null;
+let _tpEditando = null;
+
+async function carregarReunioes() {
+  $('rn-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('rn-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const { data, error } = await db.from('reunioes')
+    .select('id, titulo, data, hora_inicio, hora_fim, local, proxima_data')
+    .eq('obra_id', _obra.id).order('data', { ascending: false }).limit(200);
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler as reuniões.', error.message); return; }
+  _reunioes = data || [];
+
+  const em30 = _reunioes.filter(r => r.data >= diasAtras(30)).length;
+  const proxima = _reunioes.map(r => r.proxima_data).filter(d => d && d >= hojeISO()).sort()[0];
+  const tiles = [
+    { rot:'Últimos 30 dias', val: em30, sub: em30 ? 'realizadas' : 'nenhuma' },
+    { rot:'No total', val: _reunioes.length, sub:'nesta obra' },
+    { rot:'Próxima', val: proxima ? dataBR(proxima) : '—',
+      sub: proxima ? 'já marcada' : 'nada marcado' },
+    { rot:'Tarefas de reunião', val: '—', sub:'ver em Tarefas' }
+  ];
+  const nums = $('rn-numeros'); nums.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    if (String(t.val).includes('/')) v.style.fontSize = '19px';
+    const s = document.createElement('small'); s.textContent=t.sub;
+    d.append(r,v,s); nums.appendChild(d);
+  });
+
+  if (!_reunioes.length) {
+    area.innerHTML = vazioHTML('Nenhuma reunião registrada.',
+      'A ata guarda o que ficou combinado — e o tópico pode virar tarefa com responsável.');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  _reunioes.forEach(r => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='pessoa';
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = r.titulo;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [dataBR(r.data), r.local,
+      r.hora_inicio ? r.hora_inicio.slice(0,5) + (r.hora_fim ? ' às ' + r.hora_fim.slice(0,5) : '') : null]
+      .filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+    b.append(tarja, miolo);
+    b.addEventListener('click', () => abrirAta(r.id));
+    cx.appendChild(b);
+  });
+}
+
+$('btn-nova-reuniao').addEventListener('click', () => {
+  $('nr-titulo').value = 'Reunião de obra';
+  $('nr-data').value = hojeISO();
+  $('nr-local').value = 'Canteiro';
+  $('erro-reuniao').hidden = true;
+  $('folha-reuniao').hidden = false;
+});
+$('btn-fechar-reuniao').addEventListener('click', () => { $('folha-reuniao').hidden = true; });
+$('folha-reuniao').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-reuniao')) $('folha-reuniao').hidden = true;
+});
+
+$('form-reuniao').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-reuniao'); erro.hidden = true;
+  const titulo = $('nr-titulo').value.trim();
+  const data = $('nr-data').value;
+  if (!titulo) return falhar(erro, 'A reunião precisa de um título.');
+  if (!data)   return falhar(erro, 'Informe a data.');
+  const { data: nova, error } = await db.from('reunioes').insert({
+    obra_id: _obra.id, titulo, data, local: $('nr-local').value.trim()
+  }).select('id').single();
+  if (error) return falhar(erro, 'Não consegui criar: ' + error.message);
+  $('folha-reuniao').hidden = true;
+  await carregarReunioes();
+  await abrirAta(nova.id);
+});
+
+async function abrirAta(id) {
+  irPara('ata');
+  const [rn, parts, tops] = await Promise.all([
+    db.from('reunioes').select('*').eq('id', id).single(),
+    db.from('reuniao_participantes').select('id, contrato_id, nome, cargo, responsavel')
+      .eq('reuniao_id', id).order('nome'),
+    db.from('reuniao_topicos').select('id, ordem, titulo, notas, decisao')
+      .eq('reuniao_id', id).order('ordem')
+  ]);
+  if (rn.error) { falhar($('erro-ata'), 'Não consegui abrir a ata.'); return; }
+  _reuniao = rn.data; _participantes = parts.data || []; _topicos = tops.data || [];
+
+  $('at-obra').textContent = _obra.codigo + ' · ' + _obra.nome;
+  $('at-titulo').textContent = _reuniao.titulo;
+  $('at-quando').textContent = dataBR(_reuniao.data);
+
+  document.querySelectorAll('#tela-ata [data-rn]').forEach(el => {
+    const c = el.dataset.rn;
+    el.value = _reuniao[c] == null ? '' : _reuniao[c];
+  });
+
+  renderParticipantes();
+  renderTopicos();
+}
+
+function ligarCamposDaAta() {
+  document.querySelectorAll('#tela-ata [data-rn]').forEach(el => {
+    el.addEventListener('blur', async () => {
+      if (!_reuniao) return;
+      const campo = el.dataset.rn;
+      const valor = el.value === '' ? null : el.value;
+      if ((_reuniao[campo] == null ? '' : String(_reuniao[campo])) === (valor == null ? '' : valor)) return;
+      const { error } = await db.from('reunioes').update({ [campo]: valor }).eq('id', _reuniao.id);
+      if (error) {
+        el.value = _reuniao[campo] == null ? '' : _reuniao[campo];
+        return falhar($('erro-ata'), /reunioes_check/.test(error.message)
+          ? 'A hora de fim não pode ser antes da hora de início.'
+          : 'Não consegui gravar: ' + error.message);
+      }
+      _reuniao[campo] = valor;
+      $('erro-ata').hidden = true;
+      if (campo === 'data') $('at-quando').textContent = dataBR(valor);
+      const s = $('at-gravou'); s.hidden = false;
+      setTimeout(() => { s.hidden = true; }, 1800);
+    });
+  });
+}
+
+function renderParticipantes() {
+  const area = $('at-participantes');
+  if (!_participantes.length) {
+    area.innerHTML = vazioHTML('Ninguém registrado ainda.');
+    return;
+  }
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+  _participantes.forEach(p => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='item';
+    const corpo = document.createElement('span'); corpo.className='corpo';
+    const t = document.createElement('b'); t.textContent = p.nome;
+    const s = document.createElement('small'); s.textContent = p.cargo || '';
+    corpo.append(t, s); b.appendChild(corpo);
+    if (p.responsavel) {
+      const c = document.createElement('span'); c.className='chip'; c.dataset.tipo='cliente';
+      c.textContent = 'Responsável'; b.appendChild(c);
+    }
+    b.addEventListener('click', () => abrirParticipante(p));
+    cx.appendChild(b);
+  });
+}
+
+async function abrirParticipante(p) {
+  if (!_efetivo.length) await carregarEfetivoSilencioso();
+  _ptEditando = p || null;
+  const sel = $('pt-contrato');
+  sel.innerHTML = '<option value="">— digitar à mão —</option>';
+  _efetivo.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.contrato_id; o.textContent = e.nome + ' · ' + e.funcao;
+    if (p && p.contrato_id === e.contrato_id) o.selected = true;
+    sel.appendChild(o);
+  });
+  $('pt-nome').value = p ? p.nome : '';
+  $('pt-cargo').value = p && p.cargo ? p.cargo : '';
+  $('pt-responsavel').checked = p ? p.responsavel : false;
+  $('btn-apagar-participante').hidden = !p;
+  $('erro-participante').hidden = true;
+  $('folha-participante').hidden = false;
+}
+
+// Escolher do efetivo preenche nome e cargo: menos digitação no celular.
+$('pt-contrato').addEventListener('change', () => {
+  const e = _efetivo.find(x => x.contrato_id === $('pt-contrato').value);
+  if (!e) return;
+  $('pt-nome').value = e.nome;
+  if (!$('pt-cargo').value) $('pt-cargo').value = e.funcao || '';
+});
+
+$('btn-add-participante').addEventListener('click', () => abrirParticipante(null));
+$('btn-fechar-participante').addEventListener('click', () => { $('folha-participante').hidden = true; });
+$('folha-participante').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-participante')) $('folha-participante').hidden = true;
+});
+
+$('form-participante').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-participante'); erro.hidden = true;
+  const nome = $('pt-nome').value.trim();
+  if (!nome) return falhar(erro, 'Informe o nome do participante.');
+  const linha = { nome, cargo: $('pt-cargo').value.trim(),
+                  responsavel: $('pt-responsavel').checked,
+                  contrato_id: $('pt-contrato').value || null };
+  const { error } = _ptEditando
+    ? await db.from('reuniao_participantes').update(linha).eq('id', _ptEditando.id)
+    : await db.from('reuniao_participantes').insert({ ...linha, reuniao_id: _reuniao.id });
+  if (error) return falhar(erro, /reuniao_participantes_reuniao_id_nome_key|unique/i.test(error.message)
+    ? nome + ' já está na lista desta reunião.'
+    : 'Não consegui salvar: ' + error.message);
+  $('folha-participante').hidden = true;
+  await abrirAta(_reuniao.id);
+});
+
+$('btn-apagar-participante').addEventListener('click', async () => {
+  if (!_ptEditando) return;
+  await db.from('reuniao_participantes').delete().eq('id', _ptEditando.id);
+  $('folha-participante').hidden = true;
+  await abrirAta(_reuniao.id);
+});
+
+function renderTopicos() {
+  const area = $('at-topicos');
+  if (!_topicos.length) {
+    area.innerHTML = vazioHTML('Nenhum tópico.',
+      'É aqui que a reunião vira documento: assunto, o que foi dito e o que ficou decidido.');
+    return;
+  }
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+  _topicos.forEach(t => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='item';
+    const corpo = document.createElement('span'); corpo.className='corpo';
+    const tt = document.createElement('b'); tt.textContent = t.ordem + '. ' + t.titulo;
+    const s = document.createElement('small');
+    s.textContent = t.decisao ? 'Decisão: ' + t.decisao : (t.notas || 'sem anotação');
+    corpo.append(tt, s); b.appendChild(corpo);
+    b.addEventListener('click', () => abrirTopico(t));
+    cx.appendChild(b);
+  });
+}
+
+function abrirTopico(t) {
+  _tpEditando = t || null;
+  $('tp-titulo').value  = t ? t.titulo : '';
+  $('tp-notas').value   = t && t.notas ? t.notas : '';
+  $('tp-decisao').value = t && t.decisao ? t.decisao : '';
+  $('tp-tarefa').checked = false;
+  // Só oferece virar tarefa em tópico novo: repetir a criação a cada
+  // edição encheria as tarefas de duplicata.
+  $('caixa-vira-tarefa').hidden = !!t;
+  $('btn-apagar-topico').hidden = !t;
+  $('erro-topico').hidden = true;
+  $('folha-topico').hidden = false;
+}
+
+$('btn-add-topico').addEventListener('click', () => abrirTopico(null));
+$('btn-fechar-topico').addEventListener('click', () => { $('folha-topico').hidden = true; });
+$('folha-topico').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-topico')) $('folha-topico').hidden = true;
+});
+
+$('form-topico').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-topico'); erro.hidden = true;
+  const titulo = $('tp-titulo').value.trim();
+  if (!titulo) return falhar(erro, 'O tópico precisa de um assunto.');
+
+  const linha = { titulo, notas: $('tp-notas').value.trim(),
+                  decisao: $('tp-decisao').value.trim() };
+  let novoId = null;
+  if (_tpEditando) {
+    const { error } = await db.from('reuniao_topicos').update(linha).eq('id', _tpEditando.id);
+    if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  } else {
+    const ordem = _topicos.reduce((m, t) => Math.max(m, t.ordem), 0) + 1;
+    const { data, error } = await db.from('reuniao_topicos')
+      .insert({ ...linha, reuniao_id: _reuniao.id, ordem }).select('id').single();
+    if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+    novoId = data.id;
+  }
+
+  // O tópico vira tarefa com origem 'reuniao' e fica ligado a ela pela
+  // pauta — assim a ata e a lista de tarefas contam a mesma história.
+  if (novoId && $('tp-tarefa').checked) {
+    const { data: tarefa, error: e1 } = await db.from('tarefas').insert({
+      obra_id: _obra.id, assunto: titulo,
+      descricao: [linha.notas, linha.decisao].filter(Boolean).join('\n\n') || null,
+      criador: _perfilNome || null, status: 'aberta', prioridade: 'media',
+      data_lancamento: _reuniao.data, reuniao_id: _reuniao.id, origem: 'reuniao'
+    }).select('id').single();
+    if (e1) return falhar(erro, 'O tópico foi salvo, mas não consegui criar a tarefa: ' + e1.message);
+    await db.from('reuniao_pauta').insert({
+      reuniao_id: _reuniao.id, tarefa_id: tarefa.id,
+      ordem: _topicos.length + 1
+    });
+  }
+
+  $('folha-topico').hidden = true;
+  await abrirAta(_reuniao.id);
+});
+
+$('btn-apagar-topico').addEventListener('click', async () => {
+  if (!_tpEditando) return;
+  await db.from('reuniao_topicos').delete().eq('id', _tpEditando.id);
+  $('folha-topico').hidden = true;
+  await abrirAta(_reuniao.id);
+});
+
+/* ============================================================
+   DOCUMENTOS E MURAL
+   O documento guarda o link, não o arquivo — mesma decisão das
+   fotos do RDO. O mural é o recado curto da semana.
+   ============================================================ */
+
+const CATEGORIAS_DOC = ['Contrato','Cronograma','Programação Semanal','Orçamento','Outros'];
+
+let _documentos = [];
+let _recados = [];
+let _dcFiltro = 'todas';
+let _dcEditando = null;
+let _rcEditando = null;
+
+async function carregarDocumentos() {
+  $('dc-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('dc-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const [docs, mural] = await Promise.all([
+    db.from('documentos')
+      .select('id, categoria, titulo, url, arquivo_nome, valor_orcamento, data_cronograma, notas')
+      .eq('obra_id', _obra.id).order('categoria'),
+    db.from('mural').select('id, autor, texto, criado_em')
+      .eq('obra_id', _obra.id).order('criado_em', { ascending: false }).limit(20)
+  ]);
+  if (docs.error) { area.innerHTML = vazioHTML('Não consegui ler os documentos.', docs.error.message); return; }
+  _documentos = docs.data || [];
+  _recados = mural.error ? [] : (mural.data || []);
+
+  const orcado = _documentos.reduce((s, d) => s + Number(d.valor_orcamento || 0), 0);
+  const proxCrono = _documentos.map(d => d.data_cronograma)
+    .filter(d => d && d >= hojeISO()).sort()[0];
+  const tiles = [
+    { rot:'Documentos', val: _documentos.length, sub:'nesta obra' },
+    { rot:'Orçamentos', val: reais(orcado),
+      sub: plural(_documentos.filter(d=>d.valor_orcamento).length,'com valor','com valor') },
+    { rot:'Próximo cronograma', val: proxCrono ? dataBR(proxCrono) : '—',
+      sub: proxCrono ? 'data marcada' : 'nenhum marcado' },
+    { rot:'Recados', val: _recados.length, sub:'no mural' }
+  ];
+  const nums = $('dc-numeros'); nums.innerHTML='';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className='num';
+    const r = document.createElement('p'); r.className='rotulo'; r.textContent=t.rot;
+    const v = document.createElement('b'); v.textContent=t.val;
+    if (String(t.val).startsWith('R$') || String(t.val).includes('/')) v.style.fontSize = '19px';
+    const s = document.createElement('small'); s.textContent=t.sub;
+    d.append(r,v,s); nums.appendChild(d);
+  });
+
+  renderMural();
+  renderDcFiltros();
+  filtrarDocumentos();
+}
+
+function renderMural() {
+  const area = $('dc-mural');
+  if (!_recados.length) {
+    area.innerHTML = vazioHTML('Mural vazio.', 'Recado curto, para todo mundo ver ao abrir o app.');
+    return;
+  }
+  area.innerHTML = '<div class="pilha"></div>';
+  const cx = area.firstElementChild;
+  _recados.forEach(r => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='recado'; b.style.textAlign='left';
+    b.style.width='100%'; b.style.border='none'; b.style.cursor='pointer';
+    b.style.borderLeft='3px solid var(--accent-mark)';
+    const p = document.createElement('p'); p.textContent = r.texto;
+    const s = document.createElement('small');
+    s.textContent = r.autor + ' · ' + dataBR(String(r.criado_em).slice(0,10));
+    b.append(p, s);
+    b.addEventListener('click', () => abrirRecado(r));
+    cx.appendChild(b);
+  });
+}
+
+function renderDcFiltros() {
+  const opcoes = [['todas','Todas', _documentos.length]].concat(
+    CATEGORIAS_DOC.map(c => [c, c, _documentos.filter(d => d.categoria === c).length])
+      .filter(o => o[2] > 0));
+  const area = $('dc-filtros'); area.innerHTML='';
+  opcoes.forEach(([v, rot, n]) => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='filtro';
+    b.setAttribute('aria-pressed', String(_dcFiltro === v));
+    b.textContent = rot + ' (' + n + ')';
+    b.addEventListener('click', () => { _dcFiltro = v; renderDcFiltros(); filtrarDocumentos(); });
+    area.appendChild(b);
+  });
+}
+
+function filtrarDocumentos() {
+  const termo = ($('busca-dc').value || '').trim().toLowerCase();
+  let vistos = _documentos;
+  if (_dcFiltro !== 'todas') vistos = vistos.filter(d => d.categoria === _dcFiltro);
+  if (termo) vistos = vistos.filter(d =>
+    [d.titulo, d.categoria, d.notas].filter(Boolean).join(' ').toLowerCase().includes(termo));
+
+  const area = $('dc-lista');
+  if (!_documentos.length) {
+    area.innerHTML = vazioHTML('Nenhum documento nesta obra.',
+      'Guarde aqui o link do contrato, do cronograma e da programação da semana.');
+    return;
+  }
+  if (!vistos.length) { area.innerHTML = vazioHTML('Nada neste filtro.'); return; }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(d => {
+    const b = document.createElement('button');
+    b.type='button'; b.className='pessoa';
+    const tarja = document.createElement('span'); tarja.className='tarja';
+    const miolo = document.createElement('span'); miolo.className='miolo';
+    const nm = document.createElement('span'); nm.className='nm'; nm.textContent = d.titulo;
+    const sub = document.createElement('span'); sub.className='sub';
+    sub.textContent = [d.arquivo_nome,
+      d.valor_orcamento ? reais(d.valor_orcamento) : null,
+      d.data_cronograma ? dataBR(d.data_cronograma) : null,
+      d.url].filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+    const lado = document.createElement('span'); lado.className='lado';
+    const c = document.createElement('span'); c.className='chip'; c.dataset.cat=d.categoria;
+    c.textContent = d.categoria; lado.appendChild(c);
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => abrirDocumento(d));
+    cx.appendChild(b);
+  });
+}
+$('busca-dc').addEventListener('input', filtrarDocumentos);
+
+// Valor só faz sentido em orçamento; data, em cronograma e programação.
+function ajustarCamposDoc() {
+  const c = $('dc-categoria').value;
+  $('campo-valor').hidden = c !== 'Orçamento';
+  $('campo-cronograma').hidden = !['Cronograma','Programação Semanal'].includes(c);
+}
+$('dc-categoria').addEventListener('change', ajustarCamposDoc);
+
+function abrirDocumento(d) {
+  _dcEditando = d || null;
+  $('titulo-documento').textContent = d ? d.titulo : 'Novo documento';
+  $('dc-categoria').value = d ? d.categoria : 'Outros';
+  $('dc-doc-titulo').value = d ? d.titulo : '';
+  $('dc-url').value = d ? d.url : '';
+  $('dc-valor').value = d && d.valor_orcamento != null ? d.valor_orcamento : '';
+  $('dc-data').value = d && d.data_cronograma ? d.data_cronograma : '';
+  $('dc-notas').value = d && d.notas ? d.notas : '';
+  $('btn-apagar-documento').hidden = !d;
+  $('erro-documento').hidden = true;
+  ajustarCamposDoc();
+  $('folha-documento').hidden = false;
+}
+$('btn-novo-documento').addEventListener('click', () => abrirDocumento(null));
+$('btn-fechar-documento').addEventListener('click', () => { $('folha-documento').hidden = true; });
+$('folha-documento').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-documento')) $('folha-documento').hidden = true;
+});
+
+$('form-documento').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-documento'); erro.hidden = true;
+  const titulo = $('dc-doc-titulo').value.trim();
+  const url = $('dc-url').value.trim();
+  const cat = $('dc-categoria').value;
+  if (!titulo) return falhar(erro, 'O documento precisa de um título.');
+  if (!url)    return falhar(erro, 'Cole o link do arquivo.');
+  if (!/^https?:\/\//i.test(url))
+    return falhar(erro, 'O link precisa começar com https://.');
+
+  const linha = {
+    categoria: cat, titulo, url,
+    valor_orcamento: cat === 'Orçamento' && $('dc-valor').value !== ''
+      ? Number($('dc-valor').value) : null,
+    data_cronograma: ['Cronograma','Programação Semanal'].includes(cat) && $('dc-data').value
+      ? $('dc-data').value : null,
+    notas: $('dc-notas').value.trim()
+  };
+  const { error } = _dcEditando
+    ? await db.from('documentos').update(linha).eq('id', _dcEditando.id)
+    : await db.from('documentos').insert({ ...linha, obra_id: _obra.id });
+  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  $('folha-documento').hidden = true;
+  await carregarDocumentos();
+  await carregarPainel();
+});
+
+$('btn-apagar-documento').addEventListener('click', async () => {
+  if (!_dcEditando) return;
+  await db.from('documentos').delete().eq('id', _dcEditando.id);
+  $('folha-documento').hidden = true;
+  await carregarDocumentos();
+  await carregarPainel();
+});
+
+/* ---------- mural ---------- */
+function abrirRecado(r) {
+  _rcEditando = r || null;
+  $('rc-texto').value = r ? r.texto : '';
+  $('rc-autor').value = r ? r.autor : (_perfilNome || '');
+  $('btn-apagar-recado').hidden = !r;
+  $('erro-recado').hidden = true;
+  $('folha-recado').hidden = false;
+}
+$('btn-novo-recado').addEventListener('click', () => abrirRecado(null));
+$('btn-fechar-recado').addEventListener('click', () => { $('folha-recado').hidden = true; });
+$('folha-recado').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-recado')) $('folha-recado').hidden = true;
+});
+
+$('form-recado').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-recado'); erro.hidden = true;
+  const texto = $('rc-texto').value.trim();
+  const autor = $('rc-autor').value.trim();
+  if (!texto) return falhar(erro, 'Escreva o recado.');
+  if (!autor) return falhar(erro, 'Diga quem está publicando.');
+  const { error } = _rcEditando
+    ? await db.from('mural').update({ texto, autor }).eq('id', _rcEditando.id)
+    : await db.from('mural').insert({ obra_id: _obra.id, texto, autor });
+  if (error) return falhar(erro, 'Não consegui publicar: ' + error.message);
+  $('folha-recado').hidden = true;
+  await carregarDocumentos();
+});
+
+$('btn-apagar-recado').addEventListener('click', async () => {
+  if (!_rcEditando) return;
+  await db.from('mural').delete().eq('id', _rcEditando.id);
+  $('folha-recado').hidden = true;
+  await carregarDocumentos();
+});
+
+ligarCamposDaAta();

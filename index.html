@@ -202,6 +202,272 @@
       <div id="oc-lista"></div>
      </section>
 
+
+     <!-- ============ TAREFAS ============ -->
+     <section id="tela-tarefas" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Tarefas</p><h1 id="tf-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-nova-tarefa" type="button">+ Tarefa</button>
+      </div>
+      <div class="numeros" id="tf-numeros"></div>
+      <div class="filtros" id="tf-filtros"></div>
+      <label class="busca"><span class="sr">Buscar</span>
+        <input type="search" id="busca-tf" autocomplete="off"
+               placeholder="Buscar por assunto, responsável ou setor"></label>
+      <div id="tf-lista"></div>
+     </section>
+
+     <!-- ============ ALERTAS ============ -->
+     <section id="tela-alertas" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Alertas de prazo</p><h1 id="al-titulo">—</h1></div>
+      </div>
+      <p class="explica">Experiência de 45 e 90 dias e giro de viagem, de quem está
+         no efetivo agora. O painel mostra os 7 dias seguintes; aqui vai até 60.</p>
+      <div class="numeros" id="al-numeros"></div>
+      <div id="al-lista"></div>
+     </section>
+
+
+     <!-- ============ EPI ============ -->
+     <section id="tela-epi" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">EPI</p><h1 id="epi-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-nova-entrega" type="button">+ Entrega</button>
+      </div>
+      <div class="numeros" id="epi-numeros"></div>
+      <div class="filtros" id="epi-filtros"></div>
+      <label class="busca"><span class="sr">Buscar</span>
+        <input type="search" id="busca-epi" autocomplete="off"
+               placeholder="Buscar por pessoa ou EPI"></label>
+      <div id="epi-lista"></div>
+      <div class="bloco">
+        <button class="btn-texto btn-abre" id="btn-catalogo" type="button"
+                aria-expanded="false">Catálogo de EPI (0)</button>
+        <div id="catalogo-lista" hidden></div>
+      </div>
+     </section>
+
+     <!-- ============ NOTAS FISCAIS ============ -->
+     <section id="tela-nfs" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Notas fiscais</p><h1 id="nf-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-nova-nf" type="button">+ Nota</button>
+      </div>
+      <div class="numeros" id="nf-numeros"></div>
+      <label class="busca"><span class="sr">Buscar</span>
+        <input type="search" id="busca-nf" autocomplete="off"
+               placeholder="Buscar por número, fornecedor ou categoria"></label>
+      <div id="nf-lista"></div>
+     </section>
+
+     <!-- ============ NOTA ABERTA ============ -->
+     <section id="tela-nf-edit" hidden>
+      <div class="folha-rdo">
+        <p class="rotulo" id="nf-e-obra">—</p>
+        <div class="rdo-cabeca">
+          <span class="rdo-num" id="nf-e-numero">—</span>
+          <div>
+            <h1 id="nf-e-fornecedor">—</h1>
+            <p class="rotulo" id="nf-e-data">—</p>
+          </div>
+          <span class="gravou" id="nf-gravou" hidden>gravado</span>
+        </div>
+      </div>
+
+      <section class="cartao">
+        <h2>Cabeçalho</h2>
+        <div class="frow-2">
+          <label class="campo"><span>Número *</span>
+            <input type="text" id="nf-numero" data-nf="numero" spellcheck="false"></label>
+          <label class="campo"><span>Série</span>
+            <input type="text" id="nf-serie" data-nf="serie" spellcheck="false"></label>
+        </div>
+        <label class="campo"><span>Fornecedor *</span>
+          <input type="text" id="nf-fornecedor" data-nf="fornecedor"></label>
+        <div class="frow-2">
+          <label class="campo"><span>CNPJ</span>
+            <input type="text" id="nf-cnpj" data-nf="cnpj_fornecedor" inputmode="numeric"></label>
+          <label class="campo"><span>Data *</span>
+            <input type="date" id="nf-data" data-nf="data"></label>
+        </div>
+        <div class="frow-2">
+          <label class="campo"><span>Categoria</span>
+            <select id="nf-categoria" data-nf="categoria"></select></label>
+          <label class="campo"><span>Responsável</span>
+            <input type="text" id="nf-responsavel" data-nf="responsavel"></label>
+        </div>
+        <label class="campo"><span>Observações</span>
+          <textarea id="nf-obs" data-nf="observacoes" rows="2"></textarea></label>
+      </section>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Itens</h2>
+          <button class="btn-texto" type="button" id="btn-add-item">+ Item</button>
+        </div>
+        <div id="nf-itens"></div>
+        <p class="total-nf">Total da nota <b id="nf-total">R$ 0,00</b></p>
+      </section>
+
+      <p class="erro" id="erro-nf-edit" hidden></p>
+     </section>
+
+
+     <!-- ============ MEDIÇÕES ============ -->
+     <section id="tela-medicoes" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Medições</p><h1 id="md-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-novo-contrato" type="button">+ Contrato</button>
+      </div>
+      <div class="numeros" id="md-numeros"></div>
+      <div id="md-lista"></div>
+     </section>
+
+     <!-- ============ CONTRATO ABERTO ============ -->
+     <section id="tela-contrato" hidden>
+      <div class="folha-rdo">
+        <p class="rotulo" id="ct-e-obra">—</p>
+        <div class="rdo-cabeca">
+          <div>
+            <h1 id="ct-e-nome">—</h1>
+            <p class="rotulo" id="ct-e-empresa">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="numeros" id="ct-numeros"></div>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Itens do contrato</h2>
+          <button class="btn-texto" type="button" id="btn-add-ct-item">+ Item</button>
+        </div>
+        <div id="ct-itens"></div>
+      </section>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Medições</h2>
+          <button class="btn-texto" type="button" id="btn-add-medicao">+ Medição</button>
+        </div>
+        <div id="ct-medicoes"></div>
+      </section>
+
+      <p class="erro" id="erro-contrato" hidden></p>
+     </section>
+
+     <!-- ============ BOLETIM DE MEDIÇÃO ============ -->
+     <section id="tela-medicao" hidden>
+      <div class="folha-rdo">
+        <p class="rotulo" id="md-e-contrato">—</p>
+        <div class="rdo-cabeca">
+          <span class="rdo-num" id="md-e-numero">—</span>
+          <div>
+            <h1 id="md-e-mes">—</h1>
+            <p class="rotulo" id="md-e-periodo">—</p>
+          </div>
+          <span class="gravou" id="md-gravou" hidden>gravado</span>
+        </div>
+      </div>
+      <div class="numeros" id="md-e-numeros"></div>
+      <div class="acoes-rapidas">
+        <button class="btn-texto" type="button" id="btn-fechar-medicao">Fechar medição</button>
+      </div>
+      <p class="aviso" id="aviso-medicao" hidden></p>
+      <div id="md-e-itens"></div>
+     </section>
+
+     <!-- ============ REUNIÕES ============ -->
+     <section id="tela-reunioes" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Reuniões</p><h1 id="rn-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-nova-reuniao" type="button">+ Reunião</button>
+      </div>
+      <div class="numeros" id="rn-numeros"></div>
+      <div id="rn-lista"></div>
+     </section>
+
+     <!-- ============ ATA ============ -->
+     <section id="tela-ata" hidden>
+      <div class="folha-rdo">
+        <p class="rotulo" id="at-obra">—</p>
+        <div class="rdo-cabeca">
+          <div>
+            <h1 id="at-titulo">—</h1>
+            <p class="rotulo" id="at-quando">—</p>
+          </div>
+          <span class="gravou" id="at-gravou" hidden>gravado</span>
+        </div>
+      </div>
+
+      <section class="cartao">
+        <h2>Quando e onde</h2>
+        <div class="frow-2">
+          <label class="campo"><span>Data</span>
+            <input type="date" id="rn-data" data-rn="data"></label>
+          <label class="campo"><span>Local</span>
+            <input type="text" id="rn-local" data-rn="local"></label>
+        </div>
+        <div class="frow-2">
+          <label class="campo"><span>Início</span>
+            <input type="time" id="rn-inicio" data-rn="hora_inicio"></label>
+          <label class="campo"><span>Fim</span>
+            <input type="time" id="rn-fim" data-rn="hora_fim"></label>
+        </div>
+        <label class="campo"><span>Ausências</span>
+          <input type="text" id="rn-ausencias" data-rn="ausencias"></label>
+      </section>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Participantes</h2>
+          <button class="btn-texto" type="button" id="btn-add-participante">+ Participante</button>
+        </div>
+        <div id="at-participantes"></div>
+      </section>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Tópicos e decisões</h2>
+          <button class="btn-texto" type="button" id="btn-add-topico">+ Tópico</button>
+        </div>
+        <div id="at-topicos"></div>
+      </section>
+
+      <section class="cartao">
+        <h2>Próxima reunião</h2>
+        <label class="campo"><span>Data</span>
+          <input type="date" id="rn-proxima" data-rn="proxima_data"></label>
+        <label class="campo"><span>Pauta prevista</span>
+          <textarea id="rn-proxima-pauta" data-rn="proxima_pauta" rows="2"></textarea></label>
+      </section>
+
+      <p class="erro" id="erro-ata" hidden></p>
+     </section>
+
+     <!-- ============ DOCUMENTOS ============ -->
+     <section id="tela-documentos" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Documentos</p><h1 id="dc-titulo">—</h1></div>
+        <button class="btn btn-primario" id="btn-novo-documento" type="button">+ Documento</button>
+      </div>
+      <div class="numeros" id="dc-numeros"></div>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Mural</h2>
+          <button class="btn-texto" type="button" id="btn-novo-recado">+ Recado</button>
+        </div>
+        <div id="dc-mural"></div>
+      </section>
+
+      <div class="filtros" id="dc-filtros"></div>
+      <label class="busca"><span class="sr">Buscar</span>
+        <input type="search" id="busca-dc" autocomplete="off"
+               placeholder="Buscar por título ou categoria"></label>
+      <div id="dc-lista"></div>
+     </section>
+
      <!-- ============ RDO — lista ============ -->
      <section id="tela-rdo" hidden>
       <div class="mod-topo">
@@ -791,6 +1057,409 @@
 
       <button class="btn btn-primario" type="submit" id="btn-salvar-ocorrencia">Salvar</button>
       <button class="btn btn-perigo" type="button" id="btn-apagar-ocorrencia" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ TAREFA ============ -->
+<div class="folha" id="folha-tarefa" hidden role="dialog" aria-modal="true" aria-label="Tarefa">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-tarefa">Nova tarefa</h2>
+      <button class="icone" id="btn-fechar-tarefa" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-tarefa" novalidate>
+      <label class="campo">
+        <span>Assunto *</span>
+        <input type="text" id="t-assunto" required placeholder="Compra de blocos de concreto">
+      </label>
+      <label class="campo">
+        <span>Descrição</span>
+        <textarea id="t-descricao" rows="3"></textarea>
+      </label>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Responsável</span>
+          <input type="text" id="t-responsavel">
+        </label>
+        <label class="campo">
+          <span>Criador</span>
+          <input type="text" id="t-criador">
+        </label>
+      </div>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Setor</span>
+          <select id="t-setor"></select>
+        </label>
+        <label class="campo">
+          <span>Prioridade</span>
+          <select id="t-prioridade">
+            <option value="baixa">Baixa</option>
+            <option value="media" selected>Média</option>
+            <option value="alta">Alta</option>
+          </select>
+        </label>
+      </div>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Lançamento</span>
+          <input type="date" id="t-lancamento">
+        </label>
+        <label class="campo">
+          <span>Prazo</span>
+          <input type="date" id="t-termino">
+        </label>
+      </div>
+      <label class="campo">
+        <span>Status</span>
+        <select id="t-status">
+          <option value="aberta">Aberta</option>
+          <option value="em_andamento">Em andamento</option>
+          <option value="concluida">Concluída</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </label>
+      <p class="aviso" id="aviso-tarefa" hidden></p>
+      <p class="erro" id="erro-tarefa" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-tarefa">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-tarefa" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ ENTREGA DE EPI ============ -->
+<div class="folha" id="folha-entrega" hidden role="dialog" aria-modal="true" aria-label="Entrega de EPI">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-entrega">Entrega de EPI</h2>
+      <button class="icone" id="btn-fechar-entrega" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-entrega" novalidate>
+      <label class="campo"><span>Para quem *</span>
+        <select id="ep-contrato" required></select></label>
+      <label class="campo"><span>EPI *</span>
+        <select id="ep-epi" required></select></label>
+      <p class="dica" id="dica-troca" hidden></p>
+      <div class="frow-2">
+        <label class="campo"><span>Data *</span>
+          <input type="date" id="ep-data" required></label>
+        <label class="campo"><span>Quantidade *</span>
+          <input type="number" id="ep-qtd" min="1" step="1" value="1" inputmode="numeric"></label>
+      </div>
+      <label class="campo"><span>Motivo</span>
+        <select id="ep-motivo">
+          <option value="primeira_entrega">Primeira entrega</option>
+          <option value="troca">Troca</option>
+          <option value="danificado">Danificado</option>
+          <option value="perda">Perda</option>
+          <option value="vencimento">Vencimento</option>
+        </select></label>
+      <label class="campo"><span>Entregue por</span>
+        <input type="text" id="ep-entregador"></label>
+      <label class="marca-caixa">
+        <input type="checkbox" id="ep-assinatura">
+        <span><b>Ficha assinada</b>
+          <small>Entrega sem assinatura não vale como prova de fornecimento.</small></span>
+      </label>
+      <label class="campo"><span>Observação</span>
+        <input type="text" id="ep-obs"></label>
+      <p class="erro" id="erro-entrega" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-entrega">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-entrega" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ EPI NO CATÁLOGO ============ -->
+<div class="folha" id="folha-epi" hidden role="dialog" aria-modal="true" aria-label="EPI">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-epi-cat">Novo EPI</h2>
+      <button class="icone" id="btn-fechar-epi" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-epi" novalidate>
+      <label class="campo"><span>Nome *</span>
+        <input type="text" id="ec-nome" required placeholder="Capacete com jugular"></label>
+      <div class="frow-2">
+        <label class="campo"><span>CA</span>
+          <input type="text" id="ec-ca" spellcheck="false" inputmode="numeric"></label>
+        <label class="campo"><span>Troca a cada (dias)</span>
+          <input type="number" id="ec-validade" min="1" inputmode="numeric"></label>
+      </div>
+      <p class="explica">Com os dias preenchidos, o sistema calcula a troca prevista
+         de cada entrega. Em branco, o EPI não tem troca programada.</p>
+      <p class="erro" id="erro-epi-cat" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-epi">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-desativar-epi" hidden>Desativar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ NOVA NOTA ============ -->
+<div class="folha" id="folha-nova-nf" hidden role="dialog" aria-modal="true" aria-label="Nova nota">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Nova nota fiscal</h2>
+      <button class="icone" id="btn-fechar-nova-nf" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-nova-nf" novalidate>
+      <div class="frow-2">
+        <label class="campo"><span>Número *</span>
+          <input type="text" id="nn-numero" required spellcheck="false"></label>
+        <label class="campo"><span>Série</span>
+          <input type="text" id="nn-serie" spellcheck="false"></label>
+      </div>
+      <label class="campo"><span>Fornecedor *</span>
+        <input type="text" id="nn-fornecedor" required></label>
+      <label class="campo"><span>Data *</span>
+        <input type="date" id="nn-data" required></label>
+      <p class="explica">Número, série e fornecedor juntos não se repetem. Nota sem série
+         conta como série vazia — duas notas iguais sem série também são recusadas.</p>
+      <p class="erro" id="erro-nova-nf" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-criar-nf">Abrir a nota</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ITEM DA NOTA ============ -->
+<div class="folha" id="folha-item" hidden role="dialog" aria-modal="true" aria-label="Item da nota">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-item">Item</h2>
+      <button class="icone" id="btn-fechar-item" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-item" novalidate>
+      <label class="campo"><span>Descrição *</span>
+        <input type="text" id="it-descricao" required placeholder="Cimento CP II 50 kg"></label>
+      <div class="frow-2 curta-dir">
+        <label class="campo"><span>Quantidade *</span>
+          <input type="number" id="it-qtd" min="0" step="0.001" inputmode="decimal" required></label>
+        <label class="campo"><span>Unidade</span>
+          <input type="text" id="it-unidade" placeholder="sc"></label>
+      </div>
+      <label class="campo"><span>Preço unitário (R$) *</span>
+        <input type="number" id="it-preco" min="0" step="0.01" inputmode="decimal" required></label>
+      <p class="dica" id="dica-item"></p>
+      <p class="erro" id="erro-item" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-item">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-item" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ CONTRATO COMERCIAL ============ -->
+<div class="folha" id="folha-contrato" hidden role="dialog" aria-modal="true" aria-label="Contrato">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-contrato">Novo contrato</h2>
+      <button class="icone" id="btn-fechar-contrato" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-contrato" novalidate>
+      <label class="campo"><span>Tipo *</span>
+        <select id="cc-tipo">
+          <option value="cliente">Cliente — a obra recebe</option>
+          <option value="empreiteiro">Empreiteiro — a obra paga</option>
+        </select></label>
+      <label class="campo"><span>Nome do contrato *</span>
+        <input type="text" id="cc-nome" required placeholder="Execução da estrutura"></label>
+      <label class="campo"><span>Empresa</span>
+        <input type="text" id="cc-empresa"></label>
+      <div class="frow-2">
+        <label class="campo"><span>Especialidade</span>
+          <input type="text" id="cc-especialidade"></label>
+        <label class="campo"><span>Nº do contrato</span>
+          <input type="text" id="cc-numero" spellcheck="false"></label>
+      </div>
+      <p class="erro" id="erro-contrato-folha" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-contrato">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-encerrar-contrato" hidden>Encerrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ITEM DO CONTRATO ============ -->
+<div class="folha" id="folha-ct-item" hidden role="dialog" aria-modal="true" aria-label="Item do contrato">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-ct-item">Item do contrato</h2>
+      <button class="icone" id="btn-fechar-ct-item" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-ct-item" novalidate>
+      <div class="frow-2 curta-dir">
+        <label class="campo"><span>Descrição *</span>
+          <input type="text" id="ci-descricao" required placeholder="Concreto estrutural fck 30"></label>
+        <label class="campo"><span>Item</span>
+          <input type="text" id="ci-item" placeholder="1.2" spellcheck="false"></label>
+      </div>
+      <div class="frow-2 curta-dir">
+        <label class="campo"><span>Quantidade *</span>
+          <input type="number" id="ci-qtd" min="0" step="0.001" inputmode="decimal" required></label>
+        <label class="campo"><span>Unidade</span>
+          <input type="text" id="ci-unidade" placeholder="m³"></label>
+      </div>
+      <label class="campo"><span>Valor unitário (R$) *</span>
+        <input type="number" id="ci-valor" min="0" step="0.01" inputmode="decimal" required></label>
+      <p class="dica" id="dica-ct-item"></p>
+      <p class="erro" id="erro-ct-item" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-ct-item">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-ct-item" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ NOVA MEDIÇÃO ============ -->
+<div class="folha" id="folha-nova-medicao" hidden role="dialog" aria-modal="true" aria-label="Nova medição">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Nova medição</h2>
+      <button class="icone" id="btn-fechar-nova-medicao" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-nova-medicao" novalidate>
+      <label class="campo"><span>Mês de referência *</span>
+        <input type="month" id="nm-mes" required></label>
+      <div class="frow-2">
+        <label class="campo"><span>Início *</span>
+          <input type="date" id="nm-inicio" required></label>
+        <label class="campo"><span>Fim *</span>
+          <input type="date" id="nm-fim" required></label>
+      </div>
+      <p class="explica" id="explica-medicao">O número é sequencial por contrato e sai automático.
+         O acumulado de cada item vem das medições anteriores.</p>
+      <p class="erro" id="erro-nova-medicao" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-criar-medicao">Abrir a medição</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ REUNIÃO ============ -->
+<div class="folha" id="folha-reuniao" hidden role="dialog" aria-modal="true" aria-label="Reunião">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Nova reunião</h2>
+      <button class="icone" id="btn-fechar-reuniao" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-reuniao" novalidate>
+      <label class="campo"><span>Título *</span>
+        <input type="text" id="nr-titulo" required placeholder="Reunião semanal de obra"></label>
+      <div class="frow-2">
+        <label class="campo"><span>Data *</span>
+          <input type="date" id="nr-data" required></label>
+        <label class="campo"><span>Local</span>
+          <input type="text" id="nr-local" placeholder="Canteiro"></label>
+      </div>
+      <p class="erro" id="erro-reuniao" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-criar-reuniao">Abrir a ata</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ PARTICIPANTE ============ -->
+<div class="folha" id="folha-participante" hidden role="dialog" aria-modal="true" aria-label="Participante">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Participante</h2>
+      <button class="icone" id="btn-fechar-participante" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-participante" novalidate>
+      <label class="campo"><span>Do efetivo</span>
+        <select id="pt-contrato"></select></label>
+      <label class="campo"><span>Nome *</span>
+        <input type="text" id="pt-nome" required></label>
+      <label class="campo"><span>Cargo</span>
+        <input type="text" id="pt-cargo"></label>
+      <label class="marca-caixa">
+        <input type="checkbox" id="pt-responsavel">
+        <span><b>Responsável pela reunião</b>
+          <small>Quem conduziu e responde pela ata.</small></span>
+      </label>
+      <p class="erro" id="erro-participante" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-participante">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-participante" hidden>Remover</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ TÓPICO ============ -->
+<div class="folha" id="folha-topico" hidden role="dialog" aria-modal="true" aria-label="Tópico">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Tópico</h2>
+      <button class="icone" id="btn-fechar-topico" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-topico" novalidate>
+      <label class="campo"><span>Assunto *</span>
+        <input type="text" id="tp-titulo" required></label>
+      <label class="campo"><span>O que foi dito</span>
+        <textarea id="tp-notas" rows="3"></textarea></label>
+      <label class="campo"><span>Decisão</span>
+        <textarea id="tp-decisao" rows="2"
+                  placeholder="O que ficou combinado, com quem e para quando"></textarea></label>
+      <label class="marca-caixa" id="caixa-vira-tarefa">
+        <input type="checkbox" id="tp-tarefa">
+        <span><b>Virar tarefa</b>
+          <small>Cria uma tarefa com este assunto, ligada a esta reunião.</small></span>
+      </label>
+      <p class="erro" id="erro-topico" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-topico">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-topico" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ DOCUMENTO ============ -->
+<div class="folha" id="folha-documento" hidden role="dialog" aria-modal="true" aria-label="Documento">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-documento">Novo documento</h2>
+      <button class="icone" id="btn-fechar-documento" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-documento" novalidate>
+      <label class="campo"><span>Categoria *</span>
+        <select id="dc-categoria">
+          <option value="Contrato">Contrato</option>
+          <option value="Cronograma">Cronograma</option>
+          <option value="Programação Semanal">Programação Semanal</option>
+          <option value="Orçamento">Orçamento</option>
+          <option value="Outros" selected>Outros</option>
+        </select></label>
+      <label class="campo"><span>Título *</span>
+        <input type="text" id="dc-doc-titulo" required></label>
+      <label class="campo"><span>Link do arquivo *</span>
+        <input type="url" id="dc-url" required spellcheck="false"
+               placeholder="https://drive.google.com/…"></label>
+      <label class="campo" id="campo-valor" hidden><span>Valor do orçamento (R$)</span>
+        <input type="number" id="dc-valor" min="0" step="0.01" inputmode="decimal"></label>
+      <label class="campo" id="campo-cronograma" hidden><span>Data do cronograma</span>
+        <input type="date" id="dc-data"></label>
+      <label class="campo"><span>Notas</span>
+        <textarea id="dc-notas" rows="2"></textarea></label>
+      <p class="erro" id="erro-documento" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-documento">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-documento" hidden>Apagar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ RECADO NO MURAL ============ -->
+<div class="folha" id="folha-recado" hidden role="dialog" aria-modal="true" aria-label="Recado">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Recado no mural</h2>
+      <button class="icone" id="btn-fechar-recado" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-recado" novalidate>
+      <label class="campo"><span>Recado *</span>
+        <textarea id="rc-texto" rows="3" required
+                  placeholder="Concretagem sábado às 6h. Confirmar caminhão bomba."></textarea></label>
+      <label class="campo"><span>Autor *</span>
+        <input type="text" id="rc-autor" required></label>
+      <p class="erro" id="erro-recado" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-recado">Publicar</button>
+      <button class="btn btn-perigo" type="button" id="btn-apagar-recado" hidden>Apagar</button>
     </form>
   </div>
 </div>

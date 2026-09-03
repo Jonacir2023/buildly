@@ -683,3 +683,90 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 .pessoa .desc { display: block; font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
+
+/* ---------- tarefas e alertas ---------- */
+#tela-tarefas, #tela-alertas { display: flex; flex-direction: column; gap: var(--e4); }
+
+.filtros { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.filtro {
+  font-family: var(--cond); font-weight: 600; font-size: 14px;
+  letter-spacing: .04em; text-transform: uppercase;
+  background: var(--surface); color: var(--ink-soft);
+  border: 1px solid var(--line-forte); border-radius: 99px;
+  padding: 8px 14px; min-height: 40px; cursor: pointer;
+}
+.filtro[aria-pressed="true"] {
+  background: var(--accent-weak); color: var(--accent-text); border-color: var(--accent-mark);
+}
+
+.chip[data-prio="alta"]  { background: var(--danger-weak); color: var(--danger); }
+.chip[data-prio="media"] { background: var(--warn-weak);   color: var(--warn); }
+.chip[data-prio="baixa"] { background: var(--ok-weak);     color: var(--ok); }
+
+.chip[data-st="aberta"]       { background: var(--info-weak);   color: var(--info); }
+.chip[data-st="em_andamento"] { background: var(--accent-weak); color: var(--accent-text); }
+.chip[data-st="concluida"]    { background: var(--ok-weak);     color: var(--ok); }
+.chip[data-st="cancelada"]    { background: var(--surface-2);   color: var(--ink-soft); }
+
+.pessoa.encerrada .nm { color: var(--ink-soft); }
+
+/* ---------- EPI e notas fiscais ---------- */
+#tela-epi, #tela-nfs, #tela-nf-edit { display: flex; flex-direction: column; gap: var(--e4); }
+
+.chip[data-motivo="primeira_entrega"] { background: var(--ok-weak);     color: var(--ok); }
+.chip[data-motivo="troca"]            { background: var(--info-weak);   color: var(--info); }
+.chip[data-motivo="vencimento"]       { background: var(--warn-weak);   color: var(--warn); }
+.chip[data-motivo="danificado"],
+.chip[data-motivo="perda"]            { background: var(--danger-weak); color: var(--danger); }
+.chip.semass { background: var(--danger-weak); color: var(--danger); }
+
+.total-nf {
+  margin: 0; border-top: 1px solid var(--line); padding-top: var(--e3);
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3);
+  font-family: var(--cond); font-weight: 600; font-size: 15px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+}
+.total-nf b {
+  font-family: var(--mono); font-weight: 600; font-size: 22px;
+  letter-spacing: 0; text-transform: none; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.dinheiro { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- medições, reuniões, documentos ---------- */
+#tela-medicoes, #tela-contrato, #tela-medicao,
+#tela-reunioes, #tela-ata, #tela-documentos { display: flex; flex-direction: column; gap: var(--e4); }
+
+.chip[data-tipo="cliente"]     { background: var(--ok-weak);   color: var(--ok); }
+.chip[data-tipo="empreiteiro"] { background: var(--info-weak); color: var(--info); }
+.chip[data-cat]                { background: var(--surface-2); color: var(--ink-soft); }
+.chip.fechada { background: var(--surface-2); color: var(--ink-soft); }
+.chip.aberta  { background: var(--accent-weak); color: var(--accent-text); }
+
+/* linha de item medido: descrição em cima, os números embaixo */
+.medida-linha {
+  background: var(--surface); padding: var(--e3);
+  display: flex; flex-direction: column; gap: var(--e2);
+}
+.medida-linha .oque { font-weight: 500; overflow-wrap: anywhere; }
+.medida-linha .oque small { display: block; font-weight: 400; font-size: 13px; color: var(--ink-soft); }
+.medida-linha .conta {
+  display: flex; gap: var(--e3); align-items: center; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 13px; color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.medida-linha .conta input {
+  width: 110px; min-height: 42px; padding: 8px 10px; text-align: right;
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+}
+.medida-linha .conta b { color: var(--ink); font-weight: 600; }
+.medida-linha[data-estouro="sim"] { background: var(--danger-weak); }
+
+.recado {
+  background: var(--surface-2); border-left: 3px solid var(--accent-mark);
+  border-radius: var(--r-sm); padding: var(--e3);
+}
+.recado p { margin: 0; overflow-wrap: anywhere; }
+.recado small { color: var(--ink-soft); font-size: 13px; }
+
+.item.apagado { opacity: .6; }

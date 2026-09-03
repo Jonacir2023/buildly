@@ -144,8 +144,73 @@ Os quatro números do alto: ocorrências dos últimos 30 dias, acidentes
 dos últimos 12 meses, dias de afastamento acumulados no ano, e quase
 acidentes dos últimos 90 dias.
 
+Tarefas
+-------
+O que ficou combinado e precisa de alguém. Filtros por pendentes,
+atrasadas, concluídas e todas. Pendente vem antes de encerrada, e dentro
+disso o prazo mais curto primeiro.
+
+A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
+status vira concluída, e limpa se você reabrir. Isso vale por qualquer
+caminho, não só pela tela.
+
+Alertas
+-------
+Experiência de 45 e 90 dias e giro de viagem de quem está no efetivo.
+O painel mostra os 7 dias seguintes; esta tela vai até 60, que é o prazo
+em que ainda dá para agir.
+
+EPI
+---
+Ficha de entrega. Primeiro cadastre os tipos no "Catálogo de EPI" — com
+os dias de troca, o sistema calcula a troca prevista de cada entrega.
+
+Se a pessoa já recebeu aquele EPI, o motivo muda sozinho de "primeira
+entrega" para "troca", e a tela mostra quando foi a última.
+
+ENTREGA SEM ASSINATURA FICA MARCADA EM VERMELHO. Ficha não assinada não
+prova fornecimento.
+
+Notas fiscais
+-------------
+Cabeçalho e itens. O TOTAL NÃO SE DIGITA: um gatilho no banco soma os
+itens a cada gravação. Se alguém lançar item por outro caminho, o total
+continua certo.
+
+Número, série e fornecedor juntos não se repetem. Nota sem série conta
+como série vazia — duas notas iguais sem série também são recusadas.
+
+Medições
+--------
+Três níveis: contrato comercial > itens do contrato > boletim mensal.
+
+O contrato pode ser de CLIENTE (a obra recebe) ou de EMPREITEIRO (a obra
+paga), e o resumo separa "a receber" de "a pagar".
+
+No boletim, você digita só a quantidade do mês. O anterior, o acumulado
+e o saldo vêm calculados do banco, com base nas medições anteriores pelo
+número. Item medido acima do contratado fica com a linha vermelha.
+
+"Fechar medição" trava os campos. Reabra para corrigir.
+
+Reuniões
+--------
+Ata com participantes e tópicos. Escolher alguém do efetivo preenche
+nome e cargo sozinho.
+
+CADA TÓPICO PODE VIRAR TAREFA, ligada à reunião. A opção só aparece em
+tópico novo — em edição não aparece, senão cada correção criaria uma
+tarefa repetida.
+
+Documentos
+----------
+Link do arquivo, não o arquivo — mesma decisão das fotos do RDO. O campo
+de valor só aparece em Orçamento; o de data, em Cronograma e Programação
+Semanal.
+
+O mural é o recado curto da semana, para todo mundo ver ao abrir.
+
 O que ainda não faz
 -------------------
-Os outros módulos estão marcados "em construção" porque a tela deles
-ainda não existe: EPI, Tarefas, Notas fiscais, Medições, Reuniões,
-Documentos e a tela de Alertas.
+Os onze módulos estão de pé. O que falta é uso: cadastrar a obra de
+verdade, o efetivo e começar a lançar RDO.

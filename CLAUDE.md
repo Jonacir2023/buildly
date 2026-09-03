@@ -56,6 +56,19 @@ Tudo que o app guarda no navegador leva o prefixo **`p3::`**. Os apps do
 usuário dividem a mesma origem (`jonacir2023.github.io`) e sem prefixo
 dividiriam o mesmo armazenamento.
 
+## Dado derivado mora no banco
+
+Nenhum total é somado pelo app. Se o app somasse, qualquer gravação por
+outro caminho (N8N, SQL, importação) deixaria o número mentindo.
+
+| Coluna | Quem mantém |
+|---|---|
+| `nfs.total` | gatilho `nf_itens_recalcula` |
+| `nf_itens.total_item` | coluna calculada |
+| `contrato_itens.valor_total` | coluna calculada |
+| `tarefas.concluido_em` | gatilho `tarefas_conclusao` |
+| acumulado da medição | `vw_medicao_item`, com janela sobre o número |
+
 ## Como testar antes de entregar
 
 Duas frentes, sempre, antes de qualquer `push`:
