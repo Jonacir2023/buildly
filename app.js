@@ -1165,11 +1165,13 @@ async function carregarRDOs() {
   if (error) {
     area.innerHTML = vazioHTML('Não consegui ler os diários.', error.message);
     $('cartao-chuva').hidden = true;
+    $('cartao-calendario').hidden = true;
     return;
   }
 
   _rdos = data || [];
   carregarChuva();
+  carregarCalendario();
 
   if (!_rdos.length) {
     area.innerHTML = vazioHTML('Nenhum diário lançado nesta obra.',
@@ -4440,3 +4442,146 @@ async function carregarChuva() {
     area.appendChild(linha);
   });
 }
+
+/* ============================================================
+   CALENDÁRIO DO RDO
+   O dia que falta é a informação principal: numa lista ele não
+   aparece, porque lista só mostra o que existe. Aqui o dia útil
+   passado sem diário fica vermelho e clicável — toca e já abre
+   a folha do novo RDO naquela data.
+   ============================================================ */
+
+const CONDICAO_COR = {
+  praticavel:                'var(--ok)',
+  parcialmente_impraticavel: 'var(--warn)',
+  impraticavel:              'var(--danger)'
+};
+
+let _mesCal = null;   // 'AAAA-MM'
+
+function primeiroDoMes(mes) { return mes + '-01'; }
+function ultimoDoMes(mes) {
+  const [a, m] = mes.split('-').map(Number);
+  return new Date(Date.UTC(a, m, 0)).toISOString().slice(0, 10);
+}
+function somarMes(mes, n) {
+  const [a, m] = mes.split('-').map(Number);
+  const d = new Date(Date.UTC(a, m - 1 + n, 1));
+  return d.toISOString().slice(0, 7);
+}
+
+async function carregarCalendario() {
+  if (!_obra) { $('cartao-calendario').hidden = true; return; }
+  $('cartao-calendario').hidden = false;
+  if (!_mesCal) _mesCal = hojeISO().slice(0, 7);
+
+  const ini = primeiroDoMes(_mesCal), fim = ultimoDoMes(_mesCal);
+  const { data } = await db.from('rdos')
+    .select('id, numero, data, condicao_trabalho')
+    .eq('obra_id', _obra.id).gte('data', ini).lte('data', fim).order('data');
+
+  const porDia = {};
+  (data || []).forEach(r => { porDia[r.data] = r; });
+
+  $('cal-mes').textContent = new Intl.DateTimeFormat('pt-BR',
+    { timeZone: 'UTC', month: 'long', year: 'numeric' })
+    .format(new Date(ini + 'T12:00:00Z'));
+
+  // Não deixo navegar para mês que ainda não começou: não há diário
+  // possível lá, e o botão que não leva a nada só confunde.
+  $('cal-depois').disabled = somarMes(_mesCal, 1) > hojeISO().slice(0, 7);
+
+  const grade = $('cal-grade');
+  grade.innerHTML = '';
+
+  const totalDias = Number(fim.slice(8));
+  const primeiroDiaSemana = new Date(ini + 'T12:00:00Z').getUTCDay();
+  for (let i = 0; i < primeiroDiaSemana; i++) {
+    const vazio = document.createElement('button');
+    vazio.type = 'button'; vazio.className = 'dia'; vazio.disabled = true;
+    vazio.dataset.estado = 'fora'; vazio.tabIndex = -1;
+    grade.appendChild(vazio);
+  }
+
+  const hoje = hojeISO();
+  let faltando = 0, comDiario = 0;
+
+  for (let d = 1; d <= totalDias; d++) {
+    const iso = _mesCal + '-' + String(d).padStart(2, '0');
+    const rdo = porDia[iso];
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'dia';
+    if (iso === hoje) b.dataset.hoje = 'sim';
+
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = d;
+    b.appendChild(n);
+
+    if (rdo) {
+      comDiario++;
+      b.dataset.estado = 'tem';
+      b.title = `RDO nº ${rdo.numero} — ${dataBR(iso)}`;
+      const pt = document.createElement('span');
+      pt.className = 'pt';
+      pt.style.setProperty('--cor', CONDICAO_COR[rdo.condicao_trabalho] || 'var(--ink-faint)');
+      b.appendChild(pt);
+      b.addEventListener('click', () => abrirRDO(rdo.id));
+    } else if (iso > hoje) {
+      b.dataset.estado = 'futuro';
+      b.disabled = true;
+      b.title = dataBR(iso) + ' — ainda não chegou';
+    } else {
+      faltando++;
+      b.dataset.estado = 'falta';
+      b.title = 'Sem diário em ' + dataBR(iso) + ' — toque para lançar';
+      b.addEventListener('click', () => {
+        abrirFolhaNovoRDO();
+        $('n-data').value = iso;
+        explicarNovoRDO();
+      });
+    }
+    grade.appendChild(b);
+  }
+
+  const resumo = $('cal-resumo');
+  resumo.innerHTML = '';
+  const b1 = document.createElement('b'); b1.textContent = comDiario;
+  resumo.append(b1, document.createTextNode(
+    (comDiario === 1 ? ' dia com diário' : ' dias com diário') + ' · '));
+  const b2 = document.createElement('b');
+  b2.textContent = faltando;
+  if (faltando) b2.className = 'falta';
+  resumo.append(b2, document.createTextNode(
+    faltando === 1 ? ' dia sem lançar' : ' dias sem lançar'));
+
+  const leg = $('cal-legenda');
+  leg.innerHTML = '';
+  const itens = [
+    ['var(--ok)', 'Praticável'],
+    ['var(--warn)', 'Parcialmente impraticável'],
+    ['var(--danger)', 'Impraticável'],
+    ['var(--ink-faint)', 'Sem condição informada']
+  ].filter(([cor]) => (data || []).some(r =>
+    (CONDICAO_COR[r.condicao_trabalho] || 'var(--ink-faint)') === cor));
+
+  if (faltando) itens.push(['transparent', 'Dia sem diário — toque para lançar']);
+  itens.forEach(([cor, rot]) => {
+    const li = document.createElement('li');
+    const i = document.createElement('i');
+    i.style.setProperty('--cor', cor);
+    if (cor === 'transparent') {
+      i.style.background = 'var(--danger-weak)';
+      i.style.border = '1px solid var(--danger)';
+    }
+    li.append(i, document.createTextNode(rot));
+    leg.appendChild(li);
+  });
+}
+
+$('cal-antes').addEventListener('click', () => {
+  _mesCal = somarMes(_mesCal || hojeISO().slice(0, 7), -1);
+  carregarCalendario();
+});
+$('cal-depois').addEventListener('click', () => {
+  _mesCal = somarMes(_mesCal || hojeISO().slice(0, 7), 1);
+  carregarCalendario();
+});

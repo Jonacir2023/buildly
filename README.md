@@ -128,6 +128,19 @@ ao RDO nunca era contada — justamente o registro sem pessoa
 identificada, como quase acidente da obra. A view passou a contar os
 dois vínculos.
 
+## Calendário do RDO
+
+Grade do mês em `tela-rdo`, acima da lista. Consulta `rdos` por
+`obra_id` e intervalo do mês (`gte`/`lte`), não a view — precisa de
+`condicao_trabalho`, que `vw_rdo_resumo` não expõe.
+
+Três estados: dia com diário (abre para edição), dia passado sem diário
+(abre a folha do novo RDO já com aquela data), dia futuro (desabilitado).
+O botão de avançar trava no mês corrente.
+
+O dia sem diário é a informação principal da tela — a lista mostra só o
+que existe, então o buraco não aparece nela.
+
 ## Chuva e paralisação
 
 `vw_chuva_mes` agrupa `rdos` por obra e mês. A classificação de chuva usa

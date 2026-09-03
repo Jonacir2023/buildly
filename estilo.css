@@ -825,3 +825,52 @@ textarea {
   margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft);
   border-top: 1px solid var(--line); padding-top: var(--e3);
 }
+
+/* ============================================================
+   CALENDÁRIO DO RDO
+   Numa lista você vê o que existe; num calendário você vê o que
+   FALTA. O dia sem diário é a informação principal aqui, então
+   ele não fica em branco: fica marcado.
+   ============================================================ */
+.cal-topo { display: flex; align-items: center; gap: var(--e2); }
+.cal-topo h2 {
+  flex: 1 1 auto; text-align: center; margin: 0;
+  font-family: var(--cond); font-weight: 700; font-size: 19px;
+}
+.cal-topo .icone { min-width: 44px; min-height: 44px; font-size: 22px; }
+
+.cal-semana, .cal-grade {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+}
+.cal-semana span {
+  text-align: center; font-family: var(--cond); font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft);
+  padding-bottom: 2px;
+}
+
+.dia {
+  aspect-ratio: 1; min-height: 40px; border-radius: var(--r-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 2px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface);
+  font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.dia:disabled { cursor: default; }
+.dia .n { line-height: 1; }
+.dia .pt { width: 7px; height: 7px; border-radius: 50%; background: var(--cor); }
+
+.dia[data-estado="fora"]   { visibility: hidden; }
+.dia[data-estado="futuro"] { color: var(--ink-faint); background: transparent; border-style: dashed; }
+.dia[data-estado="falta"]  { background: var(--danger-weak); border-color: var(--danger);
+                             color: var(--danger); font-weight: 600; }
+.dia[data-estado="tem"]    { background: var(--surface-2); border-color: var(--line-forte); }
+.dia[data-hoje="sim"]      { outline: 2px solid var(--accent-mark); outline-offset: -2px; }
+.dia:not(:disabled):hover  { border-color: var(--accent-text); }
+
+.cal-resumo {
+  margin: 0; font-size: 14px; color: var(--ink-soft);
+  border-top: 1px solid var(--line); padding-top: var(--e3);
+}
+.cal-resumo b { color: var(--ink); font-weight: 600; }
+.cal-resumo b.falta { color: var(--danger); }

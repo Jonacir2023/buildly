@@ -154,6 +154,28 @@ A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
 status vira concluída, e limpa se você reabrir. Isso vale por qualquer
 caminho, não só pela tela.
 
+Calendário do RDO
+-----------------
+No alto da tela do RDO, o mês inteiro em grade.
+
+  BORDA TRACEJADA, CINZA   dia que ainda não chegou
+  FUNDO CINZA COM PONTO    dia com diário — toque para abrir e editar
+  FUNDO VERMELHO           dia passado SEM diário — toque e a folha
+                           do novo RDO já abre naquela data
+
+O ponto colorido dentro do dia é a condição de trabalho: verde
+praticável, âmbar parcialmente impraticável, vermelho impraticável,
+cinza sem condição informada.
+
+Isso é o que a lista não mostra: lista só tem o que existe, então o dia
+que falta não aparece. No calendário ele salta aos olhos.
+
+Os botões ‹ › andam pelos meses. Não dá para passar do mês atual — não
+existe diário de mês que não começou.
+
+Diário antigo não trava: qualquer dia com diário abre para edição
+completa, presença, atividades e fotos.
+
 Chuva e paralisação
 -------------------
 Na tela do RDO, abaixo da lista de diários. Aparece sozinho assim que

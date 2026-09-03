@@ -222,6 +222,7 @@
         return o;
       },
       lte: (k,v) => { cond.push(r => r[k] <= v); return o; },
+      lt:  (k,v) => { cond.push(r => r[k] <  v); return o; },
       gte: (k,v) => { cond.push(r => r[k] >= v); return o; },
       not: (k)   => { cond.push(r => r[k] != null); return o; },
       is:  (k,v) => { cond.push(r => (v === null ? r[k] == null : r[k] === v)); return o; },
