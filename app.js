@@ -36,7 +36,7 @@ const MODULOS = [
   { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: false, conta: 'ocorrencias_30_dias' },
   { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: false, conta: 'tarefas_abertas' },
   { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: false },
-  { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: false, conta: 'equipamentos_ativos' },
+  { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: true, tela: 'equipamentos', conta: 'equipamentos_ativos' },
   { ic: 'i-medicao',    nome: 'Medições',      desc: 'Boletim e acumulado', pronto: false },
   { ic: 'i-reuniao',    nome: 'Reuniões',      desc: 'Pauta e ata',         pronto: false },
   { ic: 'i-doc',        nome: 'Documentos',    desc: 'Arquivos e mural',    pronto: false }
@@ -121,11 +121,13 @@ function irPara(tela) {
   $('tela-efetivo').hidden  = tela !== 'efetivo';
   $('tela-rdo').hidden      = tela !== 'rdo';
   $('tela-rdo-edit').hidden = tela !== 'rdo-edit';
+  $('tela-equipamentos').hidden = tela !== 'equipamentos';
   $('btn-voltar').hidden    = tela === 'painel';
   renderModulos(_status);
   window.scrollTo(0, 0);
   if (tela === 'efetivo') carregarEfetivo();
   if (tela === 'rdo')     carregarRDOs();
+  if (tela === 'equipamentos') carregarEquipamentos();
 }
 
 // De dentro do diário, voltar leva à lista de diários — não ao painel.
@@ -210,7 +212,9 @@ async function carregarObras() {
   banco('ok', 'conectado · ' + plural(_obras.length, 'obra', 'obras'));
   $('numeros').hidden = false;
   await carregarPainel();
-  if (_tela === 'efetivo') await carregarEfetivo();
+  if (_tela === 'efetivo')      await carregarEfetivo();
+  if (_tela === 'equipamentos') await carregarEquipamentos();
+  if (_tela === 'rdo')          await carregarRDOs();
 }
 
 /* ============================================================
@@ -1714,8 +1718,284 @@ async function lancarHoje() {
 // As folhas do RDO também fecham no Escape.
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
-  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo']
+  ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento']
     .forEach(id => { $(id).hidden = true; });
 });
 
 ligarCamposDoRDO();
+
+/* ============================================================
+   EQUIPAMENTOS — a frota da obra
+   O prefixo é único no banco inteiro, não por obra: dois canteiros
+   não podem chamar máquinas diferentes de ESC-01. E obra_id aceita
+   ficar vazio, então existe frota que não está em obra nenhuma.
+   ============================================================ */
+
+const CATEGORIA_EQ  = { pesado:'Pesado', leve:'Leve', apoio:'Apoio', ferramenta:'Ferramenta' };
+const PROPRIEDADE_EQ = { proprio:'Próprio', locado:'Locado' };
+
+let _frota    = [];   // ativos desta obra
+let _semObra  = [];   // ativos sem obra
+let _foraFrota = [];  // inativos desta obra
+let _disp     = {};   // disponibilidade do mês, por prefixo
+let _eqEditando = null;
+
+function mesAtualISO() { return hojeISO().slice(0, 8) + '01'; }
+
+async function carregarEquipamentos() {
+  $('eq-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('eq-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+
+  const [daObra, soltos, inativos, disp] = await Promise.all([
+    db.from('equipamentos').select('*').eq('obra_id', _obra.id).eq('ativo', true).order('prefixo'),
+    db.from('equipamentos').select('*').is('obra_id', null).eq('ativo', true).order('prefixo'),
+    db.from('equipamentos').select('*').eq('obra_id', _obra.id).eq('ativo', false).order('prefixo'),
+    db.from('vw_disponibilidade_equipamento')
+      .select('prefixo, horas_operando, horas_paradas, disponibilidade_pct')
+      .eq('obra', _obra.codigo).eq('mes', mesAtualISO())
+  ]);
+
+  if (daObra.error) {
+    area.innerHTML = vazioHTML('Não consegui ler a frota.', daObra.error.message);
+    return;
+  }
+
+  _frota     = daObra.data || [];
+  _semObra   = soltos.error   ? [] : (soltos.data   || []);
+  _foraFrota = inativos.error ? [] : (inativos.data || []);
+
+  _disp = {};
+  (disp.error ? [] : (disp.data || [])).forEach(d => { _disp[d.prefixo] = d; });
+
+  renderEqNumeros();
+  filtrarEq();
+  renderSemObra();
+  renderForaFrota();
+}
+
+function nivelDisp(pct) {
+  if (pct == null) return null;
+  if (pct < 70) return 'baixa';
+  if (pct < 90) return 'meia';
+  return 'boa';
+}
+
+function renderEqNumeros() {
+  const locados = _frota.filter(e => e.propriedade === 'locado').length;
+  const comDado = _frota.map(e => _disp[e.prefixo]).filter(Boolean);
+  const media = comDado.length
+    ? Math.round(comDado.reduce((s, d) => s + Number(d.disponibilidade_pct || 0), 0) / comDado.length)
+    : null;
+
+  const tiles = [
+    { rot: 'Na frota',      val: _frota.length,          sub: plural(_foraFrota.length, 'fora da frota', 'fora da frota') },
+    { rot: 'Próprios',      val: _frota.length - locados, sub: 'da empresa' },
+    { rot: 'Locados',       val: locados,                sub: locados ? 'de terceiros' : 'nenhum' },
+    { rot: 'Disponib. do mês', val: media == null ? '—' : media + '%',
+      sub: comDado.length ? plural(comDado.length, 'com apontamento', 'com apontamento') : 'sem horas no RDO',
+      urgente: media != null && media < 70 }
+  ];
+
+  const area = $('eq-numeros');
+  area.innerHTML = '';
+  tiles.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'num';
+    const rot = document.createElement('p'); rot.className = 'rotulo'; rot.textContent = t.rot;
+    const val = document.createElement('b'); val.textContent = t.val;
+    const sub = document.createElement('small'); sub.textContent = t.sub;
+    if (t.urgente) sub.className = 'alerta';
+    div.append(rot, val, sub);
+    area.appendChild(div);
+  });
+}
+
+function linhaEquipamento(e, opcoes) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'pessoa' + (opcoes && opcoes.apagada ? ' baixada' : '');
+
+  const tarja = document.createElement('span'); tarja.className = 'tarja';
+  const pref  = document.createElement('span'); pref.className = 'pref'; pref.textContent = e.prefixo;
+
+  const miolo = document.createElement('span'); miolo.className = 'miolo';
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = e.tipo;
+  const sub = document.createElement('span'); sub.className = 'sub';
+  sub.textContent = [e.marca, e.modelo, e.placa, e.ano,
+                     e.propriedade === 'locado' ? e.fornecedor : null]
+                    .filter(Boolean).join(' · ') || CATEGORIA_EQ[e.categoria];
+  miolo.append(nm, sub);
+
+  const lado = document.createElement('span'); lado.className = 'lado';
+  const prop = document.createElement('span');
+  prop.className = 'chip'; prop.dataset.prop = e.propriedade;
+  prop.textContent = PROPRIEDADE_EQ[e.propriedade] || e.propriedade;
+  lado.appendChild(prop);
+
+  const d = _disp[e.prefixo];
+  if (d && d.disponibilidade_pct != null) {
+    const c = document.createElement('span');
+    c.className = 'chip disp';
+    c.dataset.nivel = nivelDisp(Number(d.disponibilidade_pct));
+    c.textContent = Number(d.disponibilidade_pct).toLocaleString('pt-BR') + '% disp';
+    lado.appendChild(c);
+    if (nivelDisp(Number(d.disponibilidade_pct)) === 'baixa') b.dataset.nivel = 'grave';
+  }
+
+  b.append(tarja, pref, miolo, lado);
+  b.addEventListener('click', () => abrirEquipamento(e));
+  return b;
+}
+
+function filtrarEq() {
+  const termo = ($('busca-eq').value || '').trim().toLowerCase();
+  const vistos = termo
+    ? _frota.filter(e => [e.prefixo, e.tipo, e.marca, e.modelo, e.placa]
+        .filter(Boolean).join(' ').toLowerCase().includes(termo))
+    : _frota;
+
+  const area = $('eq-lista');
+
+  if (!_frota.length) {
+    area.innerHTML = vazioHTML('Nenhum equipamento nesta obra.',
+      'Cadastre a frota aqui e ela passa a aparecer no RDO para apontar horas.');
+    return;
+  }
+  if (!vistos.length) {
+    area.innerHTML = vazioHTML('Nenhum equipamento encontrado com "' + termo + '".');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(e => cx.appendChild(linhaEquipamento(e)));
+}
+
+$('busca-eq').addEventListener('input', filtrarEq);
+
+function renderSemObra() {
+  $('bloco-sem-obra').hidden = !_semObra.length;
+  if (!_semObra.length) return;
+  $('btn-sem-obra').textContent = 'Sem obra (' + _semObra.length + ')';
+  const area = $('sem-obra-lista');
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  _semObra.forEach(e => cx.appendChild(linhaEquipamento(e)));
+}
+
+function renderForaFrota() {
+  $('bloco-fora-frota').hidden = !_foraFrota.length;
+  if (!_foraFrota.length) return;
+  $('btn-fora-frota').textContent = 'Fora da frota (' + _foraFrota.length + ')';
+  const area = $('fora-frota-lista');
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  _foraFrota.forEach(e => cx.appendChild(linhaEquipamento(e, { apagada: true })));
+}
+
+[['btn-sem-obra','sem-obra-lista'], ['btn-fora-frota','fora-frota-lista']].forEach(([bt, lst]) => {
+  $(bt).addEventListener('click', () => {
+    const area = $(lst);
+    area.hidden = !area.hidden;
+    $(bt).setAttribute('aria-expanded', String(!area.hidden));
+  });
+});
+
+/* ---------- folha ---------- */
+// Fornecedor só faz sentido em equipamento locado. Campo que não se
+// aplica atrapalha mais do que ajuda.
+function alternarFornecedor() {
+  $('campo-fornecedor').hidden = $('q-propriedade').value !== 'locado';
+}
+$('q-propriedade').addEventListener('change', alternarFornecedor);
+
+function abrirEquipamento(e) {
+  _eqEditando = e || null;
+  $('titulo-equipamento').textContent = e ? e.prefixo : 'Novo equipamento';
+  $('q-prefixo').value     = e ? e.prefixo : '';
+  $('q-tipo').value        = e ? e.tipo : '';
+  $('q-categoria').value   = e ? e.categoria : 'pesado';
+  $('q-propriedade').value = e ? e.propriedade : 'proprio';
+  $('q-fornecedor').value  = e && e.fornecedor ? e.fornecedor : '';
+  $('q-marca').value       = e && e.marca ? e.marca : '';
+  $('q-modelo').value      = e && e.modelo ? e.modelo : '';
+  $('q-placa').value       = e && e.placa ? e.placa : '';
+  $('q-ano').value         = e && e.ano ? e.ano : '';
+  $('q-nesta-obra').checked = e ? e.obra_id === _obra.id : true;
+
+  $('btn-tirar-frota').hidden   = !e || !e.ativo;
+  $('btn-voltar-frota').hidden  = !e || e.ativo;
+  $('erro-equipamento').hidden = true;
+  alternarFornecedor();
+  $('folha-equipamento').hidden = false;
+  if (!e) $('q-prefixo').focus();
+}
+
+$('btn-novo-equipamento').addEventListener('click', () => abrirEquipamento(null));
+$('btn-fechar-equipamento').addEventListener('click', () => { $('folha-equipamento').hidden = true; });
+$('folha-equipamento').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-equipamento')) $('folha-equipamento').hidden = true;
+});
+
+$('form-equipamento').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-equipamento');
+  const botao = $('btn-salvar-equipamento');
+  erro.hidden = true;
+
+  const prefixo = $('q-prefixo').value.trim().toUpperCase();
+  const tipo    = $('q-tipo').value.trim();
+  if (!prefixo) return falhar(erro, 'O prefixo é obrigatório — é por ele que a máquina é chamada na obra.');
+  if (!tipo)    return falhar(erro, 'Diga o tipo do equipamento.');
+
+  const ano = $('q-ano').value === '' ? null : Number($('q-ano').value);
+  if (ano != null && (ano < 1950 || ano > 2100))
+    return falhar(erro, 'O ano parece errado. Confira.');
+
+  const locado = $('q-propriedade').value === 'locado';
+  const linha = {
+    prefixo, tipo,
+    categoria:   $('q-categoria').value,
+    propriedade: $('q-propriedade').value,
+    fornecedor:  locado ? ($('q-fornecedor').value.trim() || null) : null,
+    marca:  $('q-marca').value.trim()  || null,
+    modelo: $('q-modelo').value.trim() || null,
+    placa:  $('q-placa').value.trim().toUpperCase() || null,
+    ano,
+    obra_id: $('q-nesta-obra').checked ? _obra.id : null
+  };
+
+  botao.disabled = true; botao.textContent = 'Salvando…';
+  const { error } = _eqEditando
+    ? await db.from('equipamentos').update(linha).eq('id', _eqEditando.id)
+    : await db.from('equipamentos').insert({ ...linha, ativo: true });
+  botao.disabled = false; botao.textContent = 'Salvar';
+
+  if (error) {
+    // O prefixo é único no banco INTEIRO. Vale dizer isso: quem lê
+    // pensaria que a briga é só dentro da obra.
+    return falhar(erro, /equipamentos_prefixo_key/.test(error.message)
+      ? `Já existe um equipamento com o prefixo ${prefixo} — o prefixo é único em todas as obras, não só nesta.`
+      : 'Não consegui salvar: ' + error.message);
+  }
+
+  $('folha-equipamento').hidden = true;
+  await carregarEquipamentos();
+  await carregarPainel();
+});
+
+// Baixa lógica: tirar da frota não apaga. O equipamento pode ter horas
+// lançadas em RDO antigo, e apagar levaria o histórico junto.
+async function mudarFrota(ativo) {
+  if (!_eqEditando) return;
+  const { error } = await db.from('equipamentos').update({ ativo }).eq('id', _eqEditando.id);
+  if (error) return falhar($('erro-equipamento'), 'Não consegui alterar: ' + error.message);
+  $('folha-equipamento').hidden = true;
+  await carregarEquipamentos();
+  await carregarPainel();
+}
+$('btn-tirar-frota').addEventListener('click', () => mudarFrota(false));
+$('btn-voltar-frota').addEventListener('click', () => mudarFrota(true));

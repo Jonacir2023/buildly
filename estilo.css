@@ -649,3 +649,22 @@ textarea {
 .rdo-item .miolo { flex: 1 1 auto; min-width: 0; }
 .rdo-item .dt { display: block; font-weight: 500; }
 .rdo-item .sub { display: block; font-size: 13px; color: var(--ink-soft); }
+
+/* ---------- equipamentos ---------- */
+#tela-equipamentos { display: flex; flex-direction: column; gap: var(--e4); }
+#bloco-sem-obra, #bloco-fora-frota { align-items: flex-start; }
+#bloco-sem-obra > div, #bloco-fora-frota > div { align-self: stretch; }
+
+.chip[data-prop="locado"]  { background: var(--warn-weak);  color: var(--warn); }
+.chip[data-prop="proprio"] { background: var(--ok-weak);    color: var(--ok); }
+.chip.disp { font-family: var(--mono); text-transform: none; letter-spacing: 0;
+             font-variant-numeric: tabular-nums; }
+.chip.disp[data-nivel="baixa"] { background: var(--danger-weak); color: var(--danger); }
+.chip.disp[data-nivel="meia"]  { background: var(--warn-weak);   color: var(--warn); }
+.chip.disp[data-nivel="boa"]   { background: var(--ok-weak);     color: var(--ok); }
+
+.pessoa .pref {
+  flex: none; font-family: var(--mono); font-weight: 600; font-size: 13px;
+  background: var(--surface-2); color: var(--ink); border-radius: var(--r-sm);
+  padding: 4px 9px;
+}

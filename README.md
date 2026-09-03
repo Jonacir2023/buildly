@@ -83,6 +83,26 @@ data)` — e não com o efetivo de hoje.
 `vw_rdo_resumo` e `vw_efetivo` expõem `o.codigo` em `obra` — todas as
 consultas filtram pelo código, nunca pelo nome.
 
+## Equipamentos
+
+`equipamentos.prefixo` é **UNIQUE global**, não por obra — a mensagem de
+erro diz isso, senão o usuário procuraria o conflito só dentro da obra.
+`obra_id` é anulável: existe frota não alocada, e só a alocada aparece no
+seletor do RDO.
+
+`vw_disponibilidade_equipamento` calcula `operando / (operando + paradas)`
+por prefixo e mês, a partir de `rdo_equipamentos`. A tela mostra o mês
+corrente; sem horas lançadas não mostra nada em vez de mostrar zero.
+
+Baixa é lógica (`ativo = false`). O banco recusa apagar equipamento com
+lançamento em RDO (`ON DELETE RESTRICT`).
+
+| Regra do banco | O que o usuário lê |
+|---|---|
+| `equipamentos_prefixo_key` | prefixo único em todas as obras |
+| `categoria` in (…) | seletor fechado: pesado, leve, apoio, ferramenta |
+| `propriedade` in (…) | seletor fechado: próprio, locado |
+
 ## Ainda não pronto
 
 Os outros módulos estão desabilitados e marcados "em construção" — a

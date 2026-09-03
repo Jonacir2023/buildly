@@ -146,6 +146,40 @@
 
      </section>
 
+
+     <!-- ============ EQUIPAMENTOS ============ -->
+     <section id="tela-equipamentos" hidden>
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Equipamentos</p>
+          <h1 id="eq-titulo">—</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-novo-equipamento" type="button">+ Equipamento</button>
+      </div>
+
+      <div class="numeros" id="eq-numeros"></div>
+
+      <label class="busca">
+        <span class="sr">Buscar</span>
+        <input type="search" id="busca-eq" autocomplete="off"
+               placeholder="Buscar por prefixo, tipo, marca ou placa">
+      </label>
+
+      <div id="eq-lista"></div>
+
+      <div class="bloco" id="bloco-sem-obra" hidden>
+        <button class="btn-texto btn-abre" id="btn-sem-obra" type="button"
+                aria-expanded="false">Sem obra (0)</button>
+        <div id="sem-obra-lista" hidden></div>
+      </div>
+
+      <div class="bloco" id="bloco-fora-frota" hidden>
+        <button class="btn-texto btn-abre" id="btn-fora-frota" type="button"
+                aria-expanded="false">Fora da frota (0)</button>
+        <div id="fora-frota-lista" hidden></div>
+      </div>
+     </section>
+
      <!-- ============ RDO — lista ============ -->
      <section id="tela-rdo" hidden>
       <div class="mod-topo">
@@ -324,7 +358,7 @@
         <label class="campo">
           <span>Código *</span>
           <input type="text" id="obra-codigo" maxlength="12" autocapitalize="characters"
-                 spellcheck="false" required placeholder="ETA">
+                 spellcheck="false" required placeholder="TESTE">
         </label>
         <label class="campo">
           <span>UF</span>
@@ -334,11 +368,11 @@
       </div>
       <label class="campo">
         <span>Nome da obra *</span>
-        <input type="text" id="obra-nome-in" required placeholder="ETA Suzano">
+        <input type="text" id="obra-nome-in" required placeholder="Obra Teste">
       </label>
       <label class="campo">
         <span>Cidade</span>
-        <input type="text" id="obra-cidade" placeholder="Suzano">
+        <input type="text" id="obra-cidade" placeholder="Cidade da obra">
       </label>
       <label class="campo">
         <span>Empresa executora</span>
@@ -350,7 +384,7 @@
       </label>
       <label class="campo">
         <span>Descrição do local</span>
-        <input type="text" id="obra-local" placeholder="Estação de tratamento — margem sul">
+        <input type="text" id="obra-local" placeholder="Referência do canteiro">
       </label>
       <p class="erro" id="erro-obra" hidden></p>
       <button class="btn btn-primario" type="submit" id="btn-salvar-obra">Salvar obra</button>
@@ -583,6 +617,90 @@
       <p class="explica" id="explica-novo-rdo"></p>
       <p class="erro" id="erro-novo-rdo" hidden></p>
       <button class="btn btn-primario" type="submit" id="btn-criar-rdo">Abrir o diário</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ EQUIPAMENTO (cadastrar / editar) ============ -->
+<div class="folha" id="folha-equipamento" hidden role="dialog" aria-modal="true" aria-label="Equipamento">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-equipamento">Novo equipamento</h2>
+      <button class="icone" id="btn-fechar-equipamento" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <form id="form-equipamento" novalidate>
+      <div class="frow-2 curta-dir">
+        <label class="campo">
+          <span>Prefixo *</span>
+          <input type="text" id="q-prefixo" required spellcheck="false"
+                 autocapitalize="characters" placeholder="ESC-01">
+        </label>
+        <label class="campo">
+          <span>Ano</span>
+          <input type="number" id="q-ano" inputmode="numeric" min="1950" max="2100">
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Tipo *</span>
+        <input type="text" id="q-tipo" required placeholder="Escavadeira hidráulica">
+      </label>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Categoria</span>
+          <select id="q-categoria">
+            <option value="pesado">Pesado</option>
+            <option value="leve">Leve</option>
+            <option value="apoio">Apoio</option>
+            <option value="ferramenta">Ferramenta</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Propriedade</span>
+          <select id="q-propriedade">
+            <option value="proprio">Próprio</option>
+            <option value="locado">Locado</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="campo" id="campo-fornecedor" hidden>
+        <span>Fornecedor</span>
+        <input type="text" id="q-fornecedor" placeholder="Quem loca o equipamento">
+      </label>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Marca</span>
+          <input type="text" id="q-marca">
+        </label>
+        <label class="campo">
+          <span>Modelo</span>
+          <input type="text" id="q-modelo">
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Placa</span>
+        <input type="text" id="q-placa" spellcheck="false" autocapitalize="characters">
+      </label>
+
+      <label class="marca-caixa">
+        <input type="checkbox" id="q-nesta-obra" checked>
+        <span>
+          <b>Alocado nesta obra</b>
+          <small id="dica-obra-eq">Só equipamento alocado aparece para apontar no RDO.</small>
+        </span>
+      </label>
+
+      <p class="erro" id="erro-equipamento" hidden></p>
+
+      <button class="btn btn-primario" type="submit" id="btn-salvar-equipamento">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-tirar-frota" hidden>Tirar da frota</button>
+      <button class="btn btn-secundario" type="button" id="btn-voltar-frota" hidden>Voltar para a frota</button>
     </form>
   </div>
 </div>
