@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3EFE9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#211E1B" media="(prefers-color-scheme: dark)">
+<meta name="description" content="BUILDLy — painel de gestão de obra: RDO, efetivo, alertas de prazo e ocorrências.">
+<title>BUILDLy — Painel da obra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<!-- Ícones em SVG, não emoji: emoji muda de desenho a cada aparelho
+     e não aceita a cor da marca. -->
+<svg class="svg-oculto" aria-hidden="true">
+  <symbol id="i-rdo" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 16h7"/></symbol>
+  <symbol id="i-efetivo" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 20c0-2.5-.9-4.2-2.4-5.2"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10.5 20a2 2 0 0 0 3 0"/></symbol>
+  <symbol id="i-epi" viewBox="0 0 24 24"><path d="M3 16h18v2H3z"/><path d="M5 16a7 7 0 0 1 14 0"/><path d="M10 3.6a7 7 0 0 0-1.4 5.6M14 3.6a7 7 0 0 1 1.4 5.6"/><path d="M10 3.5h4v3h-4z"/></symbol>
+  <symbol id="i-ocorrencia" viewBox="0 0 24 24"><path d="M12 3.5 22 20H2z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".9" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-tarefa" viewBox="0 0 24 24"><path d="M4 6.5 6 8.5 10 4.5"/><path d="M4 17.5 6 19.5 10 15.5"/><path d="M13 7h8M13 18h8"/></symbol>
+  <symbol id="i-nf" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.3-1.6L14.4 21l-2.4-1.6L9.6 21l-2.3-1.6L5 21z"/><path d="M8.5 8h7M8.5 12h7"/></symbol>
+  <symbol id="i-equip" viewBox="0 0 24 24"><circle cx="6.5" cy="17.5" r="2.6"/><circle cx="17" cy="17.5" r="2.6"/><path d="M4 14V8h5l3 4h7v5.5"/><path d="M9 8V5h4"/></symbol>
+  <symbol id="i-medicao" viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6 20V11M11 20V6M16 20v-6M21 20V9"/></symbol>
+  <symbol id="i-reuniao" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10.5h7"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M4 5h6l2 2.5h8V19H4z"/><path d="M8 13h8"/></symbol>
+  <symbol id="i-baixo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14 4h4.5v16H14"/><path d="M10 8l-4 4 4 4M6.5 12H16"/></symbol>
+</svg>
+
+<!-- ============ ENTRAR ============ -->
+<main class="tela-login" id="tela-login" hidden>
+  <div class="login-caixa">
+    <p class="marca">BUILD<span>Ly</span></p>
+    <p class="marca-sub">Gestão de obra</p>
+
+    <form id="form-login" novalidate>
+      <label class="campo">
+        <span>E-mail</span>
+        <input type="email" id="email" autocomplete="username" inputmode="email"
+               autocapitalize="off" spellcheck="false" required>
+      </label>
+      <label class="campo">
+        <span>Senha</span>
+        <input type="password" id="senha" autocomplete="current-password" required>
+      </label>
+      <p class="erro" id="erro-login" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-entrar">Entrar</button>
+    </form>
+  </div>
+</main>
+
+<!-- ============ PAINEL ============ -->
+<div id="app" hidden>
+
+  <header class="topo">
+    <p class="marca marca-topo">BUILD<span>Ly</span></p>
+
+    <button class="obra-btn" id="btn-obra" type="button" hidden
+            aria-haspopup="dialog" title="Trocar de obra">
+      <span class="cod" id="obra-cod">—</span>
+      <span class="nm" id="obra-nome">—</span>
+      <svg class="ic" aria-hidden="true"><use href="#i-baixo"></use></svg>
+    </button>
+
+    <div class="topo-dir">
+      <span class="sinal" id="sinal" hidden>sem sinal</span>
+      <button class="icone" id="btn-sair" type="button" title="Sair" aria-label="Sair">
+        <svg class="ic" aria-hidden="true"><use href="#i-sair"></use></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="moldura">
+
+    <!-- trilho de módulos: grade no celular, coluna fixa no monitor -->
+    <nav class="trilho" aria-label="Módulos">
+      <p class="rotulo">Módulos</p>
+      <div class="modulos" id="modulos"></div>
+    </nav>
+
+    <main class="conteudo">
+
+      <!-- FAIXA DO DIA -->
+      <section class="faixa" id="faixa" data-estado="vazio" aria-live="polite">
+        <p class="faixa-dia" id="faixa-dia">—<small id="faixa-mes">—</small></p>
+        <div class="faixa-txt">
+          <p class="rotulo" id="faixa-semana">—</p>
+          <h1 id="faixa-titulo">Carregando a obra…</h1>
+          <p id="faixa-linha"></p>
+        </div>
+        <div class="faixa-acao" id="faixa-acao" hidden></div>
+      </section>
+
+      <!-- NÚMEROS DA OBRA -->
+      <section class="numeros" id="numeros" aria-label="Números da obra"></section>
+
+      <!-- ALERTAS DE PRAZO -->
+      <section class="bloco">
+        <div class="bloco-topo">
+          <h2>Prazos a vencer</h2>
+          <button class="btn-texto" id="btn-todos-alertas" type="button" hidden>Ver todos</button>
+        </div>
+        <div id="alertas-area"></div>
+      </section>
+
+    </main>
+
+    <p class="nota-rodape">
+      <span class="ponto" id="ponto-banco"></span>
+      <span id="estado-banco">verificando o banco…</span>
+      <span id="estado-perfil"></span>
+    </p>
+  </div>
+</div>
+
+<!-- ============ ESCOLHER OBRA ============ -->
+<div class="folha" id="folha-escolha" hidden role="dialog" aria-modal="true" aria-label="Escolher obra">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Obra</h2>
+      <button class="icone" id="btn-fechar-escolha" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <div class="obra-lista" id="lista-obras"></div>
+    <p style="margin:var(--e5) 0 0">
+      <button class="btn btn-secundario" id="btn-nova-obra" type="button" style="width:100%">+ Cadastrar obra</button>
+    </p>
+  </div>
+</div>
+
+<!-- ============ NOVA OBRA ============ -->
+<div class="folha" id="folha-obra" hidden role="dialog" aria-modal="true" aria-label="Nova obra">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Nova obra</h2>
+      <button class="icone" id="btn-fechar-obra" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <form id="form-obra" novalidate>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Código *</span>
+          <input type="text" id="obra-codigo" maxlength="12" autocapitalize="characters"
+                 spellcheck="false" required placeholder="ETA">
+        </label>
+        <label class="campo">
+          <span>UF</span>
+          <input type="text" id="obra-uf" maxlength="2" autocapitalize="characters"
+                 spellcheck="false" placeholder="SP">
+        </label>
+      </div>
+      <label class="campo">
+        <span>Nome da obra *</span>
+        <input type="text" id="obra-nome-in" required placeholder="ETA Suzano">
+      </label>
+      <label class="campo">
+        <span>Cidade</span>
+        <input type="text" id="obra-cidade" placeholder="Suzano">
+      </label>
+      <label class="campo">
+        <span>Empresa executora</span>
+        <input type="text" id="obra-empresa" value="Cesbe">
+      </label>
+      <label class="campo">
+        <span>Consórcio</span>
+        <input type="text" id="obra-consorcio" placeholder="deixe em branco se não houver">
+      </label>
+      <label class="campo">
+        <span>Descrição do local</span>
+        <input type="text" id="obra-local" placeholder="Estação de tratamento — margem sul">
+      </label>
+      <p class="erro" id="erro-obra" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-obra">Salvar obra</button>
+    </form>
+  </div>
+</div>
+
+<div class="carregando" id="carregando"><span></span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

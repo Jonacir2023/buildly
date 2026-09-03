@@ -1,0 +1,428 @@
+/* ============================================================
+   BUILDLy — paleta Terra
+   Ocre e grafite sobre concreto.
+
+   Três ocres, e a diferença não é gosto: é contraste. O ocre de
+   marca (#B4622A) tem 4,4:1 sobre o concreto e reprova em texto
+   pequeno. Por isso fica em marca e ícone; texto usa o fechado.
+
+   Cor semântica (ok / atenção / grave) é outra família. Não é
+   sotaque da marca: é informação. Nunca escreva cor solta.
+   ============================================================ */
+
+:root {
+  --bg:            #F3EFE9;
+  --surface:       #FFFFFF;
+  --surface-2:     #EAE4DA;
+  --line:          #DFD7C9;
+  --line-forte:    #C9BEAB;
+
+  --ink:           #2E2A26;   /* 12,9:1 */
+  --ink-soft:      #6E6459;   /*  5,6:1 */
+  --ink-faint:     #9A8F81;   /* decorativo, nunca texto */
+
+  --accent-text:   #9C4F1E;   /*  5,2:1 */
+  --accent:        #A85822;   /* fundo de botão, branco em cima: 5,1:1 */
+  --accent-mark:   #B4622A;   /* marca e ícone — sem texto em cima */
+  --accent-weak:   #F5E7DA;
+  --on-accent:     #FFFFFF;
+
+  --ok:            #46703A;   --ok-weak:     #E8F0E3;
+  --warn:          #A8700E;   --warn-weak:   #FBF1DC;
+  --danger:        #A32E22;   --danger-weak: #F8E5E2;
+  --info:          #2C5C73;   --info-weak:   #E3EDF2;
+
+  --r-sm: 6px; --r-md: 9px; --r-lg: 14px;
+  --toque: 48px;
+  --sombra: 0 1px 2px rgba(46,42,38,.10), 0 8px 24px rgba(46,42,38,.06);
+
+  --e1: 4px; --e2: 8px; --e3: 12px; --e4: 16px; --e5: 24px; --e6: 32px; --e7: 48px;
+
+  --sans: "Barlow", system-ui, -apple-system, sans-serif;
+  --cond: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#211E1B; --surface:#2A2622; --surface-2:#332E29;
+    --line:#3D3730; --line-forte:#524A41;
+    --ink:#EFE9E0; --ink-soft:#B0A597; --ink-faint:#7A7166;
+    --accent-text:#E09A5C; --accent:#D98A4A; --accent-mark:#E5975A;
+    --accent-weak:#3A2E23; --on-accent:#211E1B;
+    --ok:#6FB05C; --ok-weak:#24301F;
+    --warn:#DCA92F; --warn-weak:#332B12;
+    --danger:#E0705F; --danger-weak:#3A211D;
+    --info:#6FA8C4; --info-weak:#1E2C33;
+    --sombra: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#211E1B; --surface:#2A2622; --surface-2:#332E29;
+  --line:#3D3730; --line-forte:#524A41;
+  --ink:#EFE9E0; --ink-soft:#B0A597; --ink-faint:#7A7166;
+  --accent-text:#E09A5C; --accent:#D98A4A; --accent-mark:#E5975A;
+  --accent-weak:#3A2E23; --on-accent:#211E1B;
+  --ok:#6FB05C; --ok-weak:#24301F;
+  --warn:#DCA92F; --warn-weak:#332B12;
+  --danger:#E0705F; --danger-weak:#3A211D;
+  --info:#6FA8C4; --info-weak:#1E2C33;
+  --sombra: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+h1, h2, h3 { text-wrap: balance; }
+
+/* Dedo de luva não acerta alvo pequeno. */
+button { min-height: var(--toque); font-family: inherit; }
+:focus-visible { outline: 3px solid var(--accent-text); outline-offset: 2px; border-radius: var(--r-sm); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.svg-oculto { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic { width: 24px; height: 24px; flex: none; stroke: currentColor; fill: none;
+      stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- marca ---------- */
+.marca {
+  font-family: var(--cond); font-weight: 700; letter-spacing: .02em;
+  color: var(--accent-mark); margin: 0; line-height: 1;
+}
+.marca span { color: var(--ink); }
+
+/* rótulo em versalete: aparece em todo bloco, sempre igual */
+.rotulo {
+  font-family: var(--cond); font-size: 12px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ============================================================
+   ENTRAR
+   ============================================================ */
+.tela-login { min-height: 100svh; display: grid; place-items: center; padding: var(--e5); }
+.login-caixa { width: 100%; max-width: 360px; }
+.login-caixa .marca { font-size: 44px; }
+.marca-sub {
+  font-family: var(--cond); font-size: 15px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ink-soft); margin: var(--e2) 0 var(--e6);
+}
+
+form { display: flex; flex-direction: column; gap: var(--e4); }
+.campo { display: flex; flex-direction: column; gap: var(--e1); }
+.campo > span {
+  font-family: var(--cond); font-size: 13px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft);
+}
+input, select, textarea {
+  font-family: var(--sans); font-size: 16px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-forte);
+  border-radius: var(--r-md); padding: 13px 14px; min-height: var(--toque);
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent-text); }
+
+.btn {
+  font-family: var(--cond); font-weight: 700; font-size: 17px;
+  letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid transparent; border-radius: var(--r-md);
+  padding: 13px var(--e5); cursor: pointer; min-height: var(--toque);
+}
+.btn-primario { background: var(--accent); color: var(--on-accent); }
+.btn-primario:disabled { opacity: .55; cursor: progress; }
+.btn-secundario { background: var(--surface); color: var(--accent-text); border-color: var(--line-forte); }
+
+.erro {
+  background: var(--danger-weak); color: var(--danger);
+  border-left: 3px solid var(--danger); border-radius: var(--r-sm);
+  padding: 11px 13px; margin: 0; font-size: 15px;
+}
+
+/* ============================================================
+   TOPO
+   ============================================================ */
+.topo {
+  display: flex; align-items: center; gap: var(--e3);
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: var(--e2) var(--e4);
+  padding-top: calc(var(--e2) + env(safe-area-inset-top));
+  position: sticky; top: 0; z-index: 30;
+}
+.marca-topo { font-size: 22px; flex: none; }
+
+/* seletor de obra: é o contexto de tudo que a tela mostra, então
+   mora no topo e não some ao rolar. */
+.obra-btn {
+  display: flex; align-items: center; gap: var(--e2);
+  background: var(--surface-2); border: 1px solid var(--line-forte);
+  border-radius: 99px; padding: 5px 10px 5px 6px; min-height: 38px;
+  cursor: pointer; color: var(--ink); max-width: 46vw;
+}
+.obra-btn .cod {
+  font-family: var(--mono); font-weight: 600; font-size: 12px;
+  background: var(--accent-weak); color: var(--accent-text);
+  border-radius: 99px; padding: 3px 8px; flex: none;
+}
+.obra-btn .nm {
+  font-family: var(--cond); font-weight: 600; font-size: 15px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.obra-btn .ic { width: 16px; height: 16px; color: var(--ink-soft); }
+
+.topo-dir { margin-left: auto; display: flex; align-items: center; gap: var(--e2); }
+.sinal {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--warn); background: var(--warn-weak);
+  border: 1px solid var(--warn); border-radius: 99px; padding: 3px 9px;
+}
+.icone {
+  display: grid; place-items: center;
+  background: none; border: 1px solid var(--line-forte);
+  border-radius: var(--r-md); color: var(--ink-soft);
+  min-width: 44px; min-height: 44px; cursor: pointer;
+}
+.icone:hover { color: var(--accent-text); border-color: var(--accent-text); }
+
+/* ============================================================
+   MOLDURA — trilho de módulos + painel
+   ============================================================ */
+.moldura { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; }
+.conteudo    { order: 1; }
+.trilho      { order: 2; }
+.nota-rodape { order: 3; }
+.conteudo {
+  padding: var(--e5) var(--e4) var(--e7);
+  display: flex; flex-direction: column; gap: var(--e5);
+}
+
+@media (min-width: 1040px) {
+  .moldura { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: var(--e6); padding: 0 var(--e5); }
+  .trilho   { order: 1; }
+  .conteudo { order: 2; padding: var(--e6) 0 var(--e7); }
+}
+
+/* ============================================================
+   FAIXA DO DIA
+   A pergunta das seis da manhã é uma só: o RDO de hoje saiu?
+   Por isso é a primeira coisa da tela, e é a única com peso.
+   Régua em cima e embaixo — o cabeçalho do RDO de papel que
+   isto aqui substitui.
+   ============================================================ */
+.faixa {
+  background: var(--surface);
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  padding: var(--e4);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--e3) var(--e4);
+  align-items: center;
+}
+.faixa-dia {
+  font-family: var(--mono); font-weight: 600; font-size: 40px;
+  line-height: .95; color: var(--ink); font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.faixa-dia small {
+  display: block; font-family: var(--cond); font-size: 13px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft);
+  margin-top: 3px;
+}
+.faixa-txt { min-width: 0; }
+.faixa-txt h1 {
+  font-family: var(--cond); font-weight: 700; font-size: 25px;
+  margin: 2px 0 0; line-height: 1.15;
+}
+.faixa-txt p { margin: var(--e1) 0 0; color: var(--ink-soft); font-size: 15px; }
+.faixa-acao { grid-column: 1 / -1; display: flex; gap: var(--e2); flex-wrap: wrap; }
+.faixa-acao .btn { flex: 1 1 auto; }
+@media (min-width: 620px) { .faixa-acao .btn { flex: 0 1 auto; min-width: 260px; } }
+
+/* estado do RDO: a cor é informação, não enfeite */
+.faixa[data-estado="lancado"]   { border-top-color: var(--ok); }
+.faixa[data-estado="pendente"]  { border-top-color: var(--warn); }
+.faixa[data-estado="atrasado"]  { border-top-color: var(--danger); }
+.faixa[data-estado="lancado"]  .faixa-dia { color: var(--ok); }
+.faixa[data-estado="pendente"] .faixa-dia { color: var(--warn); }
+.faixa[data-estado="atrasado"] .faixa-dia { color: var(--danger); }
+
+/* ============================================================
+   NÚMEROS
+   ============================================================ */
+.numeros { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e3); }
+@media (min-width: 700px) { .numeros { grid-template-columns: repeat(4, 1fr); } }
+
+.num {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--e3) var(--e4) var(--e4);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.num .rotulo { font-size: 11px; letter-spacing: .1em; }
+.num b {
+  font-family: var(--mono); font-weight: 600; font-size: 30px; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.num small { font-size: 13px; color: var(--ink-soft); }
+.num small.alerta { color: var(--danger); font-weight: 600; }
+
+/* ============================================================
+   ALERTAS — prazo de experiência e viagem
+   ============================================================ */
+.bloco { display: flex; flex-direction: column; gap: var(--e3); }
+.bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+.bloco-topo h2 { font-family: var(--cond); font-weight: 700; font-size: 20px; margin: 0; }
+.btn-texto {
+  background: none; border: none; padding: 0; min-height: 0;
+  font-family: var(--cond); font-weight: 600; font-size: 15px;
+  letter-spacing: .02em; color: var(--accent-text); cursor: pointer;
+}
+
+.lista { display: flex; flex-direction: column; gap: 1px;
+         background: var(--line); border: 1px solid var(--line);
+         border-radius: var(--r-lg); overflow: hidden; }
+.linha {
+  background: var(--surface); padding: var(--e3) var(--e4);
+  display: flex; align-items: center; gap: var(--e3);
+}
+.linha .tarja { width: 5px; align-self: stretch; border-radius: 99px; flex: none; background: var(--ink-faint); }
+.linha[data-nivel="grave"]   .tarja { background: var(--danger); }
+.linha[data-nivel="atencao"] .tarja { background: var(--warn); }
+.linha[data-nivel="calmo"]   .tarja { background: var(--ok); }
+.linha .miolo { flex: 1 1 auto; min-width: 0; }
+.linha .quem { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linha .oque { display: block; font-size: 13px; color: var(--ink-soft); }
+.linha .prazo {
+  flex: none; font-family: var(--mono); font-weight: 600; font-size: 13px;
+  border-radius: 99px; padding: 4px 10px; white-space: nowrap;
+  background: var(--surface-2); color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.linha[data-nivel="grave"]   .prazo { background: var(--danger-weak); color: var(--danger); }
+.linha[data-nivel="atencao"] .prazo { background: var(--warn-weak);   color: var(--warn); }
+.linha[data-nivel="calmo"]   .prazo { background: var(--ok-weak);     color: var(--ok); }
+
+.vazio {
+  background: var(--surface); border: 1px dashed var(--line-forte);
+  border-radius: var(--r-lg); padding: var(--e5) var(--e4); text-align: center;
+}
+.vazio p { margin: 0; color: var(--ink-soft); }
+.vazio p + p { margin-top: var(--e2); }
+.vazio strong { color: var(--ink); }
+
+/* ============================================================
+   MÓDULOS
+   No celular, grade de dois. No monitor, trilho fixo à esquerda —
+   aí vira plataforma, e não página de celular esticada.
+   ============================================================ */
+.trilho { padding: 0 var(--e4); }
+.trilho .rotulo { margin-bottom: var(--e3); }
+.modulos { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e3); }
+@media (min-width: 560px) { .modulos { grid-template-columns: repeat(3, 1fr); } }
+
+.modulo {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--e4) var(--e3);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  text-align: left; color: var(--ink); font-family: var(--sans); font-size: 15px;
+  min-height: 104px; cursor: pointer; position: relative;
+}
+.modulo .ic { color: var(--accent-mark); margin-bottom: var(--e1); }
+.modulo b { font-family: var(--cond); font-weight: 600; font-size: 17px; }
+.modulo small { color: var(--ink-soft); font-size: 13px; }
+.modulo:not([disabled]):hover { border-color: var(--accent-text); }
+.modulo[disabled] { cursor: default; background: transparent; border-style: dashed; }
+.modulo[disabled] .ic, .modulo[disabled] b { color: var(--ink-soft); }
+.modulo .conta {
+  position: absolute; top: var(--e3); right: var(--e3);
+  font-family: var(--mono); font-weight: 600; font-size: 12px;
+  background: var(--accent-weak); color: var(--accent-text);
+  border-radius: 99px; padding: 2px 8px; font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1040px) {
+  .trilho { padding: var(--e6) 0 var(--e7); position: sticky; top: 76px; align-self: start; }
+  .modulos { grid-template-columns: 1fr; gap: 2px; }
+  .modulo {
+    flex-direction: row; align-items: center; gap: var(--e3);
+    min-height: var(--toque); padding: 10px var(--e3);
+    border: 1px solid transparent; border-radius: var(--r-md); background: transparent;
+  }
+  .modulo .ic { margin-bottom: 0; width: 20px; height: 20px; }
+  .modulo small { display: none; }
+  .modulo[disabled] { border-style: solid; border-color: transparent; }
+  .modulo .conta { position: static; margin-left: auto; }
+  .modulo:not([disabled]):hover { background: var(--surface); border-color: var(--line); }
+  .nota-rodape { grid-column: 1 / -1; }
+}
+
+.nota-rodape {
+  font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+  border-top: 1px solid var(--line);
+  padding: var(--e3) var(--e4) calc(var(--e5) + env(safe-area-inset-bottom));
+  margin: var(--e4) 0 0;
+  display: flex; gap: var(--e2); flex-wrap: wrap; align-items: center;
+}
+.ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); flex: none; }
+.ponto[data-estado="ok"]   { background: var(--ok); }
+.ponto[data-estado="erro"] { background: var(--danger); }
+
+/* ---------- carregando ---------- */
+.carregando { display: grid; place-items: center; min-height: 100svh; }
+.carregando span {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--accent-mark);
+  animation: gira .8s linear infinite;
+}
+@keyframes gira { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   FOLHA — o que sobe por cima da tela
+   Sobe de baixo porque no celular o polegar mora ali; caixa
+   centralizada obrigaria a mão a subir para fechar.
+   ============================================================ */
+.folha {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(46, 42, 38, .45);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+@media (min-width: 620px) { .folha { align-items: center; } }
+
+.folha-caixa {
+  background: var(--bg); width: 100%; max-width: 560px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: var(--e5) var(--e4);
+  padding-bottom: calc(var(--e6) + env(safe-area-inset-bottom));
+  max-height: 92svh; overflow-y: auto; box-shadow: var(--sombra);
+}
+@media (min-width: 620px) { .folha-caixa { border-radius: var(--r-lg); } }
+
+.folha-topo { display: flex; align-items: center; gap: var(--e3); margin-bottom: var(--e5); }
+.folha-topo h2 { font-family: var(--cond); font-weight: 700; font-size: 24px; margin: 0; }
+.folha-topo .icone { margin-left: auto; }
+.frow-2 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--e3); }
+
+/* escolher obra */
+.obra-lista { display: flex; flex-direction: column; gap: var(--e2); }
+.obra-cartao {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--e3) var(--e4);
+  display: flex; align-items: center; gap: var(--e3);
+  width: 100%; text-align: left; cursor: pointer; color: var(--ink);
+}
+.obra-cartao .cod {
+  font-family: var(--mono); font-weight: 600; font-size: 13px;
+  background: var(--surface-2); color: var(--ink-soft);
+  border-radius: var(--r-sm); padding: 4px 9px; flex: none;
+}
+.obra-cartao .nm { font-family: var(--cond); font-weight: 600; font-size: 18px;
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obra-cartao .onde { color: var(--ink-soft); font-size: 13px; margin-left: auto; flex: none; }
+.obra-cartao:hover { border-color: var(--accent-text); }
+.obra-cartao.atual { border-color: var(--accent-mark); background: var(--accent-weak); }
+.obra-cartao.atual .cod { background: var(--surface); color: var(--accent-text); }

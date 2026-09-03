@@ -1,0 +1,44 @@
+BUILDLy — página geral da plataforma
+====================================
+
+O que tem aqui
+--------------
+index.html   a tela: entrar, painel da obra, escolher obra, cadastrar obra
+estilo.css   a paleta Terra e todo o desenho
+app.js       a conversa com o Supabase P3
+.nojekyll    obriga o GitHub Pages a servir o arquivo como está
+README.md    a mesma coisa, em formato de repositório
+
+Onde colocar
+------------
+Na RAIZ do repositório "buildly". Os quatro arquivos soltos, sem pasta.
+Depois: Settings > Pages > Source: "Deploy from a branch" > main / (root).
+
+O endereço fica: https://jonacir2023.github.io/buildly/
+
+Entrar
+------
+E-mail e senha são os do Supabase (jonacir70@icloud.com e a senha que
+você criou). Não há cadastro na tela: usuário novo se cria no painel do
+Supabase, em Authentication > Users.
+
+O que a tela mostra
+-------------------
+1. FAIXA DO DIA — a pergunta das seis da manhã: o RDO de hoje saiu?
+   Régua verde = lançado. Âmbar = ainda não. Vermelha = dois dias ou
+   mais sem diário.
+2. QUATRO NÚMEROS — efetivo ativo, RDOs dos últimos 30 dias, tarefas
+   abertas (com as atrasadas em vermelho) e ocorrências.
+3. PRAZOS A VENCER — experiência de 45 e 90 dias e viagem, do mais
+   apertado para o mais folgado. Até 7 dias é vermelho: experiência
+   perdida por um dia vira contrato por prazo indeterminado.
+4. MÓDULOS — no celular, grade. No monitor, trilho fixo à esquerda.
+
+Tudo isso sai de duas consultas ao banco (vw_status_obra e vw_alertas).
+Nada é inventado: com o banco vazio, a tela diz que está vazio.
+
+O que ainda não faz
+-------------------
+Os módulos estão marcados "em construção" porque a tela deles ainda não
+existe. O botão do RDO avisa isso quando você toca — não finge que abriu.
+As próximas telas, na ordem: Efetivo (pessoas e contratos), depois RDO.
