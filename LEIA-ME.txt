@@ -154,6 +154,50 @@ A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
 status vira concluída, e limpa se você reabrir. Isso vale por qualquer
 caminho, não só pela tela.
 
+Avisos — o robô da manhã
+------------------------
+O sino no alto da tela, ao lado da lupa. O número vermelho é quanto há
+para ler.
+
+O ROBÔ RODA NO BANCO, TODO DIA ÀS 6H DA MANHÃ. Não depende de alguém
+abrir o app — que é justamente quando o prazo passa batido. Ele varre:
+
+  Experiência de 45 e 90 dias vencendo em até 7 dias
+  Viagem prevista para os próximos 7 dias
+  Tarefa que passou do prazo
+  Dia útil sem RDO, de ontem até 7 dias atrás (domingo não conta)
+  EPI com troca vencida e sem entrega posterior
+
+Tocar no aviso leva ao lugar onde se resolve e marca como lido. O aviso
+de RDO faltando já abre a folha do novo diário naquele dia.
+
+Rodar de novo no mesmo dia não duplica: o mesmo prazo é sempre o mesmo
+aviso. Aviso lido some da lista depois de 60 dias; não lido nunca some.
+
+O QUE AINDA NÃO EXISTE: o aviso não chega no seu celular por conta
+própria. Ele fica no app. Para chegar por e-mail ou WhatsApp é preciso
+contratar um serviço de envio — está explicado abaixo.
+
+Pedidos por formulário
+----------------------
+Em Tarefas, no fim da tela, tem "Link do formulário" e um botão de
+copiar. Mande esse link para quem precisa pedir coisas mas não tem
+login: encarregado, portaria, almoxarifado.
+
+Quem abre o link preenche nome, o que precisa, setor e urgência. NÃO
+PRECISA DE SENHA.
+
+O PEDIDO NÃO VIRA TAREFA SOZINHO. Ele cai na caixa "Pedidos recebidos",
+dentro de Tarefas, e você decide: ajusta o assunto, põe responsável e
+prazo, e aceita — aí vira tarefa. Ou recusa, dizendo por quê.
+
+Isso é de propósito. Formulário aberto gravando direto na lista de
+tarefas é porta aberta: qualquer um enche a obra de tarefa sem dono.
+
+Segurança de quem preenche: a página SÓ ENVIA. Ela não consegue ler
+nada — nem os pedidos dos outros, nem os dados da obra. Isso não é
+promessa da tela, é regra do banco.
+
 Buscar em toda a obra
 ---------------------
 A lupa no alto da tela, ao lado do botão de sair. Procura ao mesmo tempo

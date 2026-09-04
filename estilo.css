@@ -976,3 +976,45 @@ textarea {
     font-size: 7.5pt;
   }
 }
+
+/* ---------- sino de avisos ---------- */
+.sino { position: relative; }
+.conta-sino {
+  position: absolute; top: 1px; right: 1px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  display: grid; place-items: center;
+  background: var(--danger); color: var(--on-accent);
+  border-radius: 99px; font-family: var(--mono); font-size: 10px; font-weight: 600;
+  line-height: 1;
+}
+.sino[data-vazio="sim"] .conta-sino { display: none; }
+.sino[data-vazio="sim"] { color: var(--ink-soft); }
+.sino:not([data-vazio="sim"]) { color: var(--danger); border-color: var(--danger); }
+
+.aviso-linha {
+  background: var(--surface); padding: var(--e3) var(--e4);
+  display: flex; align-items: center; gap: var(--e3);
+  width: 100%; text-align: left; color: var(--ink); border: none;
+  font-family: var(--sans); font-size: 15px; cursor: pointer;
+}
+.aviso-linha .tarja { width: 5px; align-self: stretch; border-radius: 99px; flex: none;
+                      background: var(--warn); }
+.aviso-linha[data-grav="grave"] .tarja { background: var(--danger); }
+.aviso-linha .miolo { flex: 1 1 auto; min-width: 0; }
+.aviso-linha .nm { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.aviso-linha .sub { display: block; font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.aviso-linha.lido { opacity: .55; }
+.aviso-linha.lido .nm { font-weight: 400; }
+
+/* ---------- pedidos por formulário ---------- */
+#bloco-pedidos { align-items: flex-start; }
+#bloco-pedidos > div { align-self: stretch; }
+.link-form {
+  font-family: var(--mono); font-size: 12px; color: var(--ink);
+  background: var(--surface-2); border-radius: var(--r-sm);
+  padding: var(--e3); margin: 0; overflow-wrap: anywhere;
+}
+.pedido-linha .nm::after { content: ""; }
+.chip[data-st="pendente"] { background: var(--warn-weak); color: var(--warn); }
+.chip[data-st="aceita"]   { background: var(--ok-weak);   color: var(--ok); }
+.chip[data-st="recusada"] { background: var(--surface-2); color: var(--ink-soft); }

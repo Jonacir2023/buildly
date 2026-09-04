@@ -13,7 +13,7 @@
     tarefas: [], epis: [], epi_entregas: [], nfs: [], nf_itens: [],
     contratos_comerciais: [], contrato_itens: [], medicoes: [], medicao_itens: [],
     reunioes: [], reuniao_participantes: [], reuniao_topicos: [], reuniao_pauta: [],
-    documentos: [], mural: [],
+    documentos: [], mural: [], avisos: [], solicitacoes: [],
     rdos: [], rdo_presencas: [], rdo_atividades: [], rdo_fotos: [], rdo_equipamentos: [],
     perfis: [{id:'u1',nome:'Jonacir Cazelli',papel:'gestor'}]
   };
@@ -252,6 +252,7 @@
       insert: (linha) => {
         const linhas = Array.isArray(linha) ? linha : [linha];
         for (const l of linhas) {
+          aplicarPadroes(nome, l);
           const e = choque(nome, l);
           if (e) return respostaErro(e);
         }
@@ -301,6 +302,26 @@
     const r = { data:null, error:{ message } };
     return { select: () => ({ single: () => Promise.resolve(r) }),
              then: (f) => Promise.resolve(r).then(f) };
+  }
+
+  // valores padrão de coluna, que o Postgres aplica e o dublê também
+  // precisa aplicar — senão o teste vê "undefined" onde o banco põe valor
+  const PADROES = {
+    solicitacoes: { status: 'pendente', prioridade: 'media' },
+    avisos:       { gravidade: 'atencao' },
+    tarefas:      { status: 'aberta', prioridade: 'media', origem: 'pauta' },
+    contratos:    { alojado: false },
+    equipamentos: { categoria: 'pesado', propriedade: 'proprio', ativo: true },
+    epi_entregas: { quantidade: 1, motivo: 'primeira_entrega', assinatura_ok: false },
+    rdo_presencas:{ situacao: 'presente', horas_normais: 8, horas_extras: 0 },
+    medicoes:     { fechada: false },
+    documentos:   { categoria: 'Outros' },
+    nfs:          { total: 0 }
+  };
+  function aplicarPadroes(nome, l) {
+    const p = PADROES[nome]; if (!p) return l;
+    Object.keys(p).forEach(k => { if (l[k] === undefined) l[k] = p[k]; });
+    return l;
   }
 
   // os mesmos índices e checagens que o Postgres tem

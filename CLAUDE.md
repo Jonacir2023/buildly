@@ -79,6 +79,22 @@ a da obra discordam, e a certa é a da obra. Os testes calculam "hoje"
 com `ZoneInfo('America/Sao_Paulo')` — já quebraram uma vez por não fazer
 isso, e o app estava certo.
 
+## O que roda sozinho
+
+| Quando | O quê |
+|---|---|
+| todo dia 09:00 UTC | `gerar_avisos()` — varre prazos e grava em `avisos` |
+| domingo 09:30 UTC | `limpar_avisos_antigos()` — apaga lido com mais de 60 dias |
+
+Agendado por `pg_cron`. Ver com `select * from cron.job`.
+
+## Escrita por quem não tem login
+
+Só `solicitacoes` aceita `anon`, e só INSERT. Qualquer tabela nova que
+precise receber de fora segue o mesmo desenho: caixa de entrada
+separada, triagem por quem tem login, nunca gravação direta na tabela de
+verdade.
+
 ## Como testar antes de entregar
 
 Duas frentes, sempre, antes de qualquer `push`:

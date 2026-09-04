@@ -70,6 +70,11 @@
     </button>
 
     <div class="topo-dir">
+      <button class="icone sino" id="btn-avisos" type="button" hidden
+              title="Avisos" aria-label="Avisos">
+        <svg class="ic" aria-hidden="true"><use href="#i-alerta"></use></svg>
+        <span class="conta-sino" id="conta-avisos">0</span>
+      </button>
       <button class="icone" id="btn-busca" type="button"
               title="Buscar em toda a obra" aria-label="Buscar em toda a obra">
         <svg class="ic" aria-hidden="true"><use href="#i-busca"></use></svg>
@@ -220,6 +225,20 @@
         <input type="search" id="busca-tf" autocomplete="off"
                placeholder="Buscar por assunto, responsável ou setor"></label>
       <div id="tf-lista"></div>
+
+      <div class="bloco" id="bloco-pedidos" hidden>
+        <button class="btn-texto btn-abre" id="btn-pedidos" type="button"
+                aria-expanded="false">Pedidos recebidos (0)</button>
+        <div id="pedidos-lista" hidden></div>
+      </div>
+
+      <section class="cartao">
+        <h2>Link do formulário</h2>
+        <p class="explica">Quem não tem login pede por aqui. O pedido não vira tarefa
+           sozinho: cai na caixa acima e você decide.</p>
+        <p class="link-form" id="link-formulario">—</p>
+        <button class="btn btn-secundario" type="button" id="btn-copiar-link">Copiar link</button>
+      </section>
      </section>
 
      <!-- ============ ALERTAS ============ -->
@@ -1518,6 +1537,63 @@
     <p class="explica" id="busca-dica">Procura ao mesmo tempo em efetivo, equipamentos,
        tarefas, ocorrências, EPI, notas fiscais, documentos, reuniões, recados e RDO.</p>
     <div id="busca-resultado"></div>
+  </div>
+</div>
+
+
+<!-- ============ AVISOS ============ -->
+<div class="folha folha-alta" id="folha-avisos" hidden role="dialog" aria-modal="true"
+     aria-label="Avisos">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Avisos</h2>
+      <button class="icone" id="btn-fechar-avisos" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <p class="explica">O robô varre a obra toda manhã às 6h e deixa aqui o que
+       está vencendo. Não depende de alguém abrir o app.</p>
+    <div class="acoes-rapidas">
+      <button class="btn-texto" type="button" id="btn-ler-todos">Marcar todos como lidos</button>
+      <button class="btn-texto" type="button" id="btn-ver-lidos">Ver também os lidos</button>
+    </div>
+    <div id="avisos-lista"></div>
+  </div>
+</div>
+
+
+<!-- ============ PEDIDO RECEBIDO ============ -->
+<div class="folha" id="folha-pedido" hidden role="dialog" aria-modal="true" aria-label="Pedido">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Pedido recebido</h2>
+      <button class="icone" id="btn-fechar-pedido" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <p class="explica" id="pedido-quem">—</p>
+
+    <form id="form-pedido-avaliar" novalidate>
+      <label class="campo">
+        <span>Assunto da tarefa</span>
+        <input type="text" id="pd-assunto" maxlength="200">
+      </label>
+      <label class="campo">
+        <span>Detalhe</span>
+        <textarea id="pd-descricao" rows="3"></textarea>
+      </label>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Responsável</span>
+          <input type="text" id="pd-responsavel">
+        </label>
+        <label class="campo">
+          <span>Prazo</span>
+          <input type="date" id="pd-prazo">
+        </label>
+      </div>
+      <p class="erro" id="erro-pedido-av" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-aceitar-pedido">
+        Aceitar e virar tarefa
+      </button>
+      <button class="btn btn-perigo" type="button" id="btn-recusar-pedido">Recusar</button>
+    </form>
   </div>
 </div>
 

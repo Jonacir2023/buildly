@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3EFE9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#211E1B" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>BUILDLy — Pedido para a obra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .pedido { max-width: 560px; margin: 0 auto; padding: var(--e5) var(--e4) var(--e7); }
+  .pedido .marca { font-size: 34px; }
+  .pedido .marca-sub { margin-bottom: var(--e5); }
+  .obra-alvo {
+    font-family: var(--mono); font-weight: 600; font-size: 13px;
+    background: var(--accent-weak); color: var(--accent-text);
+    border-radius: 99px; padding: 4px 12px; display: inline-block;
+  }
+  .feito {
+    background: var(--ok-weak); color: var(--ok);
+    border-left: 3px solid var(--ok); border-radius: var(--r-sm);
+    padding: var(--e4); margin: 0;
+  }
+  .feito b { display: block; font-family: var(--cond); font-size: 19px; margin-bottom: 4px; }
+  /* Campo de isca: gente não vê, robô de spam preenche. */
+  .isca { position: absolute; left: -9999px; width: 1px; height: 1px; }
+</style>
+</head>
+<body>
+
+<main class="pedido">
+  <p class="marca">BUILD<span>Ly</span></p>
+  <p class="marca-sub">Pedido para a obra</p>
+
+  <p class="explica" id="alvo">
+    Carregando…
+  </p>
+
+  <form id="form-pedido" novalidate>
+    <label class="campo">
+      <span>Seu nome *</span>
+      <input type="text" id="s-nome" required maxlength="120" autocapitalize="words">
+    </label>
+
+    <label class="campo">
+      <span>Telefone ou e-mail</span>
+      <input type="text" id="s-contato" maxlength="120"
+             placeholder="para te responderem, se precisar">
+    </label>
+
+    <label class="campo">
+      <span>O que você precisa *</span>
+      <input type="text" id="s-assunto" required maxlength="200"
+             placeholder="Falta cimento na frente B">
+    </label>
+
+    <label class="campo">
+      <span>Detalhe</span>
+      <textarea id="s-descricao" rows="4" maxlength="2000"
+                placeholder="Quanto, onde, para quando"></textarea>
+    </label>
+
+    <div class="frow-2">
+      <label class="campo">
+        <span>Setor</span>
+        <select id="s-setor">
+          <option value="">— não sei —</option>
+          <option>Suprimentos</option>
+          <option>Transporte</option>
+          <option>Planejamento</option>
+          <option>Administração</option>
+          <option>Segurança</option>
+          <option>Produção</option>
+          <option>Qualidade</option>
+          <option>Meio ambiente</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Urgência</span>
+        <select id="s-prioridade">
+          <option value="baixa">Baixa</option>
+          <option value="media" selected>Média</option>
+          <option value="alta">Alta</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="isca" aria-hidden="true">
+      Não preencha<input type="text" id="s-isca" tabindex="-1" autocomplete="off">
+    </label>
+
+    <p class="erro" id="erro-pedido" hidden></p>
+    <button class="btn btn-primario" type="submit" id="btn-enviar">Enviar pedido</button>
+  </form>
+
+  <div id="pronto" hidden>
+    <p class="feito">
+      <b>Pedido enviado.</b>
+      Ele entra na caixa de pedidos da obra. Quem responde decide se vira tarefa —
+      e é por isso que não aparece na hora.
+    </p>
+    <p style="margin-top:var(--e4)">
+      <button class="btn btn-secundario" id="btn-outro" type="button" style="width:100%">
+        Enviar outro pedido
+      </button>
+    </p>
+  </div>
+
+  <p class="nota-rodape" style="margin-top:var(--e6)">
+    Esta página só envia. Ela não mostra o que já foi pedido, nem os dados da obra.
+  </p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="pedido.js"></script>
+</body>
+</html>

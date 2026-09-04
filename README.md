@@ -128,6 +128,37 @@ ao RDO nunca era contada — justamente o registro sem pessoa
 identificada, como quase acidente da obra. A view passou a contar os
 dois vínculos.
 
+## Robô de avisos
+
+`gerar_avisos()` roda por `pg_cron` às 09:00 UTC (06:00 em São Paulo) e
+grava em `avisos`. A varredura mora no banco porque o aviso precisa
+existir mesmo que ninguém abra o app.
+
+`uq_aviso (obra_id, tipo, referencia, data_ref)` com `on conflict do
+nothing`: o robô roda todo dia, e sem essa chave o mesmo prazo viraria
+aviso novo a cada manhã.
+
+`limpar_avisos_antigos()` roda aos domingos e apaga só o que foi lido há
+mais de 60 dias. Não lido nunca é apagado.
+
+Entrega fora do app (e-mail, WhatsApp) **não existe** — exige serviço
+externo com chave, que o dono precisa contratar.
+
+## Pedidos por formulário
+
+`pedido.html` é público e usa a mesma chave publicável. A política de
+`solicitacoes` dá ao papel `anon` **só INSERT**, e ainda exige `status =
+'pendente' and tarefa_id is null` no `with check`. Anon não lê nada.
+
+O formulário manda o **código** da obra; um trigger `security definer`
+resolve para `obra_id`. Assim o anônimo nunca precisa ler `obras`.
+
+O insert é feito **sem `.select()`**: pedir retorno exigiria permissão de
+leitura, que essa página não tem nem deve ter.
+
+Limites de tamanho por `check` na tabela, e campo-isca invisível no
+formulário — preenchido, o envio é descartado em silêncio.
+
 ## Busca em toda a obra
 
 Dez consultas em paralelo com `ilike` no PostgREST, uma por tabela, com

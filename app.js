@@ -31,7 +31,7 @@ const PAPEIS = {
 const MODULOS = [
   { ic: 'i-rdo',        nome: 'RDO',           desc: 'Diário de obra',      pronto: true, tela: 'rdo', conta: 'rdos_30_dias' },
   { ic: 'i-efetivo',    nome: 'Efetivo',       desc: 'Pessoas e contratos', pronto: true, tela: 'efetivo', conta: 'efetivo_ativo' },
-  { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Experiência e viagem', pronto: true, tela: 'alertas' },
+  { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Prazos em 60 dias', pronto: true, tela: 'alertas' },
   { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: true, tela: 'epi', },
   { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: true, tela: 'ocorrencias', conta: 'ocorrencias_30_dias' },
   { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: true, tela: 'tarefas', conta: 'tarefas_abertas' },
@@ -244,6 +244,7 @@ async function carregarObras() {
   banco('ok', 'conectado · ' + plural(_obras.length, 'obra', 'obras'));
   $('numeros').hidden = false;
   await carregarPainel();
+  await carregarAvisos();
   if (_tela === 'efetivo')      await carregarEfetivo();
   if (_tela === 'equipamentos') await carregarEquipamentos();
   if (_tela === 'rdo')          await carregarRDOs();
@@ -1772,7 +1773,7 @@ document.addEventListener('keydown', (ev) => {
   ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia','folha-tarefa','folha-entrega','folha-epi',
    'folha-nova-nf','folha-item','folha-contrato','folha-ct-item',
    'folha-nova-medicao','folha-reuniao','folha-participante','folha-topico',
-   'folha-documento','folha-recado','folha-busca']
+   'folha-documento','folha-recado','folha-busca','folha-avisos','folha-pedido']
     .forEach(id => { $(id).hidden = true; });
 });
 
@@ -2430,6 +2431,7 @@ async function carregarTarefas() {
   if (error) { area.innerHTML = vazioHTML('Não consegui ler as tarefas.', error.message); return; }
 
   _tarefas = data || [];
+  carregarPedidos();
   renderTfNumeros();
   renderTfFiltros();
   filtrarTarefas();
@@ -4993,4 +4995,302 @@ $('btn-imprimir-rdo').addEventListener('click', async () => {
   document.title = `RDO ${_rdo.numero} - ${_obra.codigo} - ${_rdo.data}`;
   window.print();
   document.title = antes;
+});
+
+/* ============================================================
+   AVISOS — o que o robô encontrou
+   A varredura roda no banco às 6h, todo dia, pelo pg_cron. O app
+   só lê o resultado. Por isso o aviso existe mesmo que ninguém
+   tenha aberto o Buildly — que é justamente quando o prazo passa
+   batido.
+   ============================================================ */
+
+const TIPO_AVISO = {
+  experiencia:     'Experiência',
+  viagem:          'Viagem',
+  tarefa_atrasada: 'Tarefa',
+  rdo_faltando:    'RDO',
+  epi_vencido:     'EPI'
+};
+
+let _avisos = [];
+let _verLidos = false;
+
+async function carregarAvisos() {
+  if (!_obra) { $('btn-avisos').hidden = true; return; }
+  $('btn-avisos').hidden = false;
+
+  const { data, error } = await db.from('avisos')
+    .select('id, tipo, gravidade, titulo, detalhe, referencia, data_ref, lido_em')
+    .eq('obra_id', _obra.id).order('data_ref', { ascending: true }).limit(200);
+
+  if (error) { _avisos = []; return; }
+  _avisos = data || [];
+
+  const naoLidos = _avisos.filter(a => !a.lido_em).length;
+  const sino = $('btn-avisos');
+  sino.dataset.vazio = naoLidos ? 'nao' : 'sim';
+  $('conta-avisos').textContent = naoLidos > 99 ? '99+' : naoLidos;
+  sino.title = naoLidos
+    ? plural(naoLidos, 'aviso não lido', 'avisos não lidos')
+    : 'Nenhum aviso pendente';
+}
+
+function renderAvisos() {
+  const area = $('avisos-lista');
+  const vistos = _verLidos ? _avisos : _avisos.filter(a => !a.lido_em);
+  $('btn-ver-lidos').textContent = _verLidos ? 'Esconder os lidos' : 'Ver também os lidos';
+
+  if (!_avisos.length) {
+    area.innerHTML = vazioHTML('Nenhum aviso.',
+      'O robô roda às 6h. Se não há nada vencendo, ele não inventa aviso.');
+    return;
+  }
+  if (!vistos.length) {
+    area.innerHTML = vazioHTML('Tudo lido.', 'Toque em "Ver também os lidos" para rever.');
+    return;
+  }
+
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  vistos.forEach(a => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'aviso-linha' + (a.lido_em ? ' lido' : '');
+    b.dataset.grav = a.gravidade;
+
+    const tarja = document.createElement('span'); tarja.className = 'tarja';
+    const miolo = document.createElement('span'); miolo.className = 'miolo';
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = a.titulo;
+    const sub = document.createElement('span'); sub.className = 'sub';
+    sub.textContent = [TIPO_AVISO[a.tipo] || a.tipo, a.detalhe].filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+
+    const lado = document.createElement('span'); lado.className = 'lado';
+    const chip = document.createElement('span'); chip.className = 'chip prazo';
+    const dias = diasAte(a.data_ref);
+    chip.dataset.nivel = a.gravidade === 'grave' ? 'grave' : 'atencao';
+    chip.textContent = dias == null ? dataBR(a.data_ref) : prazoTexto(dias);
+    lado.appendChild(chip);
+
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => irAtrasDoAviso(a));
+    cx.appendChild(b);
+  });
+}
+
+// Tocar no aviso leva ao lugar onde se resolve, e marca como lido.
+// Aviso que não leva a lugar nenhum vira decoração.
+async function irAtrasDoAviso(a) {
+  if (!a.lido_em) {
+    const { error } = await db.from('avisos')
+      .update({ lido_em: new Date().toISOString() }).eq('id', a.id);
+    if (!error) a.lido_em = new Date().toISOString();
+  }
+  $('folha-avisos').hidden = true;
+
+  if (a.tipo === 'tarefa_atrasada') {
+    irPara('tarefas'); await carregarTarefas();
+    const t = _tarefas.find(x => x.id === a.referencia);
+    if (t) abrirTarefa(t);
+  } else if (a.tipo === 'rdo_faltando') {
+    irPara('rdo'); await carregarRDOs();
+    abrirFolhaNovoRDO();
+    $('n-data').value = a.referencia;
+    explicarNovoRDO();
+  } else if (a.tipo === 'epi_vencido') {
+    irPara('epi'); await carregarEPI();
+  } else {
+    // experiência e viagem se resolvem na ficha da pessoa
+    irPara('efetivo'); await carregarEfetivo();
+    const contrato = String(a.referencia).split(':')[0];
+    if (_efetivo.some(p => p.contrato_id === contrato)) abrirPessoa(contrato);
+  }
+  await carregarAvisos();
+}
+
+$('btn-avisos').addEventListener('click', async () => {
+  await carregarAvisos();
+  _verLidos = false;
+  renderAvisos();
+  $('folha-avisos').hidden = false;
+});
+$('btn-fechar-avisos').addEventListener('click', () => { $('folha-avisos').hidden = true; });
+$('folha-avisos').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-avisos')) $('folha-avisos').hidden = true;
+});
+$('btn-ver-lidos').addEventListener('click', () => { _verLidos = !_verLidos; renderAvisos(); });
+
+$('btn-ler-todos').addEventListener('click', async () => {
+  const pendentes = _avisos.filter(a => !a.lido_em);
+  if (!pendentes.length) return;
+  const agora = new Date().toISOString();
+  for (const a of pendentes) {
+    await db.from('avisos').update({ lido_em: agora }).eq('id', a.id);
+    a.lido_em = agora;
+  }
+  await carregarAvisos();
+  renderAvisos();
+});
+
+/* ============================================================
+   PEDIDOS RECEBIDOS PELO FORMULÁRIO
+   O pedido não vira tarefa sozinho. Alguém da obra lê, ajusta o
+   assunto, põe responsável e prazo — e aí vira. Pedido virando
+   tarefa direto encheria a lista de coisa sem dono.
+   ============================================================ */
+
+let _pedidos = [];
+let _pdEditando = null;
+
+function linkDoFormulario() {
+  if (!_obra) return '';
+  const base = location.href.replace(/\/[^/]*$/, '/');
+  return base + 'pedido.html?obra=' + encodeURIComponent(_obra.codigo);
+}
+
+async function carregarPedidos() {
+  if (!_obra) { $('bloco-pedidos').hidden = true; return; }
+  $('link-formulario').textContent = linkDoFormulario();
+
+  const { data, error } = await db.from('solicitacoes')
+    .select('id, solicitante, contato, assunto, descricao, setor, prioridade, ' +
+            'status, criado_em, tarefa_id, motivo_recusa, avaliado_por')
+    .eq('obra_id', _obra.id).order('criado_em', { ascending: false }).limit(100);
+
+  _pedidos = error ? [] : (data || []);
+  const pendentes = _pedidos.filter(p => p.status === 'pendente');
+
+  $('bloco-pedidos').hidden = !_pedidos.length;
+  $('btn-pedidos').textContent = pendentes.length
+    ? 'Pedidos recebidos (' + pendentes.length + ' a responder)'
+    : 'Pedidos recebidos (' + _pedidos.length + ', todos respondidos)';
+
+  const area = $('pedidos-lista');
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+
+  _pedidos.forEach(p => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pessoa' + (p.status === 'pendente' ? '' : ' encerrada');
+    if (p.status === 'pendente' && p.prioridade === 'alta') b.dataset.nivel = 'grave';
+    else if (p.status === 'pendente') b.dataset.nivel = 'atencao';
+
+    const tarja = document.createElement('span'); tarja.className = 'tarja';
+    const miolo = document.createElement('span'); miolo.className = 'miolo';
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.assunto;
+    const sub = document.createElement('span'); sub.className = 'sub';
+    sub.textContent = [p.solicitante, p.setor, PRIORIDADE_TF[p.prioridade],
+                       dataBR(String(p.criado_em).slice(0, 10))].filter(Boolean).join(' · ');
+    miolo.append(nm, sub);
+
+    const lado = document.createElement('span'); lado.className = 'lado';
+    const st = document.createElement('span'); st.className = 'chip'; st.dataset.st = p.status;
+    st.textContent = { pendente:'A responder', aceita:'Virou tarefa', recusada:'Recusado' }[p.status];
+    lado.appendChild(st);
+
+    b.append(tarja, miolo, lado);
+    b.addEventListener('click', () => abrirPedido(p));
+    cx.appendChild(b);
+  });
+}
+
+$('btn-pedidos').addEventListener('click', () => {
+  const area = $('pedidos-lista');
+  area.hidden = !area.hidden;
+  $('btn-pedidos').setAttribute('aria-expanded', String(!area.hidden));
+});
+
+$('btn-copiar-link').addEventListener('click', async () => {
+  const b = $('btn-copiar-link');
+  try {
+    await navigator.clipboard.writeText(linkDoFormulario());
+    b.textContent = 'Link copiado';
+  } catch (e) {
+    // Sem permissão de área de transferência: o link está na tela para
+    // copiar à mão, então não finjo que copiei.
+    b.textContent = 'Copie o link acima';
+  }
+  setTimeout(() => { b.textContent = 'Copiar link'; }, 2200);
+});
+
+function abrirPedido(p) {
+  _pdEditando = p;
+  $('pedido-quem').textContent =
+    `${p.solicitante}${p.contato ? ' · ' + p.contato : ''} — ` +
+    `enviado em ${dataBR(String(p.criado_em).slice(0, 10))}` +
+    (p.status === 'pendente' ? '' :
+     p.status === 'aceita' ? ' · já virou tarefa' :
+     ' · recusado' + (p.motivo_recusa ? ': ' + p.motivo_recusa : ''));
+
+  $('pd-assunto').value = p.assunto;
+  $('pd-descricao').value = p.descricao || '';
+  $('pd-responsavel').value = '';
+  $('pd-prazo').value = '';
+  const pendente = p.status === 'pendente';
+  $('btn-aceitar-pedido').hidden = !pendente;
+  $('btn-recusar-pedido').hidden = !pendente;
+  ['pd-assunto','pd-descricao','pd-responsavel','pd-prazo']
+    .forEach(id => { $(id).disabled = !pendente; });
+  $('erro-pedido-av').hidden = true;
+  $('folha-pedido').hidden = false;
+}
+
+$('btn-fechar-pedido').addEventListener('click', () => { $('folha-pedido').hidden = true; });
+$('folha-pedido').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-pedido')) $('folha-pedido').hidden = true;
+});
+
+$('form-pedido-avaliar').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-pedido-av'); erro.hidden = true;
+  if (!_pdEditando) return;
+
+  const assunto = $('pd-assunto').value.trim();
+  if (!assunto) return falhar(erro, 'A tarefa precisa de um assunto.');
+
+  const { data: tarefa, error } = await db.from('tarefas').insert({
+    obra_id: _obra.id,
+    assunto,
+    descricao: [$('pd-descricao').value.trim(),
+                'Pedido de ' + _pdEditando.solicitante +
+                (_pdEditando.contato ? ' (' + _pdEditando.contato + ')' : '')]
+               .filter(Boolean).join('\n\n'),
+    criador: _pdEditando.solicitante,
+    responsavel: $('pd-responsavel').value.trim() || null,
+    setor: _pdEditando.setor || null,
+    prioridade: _pdEditando.prioridade,
+    status: 'aberta',
+    data_lancamento: hojeISO(),
+    data_termino: $('pd-prazo').value || null,
+    origem: 'pauta'
+  }).select('id').single();
+
+  if (error) return falhar(erro, 'Não consegui criar a tarefa: ' + error.message);
+
+  const r = await db.from('solicitacoes').update({
+    status: 'aceita', tarefa_id: tarefa.id,
+    avaliado_por: _perfilNome || null, avaliado_em: new Date().toISOString()
+  }).eq('id', _pdEditando.id);
+
+  if (r.error) return falhar(erro,
+    'A tarefa foi criada, mas não consegui marcar o pedido como aceito: ' + r.error.message);
+
+  $('folha-pedido').hidden = true;
+  await carregarTarefas();
+  await carregarPainel();
+});
+
+$('btn-recusar-pedido').addEventListener('click', async () => {
+  if (!_pdEditando) return;
+  const motivo = prompt('Por que está recusando? (aparece no histórico)');
+  if (motivo === null) return;
+  const { error } = await db.from('solicitacoes').update({
+    status: 'recusada', motivo_recusa: motivo.trim() || null,
+    avaliado_por: _perfilNome || null, avaliado_em: new Date().toISOString()
+  }).eq('id', _pdEditando.id);
+  if (error) return falhar($('erro-pedido-av'), 'Não consegui recusar: ' + error.message);
+  $('folha-pedido').hidden = true;
+  await carregarTarefas();
 });
