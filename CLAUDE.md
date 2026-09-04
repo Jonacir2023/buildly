@@ -50,11 +50,42 @@ e trata a recusa do índice único recalculando.
 
 Índices únicos que viram mensagem em português, nunca erro cru:
 `uq_contrato_ativo`, `pessoas_cpf_key`, `uq_rdo_obra_data`,
-`uq_rdo_obra_numero`, `uq_presenca`, `uq_rdo_equip`.
+`uq_rdo_obra_numero`, `uq_presenca`, `uq_rdo_equip`,
+`uq_atividade_obra_desc`, `uq_rdo_atividade`.
+
+`uq_atividade_obra_desc` compara **sem caixa e sem espaço nas pontas**
+(`lower(btrim(descricao))`): "Concretagem" e " concretagem " são a mesma
+atividade, e duas grafias partiriam o acumulado em dois.
 
 Tudo que o app guarda no navegador leva o prefixo **`p3::`**. Os apps do
 usuário dividem a mesma origem (`jonacir2023.github.io`) e sem prefixo
 dividiriam o mesmo armazenamento.
+
+## Como as abas são organizadas
+
+O trilho de módulos é a operação do dia. **Cadastro** é a aba que junta o
+que se cadastra uma vez e depois só se escolhe: **Efetivo**,
+**Equipamentos** e **Atividades**. Essas três telas continuam existindo
+inteiras — só saíram do trilho principal e passaram a ser abertas por
+dentro do Cadastro (`const CADASTROS` no `app.js`). O botão voltar, de
+dentro delas, cai no Cadastro, não no painel, e o trilho acende o
+Cadastro enquanto se está lá dentro.
+
+O `verificar.py` confere `CADASTROS` com o mesmo rigor de `MODULOS`:
+tela existente, escondida pelo roteador e com carregador. Sem isso, tela
+tirada do trilho deixaria de ser conferida.
+
+## O diário não digita nome de nada
+
+Efetivo, equipamentos e atividades entram no RDO por escolha, nunca por
+digitação. No caso da atividade, o que vai para `rdo_atividades` é uma
+**cópia** — `descricao`, `local` e `unidade` — mais o vínculo
+`atividade_id`. Mexer no cadastro amanhã não pode reescrever o diário
+que a obra assinou ontem; o vínculo serve só para somar o acumulado
+(`vw_atividade_acumulado`).
+
+Atividade sai de uso por `ativo = false`, nunca por `delete`: os diários
+antigos apontam para ela.
 
 ## Dado derivado mora no banco
 
@@ -111,6 +142,17 @@ de número do painel) numa célula de tabela impressa, e `.aviso` (caixa
 de mensagem) como modificador de número. Modificador de classe leva
 prefixo próprio — `qto-vermelho`, `imp-n`. O `verificar.py` agora
 reclama disso sozinho.
+
+**Id repetido no HTML.** `$()` devolve o primeiro e a segunda tela fica
+muda, sem erro nenhum. Aconteceu com `at-titulo`, disputado pela ata da
+reunião e pela tela de atividades. O `verificar.py` agora conta os id e
+reclama do que aparece duas vezes.
+
+**`limparTermo()` não abaixa a caixa.** Ela só tira o que atrapalha o
+PostgREST, para a busca que vai ao banco. Filtro que roda na memória
+compara com `.toLowerCase()` dos dois lados, como no efetivo e na frota
+— usar `limparTermo` numa busca local faz "concret" não achar
+"Concretagem".
 
 Texto de botão e de rótulo é posto em versalete pelo CSS
 (`text-transform: uppercase`). Teste que compara esse texto precisa

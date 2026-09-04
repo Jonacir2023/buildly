@@ -1126,6 +1126,36 @@ textarea {
   border-left: 3px solid var(--line-forte); padding: 4px var(--e3);
 }
 
+/* ---------- cadastro e atividades ---------- */
+#tela-cadastro .modulos { margin-top: var(--e4); }
+.unid {
+  font-family: var(--mono); font-weight: 600; font-size: 12px;
+  color: var(--accent-text); text-transform: none;
+}
+/* a lista de escolha ocupa o que sobra da folha e rola sozinha, senão
+   com trinta atividades cadastradas o botão de fechar sai da tela */
+.folha-alta .rolagem { flex: 1 1 auto; overflow-y: auto; }
+.marca-caixa.ativ-marcada { border-color: var(--accent-mark); background: var(--accent-weak); }
+.ativ-usada {
+  font-size: 13px; color: var(--ink-soft); font-family: var(--sans);
+  border: none; border-left: 3px solid var(--line-forte); background: none;
+  padding: 6px var(--e3); width: 100%; text-align: left; cursor: pointer;
+}
+.ativ-usada:hover { color: var(--ink); border-left-color: var(--accent-mark); }
+
+/* ---------- EPI dentro do cadastro da pessoa ---------- */
+#bloco-epi { display: flex; flex-direction: column; gap: var(--e2); }
+.epi-linha {
+  display: flex; align-items: baseline; gap: var(--e3);
+  font-size: 14px; padding: 5px var(--e3);
+  border-left: 3px solid var(--line-forte);
+}
+.epi-linha .oque { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.epi-linha .quando { font-size: 13px; color: var(--ink-soft); flex: none; }
+.epi-linha[data-estado="vencida"] { border-left-color: var(--danger); }
+.epi-linha[data-estado="vencida"] .quando { color: var(--danger); }
+.epi-linha[data-estado="sem-assinatura"] { border-left-color: var(--warn); }
+
 /* ---------- relatórios ---------- */
 #tela-relatorios { display: flex; flex-direction: column; gap: var(--e4); }
 #tela-relatorios .cartao .btn { width: 100%; }

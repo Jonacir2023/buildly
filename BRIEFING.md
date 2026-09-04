@@ -130,6 +130,11 @@ a seguir é parte da entrega, não enfeite.
 | `medicoes (contrato_id, numero)` | numeração sequencial por contrato |
 | `reuniao_participantes (reuniao_id, nome)` | já está na lista |
 
+`uq_atividade_obra_desc` compara `lower(btrim(descricao))`: "Concretagem"
+e " concretagem " são a mesma atividade. `uq_rdo_atividade` impede a mesma
+atividade do catálogo duas vezes no mesmo diário — atividade avulsa
+(`atividade_id` nulo) fica livre, porque ali cada linha é uma coisa.
+
 ### Numeração calculada pelo app
 
 `rdos.numero` e `medicoes.numero` **não têm valor automático**. O app faz
@@ -184,21 +189,35 @@ prazo viraria aviso novo todo dia.
 
 ## 4. Os módulos
 
-Onze, todos funcionando. Nenhum "em construção".
+Onze abas no trilho, todas funcionando. Nenhuma "em construção".
 
 | Módulo | O que faz | Tabelas |
 |---|---|---|
 | **RDO** | diário: calendário do mês, condições, DSS, chamada, atividades, equipamentos, fotos, PDF, resumo de chuva | `rdos`, `rdo_presencas`, `rdo_atividades`, `rdo_equipamentos`, `rdo_fotos` |
-| **Efetivo** | pessoas e contratos, regime de moradia, baixa | `pessoas`, `contratos`, `funcoes` |
+| **Cadastro** | aba que reúne Efetivo, Equipamentos e Atividades | — |
 | **Alertas** | prazos até 60 dias (o painel mostra 7) | `vw_efetivo` |
 | **EPI** | catálogo e ficha de entrega, troca prevista | `epis`, `epi_entregas` |
 | **Ocorrências** | segurança e disciplina, 8 tipos, elogio incluído | `ocorrencias` |
 | **Tarefas** | quadro (kanban) e lista, mais os pedidos recebidos | `tarefas`, `solicitacoes` |
 | **Notas fiscais** | cabeçalho e itens, total pelo gatilho | `nfs`, `nf_itens` |
-| **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
-| **Medições** | contrato → itens → boletim mensal acumulado | `contratos_comerciais`, `contrato_itens`, `medicoes`, `medicao_itens` |
+| **Medições** | contrato → itens → boletim mensal acumulado, com PDF em paisagem | `contratos_comerciais`, `contrato_itens`, `medicoes`, `medicao_itens` |
 | **Reuniões** | ata, participantes, tópicos que viram tarefa | `reunioes`, `reuniao_*` |
+| **Relatórios** | semana, mês e ano; diários e efetivo, chuva e paralisação, cada um com PDF | `vw_rdo_dia` |
 | **Documentos** | links e mural | `documentos`, `mural`, `documento_notas` |
+
+Dentro do **Cadastro** (`const CADASTROS` no `app.js`), três telas que
+saíram do trilho porque cadastro não é trabalho do dia:
+
+| Tela | O que faz | Tabelas |
+|---|---|---|
+| **Efetivo** | pessoas, contratos, regime de moradia, ajuda de custo, EPI da admissão, baixa | `pessoas`, `contratos`, `funcoes`, `ajuda_custo`, `epi_entregas` |
+| **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
+| **Atividades** | catálogo do que a obra executa, com unidade e acumulado | `atividades`, `vw_atividade_acumulado` |
+
+A regra por trás dessa aba: **no diário não se digita nome de nada** —
+nem de gente, nem de máquina, nem de serviço. Tudo entra por escolha de
+uma lista cadastrada. Digitar o mesmo serviço com duas grafias parte o
+acumulado em dois e não tem conserto depois.
 
 Fora dos módulos: **busca em toda a obra** (lupa no topo) e **avisos**
 (sino no topo).
@@ -217,6 +236,28 @@ tamanho perde o dia inteiro de apontamento quando o sinal cai no canteiro.
 
 **Lista fechada, nunca texto livre**, onde o banco tem `check`. O seletor
 existe para o dado nascer certo.
+
+**No diário não se digita nome de nada.** Gente, máquina e serviço entram
+por escolha de uma lista cadastrada. Duas grafias do mesmo serviço partem
+o acumulado em dois, e não há conserto depois — só quem lançou sabe que
+"Concretagem" e "concretagem laje" eram a mesma coisa, e daqui a um mês
+nem ele.
+
+**Marcar primeiro, medir depois.** Atividade e equipamento entram no dia
+por caixinha, e a quantidade ou a hora entra num segundo toque. É a ordem
+do canteiro: de manhã se sabe o que vai ser feito e quais máquinas saíram;
+quanto rendeu, só no fim do dia.
+
+**Desmarcar não apaga o que já foi digitado.** Tirar a marca de uma
+atividade com quantidade, ou de uma máquina com hora, é recusado com o
+caminho escrito: abrir a linha no diário e usar Apagar. O app **não tem
+`confirm()` em lugar nenhum** — caixa do navegador em cima de dedo de
+luva não é confirmação, é sorteio.
+
+**O diário guarda cópia, não referência.** Escolhendo do cadastro, a
+descrição, o local e a unidade são copiados para `rdo_atividades`. Mexer
+no cadastro amanhã não pode reescrever o que a obra assinou ontem; o
+vínculo `atividade_id` fica só para somar o acumulado.
 
 **Duas formas de mover o cartão no quadro.** Seta de um toque para o
 canteiro, arrastar para o computador. Arrastar com luva, no sol, falha.
@@ -268,7 +309,8 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **365 verificações de tela** e 16 em SQL.
+Duas frentes, sempre. Hoje são **550 verificações de tela** em 16 suítes,
+e 17 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
 
@@ -290,9 +332,11 @@ Ele imita índices únicos, checagens e valores padrão. Não substitui a
 frente 1.
 
 **3. `python3 verificar.py`** antes de todo envio. Confere o que o olho
-não pega: id usado no JS que não existe no HTML, módulo marcado pronto sem
-tela, tela sem carregador no roteador. Já pegou um botão que teria ido
-morto para o ar.
+não pega: id usado no JS que não existe no HTML, **id repetido no HTML**,
+módulo (ou tela do Cadastro) marcado pronto sem tela, tela sem carregador
+no roteador, ícone citado que não está no desenho, e nome de classe do CSS
+usado como modificador. Já pegou um botão que teria ido morto para o ar e
+um `at-titulo` que a ata da reunião e as atividades disputavam.
 
 **4. Olhe a tela renderizada.** Metade dos defeitos desta lista só
 apareceu em captura de tela, não em teste.
@@ -346,6 +390,14 @@ Estão aqui porque cada um custou tempo.
 15. **`pg.evaluate` do Playwright executa a função que o trecho
     devolve.** Substituir `window.print` por uma função contadora já
     conta uma chamada. Zere o contador depois de instalar.
+16. **Usar `limparTermo()` em busca que roda na memória.** Ela só tira o
+    que atrapalha o PostgREST — **não abaixa a caixa**. "concret" não
+    achava "Concretagem". Filtro local compara com `.toLowerCase()` dos
+    dois lados, como no efetivo e na frota.
+17. **`pg.reload()` depois de semear o dublê.** O banco do dublê é
+    memória: recarregar a página o recria vazio e o teste passa a medir
+    uma tela sem dado nenhum. Semeie e chame `carregarPainel()`, não
+    recarregue.
 
 ---
 
@@ -360,8 +412,12 @@ Estão aqui porque cada um custou tempo.
 - **Sem foto dentro do app.** Só link do Drive.
 - **`documento_notas` e `reuniao_pauta`** têm tabela mas pouca ou
   nenhuma tela. (`ajuda_custo` já tem tela, dentro da ficha da pessoa.)
-- **Sem relatório consolidado** além do PDF do RDO: não há medição em PDF
-  nem folha de efetivo para impressão.
+- **Sem folha de efetivo para impressão** — a lista de presença em papel,
+  para assinar no canteiro. O PDF do diário, o do boletim de medição e os
+  dos relatórios de período já existem.
+- **Atividade avulsa não soma em acumulado**, de propósito: sem cadastro
+  atrás, não há o que somar. Quem quiser o acumulado cadastra a
+  atividade e escolhe da lista.
 
 ---
 
@@ -371,9 +427,12 @@ O dono já está usando. Não é banco vazio.
 
 - 1 obra: `TESTE`
 - 2 pessoas com contrato: Jonacir Cazelli (Engenheiro) e João Da Silva (Pedreiro)
-- 1 RDO lançado (03/09) com 1 presença e 1 atividade
+- 2 RDOs lançados, com 3 presenças e 2 atividades (ainda em texto livre,
+  de antes do catálogo existir)
+- 1 equipamento na frota
 - 1 tarefa
 - 1 perfil: Jonacir Cazelli, papel `gestor`
+- `atividades`, `epis` e `epi_entregas` ainda vazias
 
 **Todo teste destrutivo tem que ser desfeito.** Confira as contagens
 depois.

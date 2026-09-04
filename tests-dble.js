@@ -15,6 +15,7 @@
     reunioes: [], reuniao_participantes: [], reuniao_topicos: [], reuniao_pauta: [],
     documentos: [], mural: [], avisos: [], solicitacoes: [], ajuda_custo: [],
     rdos: [], rdo_presencas: [], rdo_atividades: [], rdo_fotos: [], rdo_equipamentos: [],
+    atividades: [],
     perfis: [{id:'u1',nome:'Jonacir Cazelli',papel:'gestor'}]
   };
   const hoje = () => new Date().toISOString().slice(0,10);
@@ -114,7 +115,9 @@
           && t.data_termino && t.data_termino < hoje()).length,
         documentos: B.documentos.length,
         reunioes_30_dias: B.reunioes.filter(r => r.data >= d30()).length }))
-      .map(x => ({ ...x, equipamentos_ativos: B.equipamentos.filter(e=>e.ativo && e.obra_id==='o1').length }));
+      .map(x => ({ ...x,
+        equipamentos_ativos: B.equipamentos.filter(e=>e.ativo && e.obra_id==='o1').length,
+        atividades_cadastradas: B.atividades.filter(a=>a.ativo!==false && a.obra_id==='o1').length }));
   }
 
   // embutidos: o app pede pessoa:pessoas(...) e funcao:funcoes(...)
@@ -136,6 +139,8 @@
     }
     if (nome === 'rdo_equipamentos') return { ...linha,
       equipamento: B.equipamentos.find(e => e.id === linha.equipamento_id) };
+    if (nome === 'epi_entregas') return { ...linha,
+      epi: B.epis.find(e => e.id === linha.epi_id) || null };
     return linha;
   }
 
@@ -215,12 +220,26 @@
     });
   }
 
+  function atividadeAcumulado() {
+    return B.atividades.map(a => {
+      const usos = B.rdo_atividades.filter(x => x.atividade_id === a.id);
+      const dias = usos.map(u => (B.rdos.find(r => r.id === u.rdo_id) || {}).data).filter(Boolean);
+      return { atividade_id: a.id, obra_id: a.obra_id, obra: 'TESTE',
+        descricao: a.descricao, local: a.local || null, unidade: a.unidade || null,
+        ativo: a.ativo !== false,
+        quantidade_total: usos.reduce((s,u) => s + Number(u.quantidade || 0), 0),
+        dias_lancados: usos.length,
+        ultimo_dia: dias.length ? dias.slice().sort().pop() : null };
+    });
+  }
+
   const VIRTUAIS = { vw_efetivo: efetivo, vw_rdo_resumo: resumoRDO,
                      vw_status_obra: statusObra, vw_alertas: () => [],
                      vw_disponibilidade_equipamento: disponibilidade,
                      vw_ficha_epi: fichaEpi, vw_medicao_item: medicaoItem,
                      vw_contrato_saldo: contratoSaldo, vw_chuva_mes: chuvaMes,
-                     vw_rdo_dia: rdoDia };
+                     vw_rdo_dia: rdoDia,
+                     vw_atividade_acumulado: atividadeAcumulado };
 
   function tabela(nome) {
     const cond = [];   // funções de filtro
@@ -340,6 +359,7 @@
     tarefas:      { status: 'aberta', prioridade: 'media', origem: 'pauta' },
     contratos:    { alojado: false },
     equipamentos: { categoria: 'pesado', propriedade: 'proprio', ativo: true },
+    atividades:   { ativo: true },
     epi_entregas: { quantidade: 1, motivo: 'primeira_entrega', assinatura_ok: false },
     rdo_presencas:{ situacao: 'presente', horas_normais: 8, horas_extras: 0 },
     medicoes:     { fechada: false },
@@ -396,6 +416,14 @@
       return 'duplicate key value violates unique constraint "uq_presenca"';
     if (nome==='rdo_equipamentos' && outros.some(x=>x.rdo_id===l.rdo_id && x.equipamento_id===l.equipamento_id))
       return 'duplicate key value violates unique constraint "uq_rdo_equip"';
+    if (nome==='atividades') {
+      const chave = (s) => String(s||'').trim().toLowerCase();
+      if (outros.some(a => a.obra_id===l.obra_id && chave(a.descricao)===chave(l.descricao)))
+        return 'duplicate key value violates unique constraint "uq_atividade_obra_desc"';
+    }
+    if (nome==='rdo_atividades' && l.atividade_id &&
+        outros.some(x=>x.rdo_id===l.rdo_id && x.atividade_id===l.atividade_id))
+      return 'duplicate key value violates unique constraint "uq_rdo_atividade"';
     if (nome==='ajuda_custo') {
       if (!l.fim && outros.some(a => a.contrato_id === l.contrato_id && !a.fim))
         return 'duplicate key value violates unique constraint "uq_ajuda_ativa"';

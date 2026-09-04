@@ -30,17 +30,29 @@ const PAPEIS = {
    "conta" diz de qual número da obra o módulo tira o contador. */
 const MODULOS = [
   { ic: 'i-rdo',        nome: 'RDO',           desc: 'Diário de obra',      pronto: true, tela: 'rdo', conta: 'rdos_30_dias' },
-  { ic: 'i-efetivo',    nome: 'Efetivo',       desc: 'Pessoas e contratos', pronto: true, tela: 'efetivo', conta: 'efetivo_ativo' },
+  { ic: 'i-cadastro',   nome: 'Cadastro',      desc: 'Gente, frota e serviços', pronto: true, tela: 'cadastro' },
   { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Prazos em 60 dias', pronto: true, tela: 'alertas' },
   { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: true, tela: 'epi', },
   { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: true, tela: 'ocorrencias', conta: 'ocorrencias_30_dias' },
   { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: true, tela: 'tarefas', conta: 'tarefas_abertas' },
   { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: true, tela: 'nfs', },
-  { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: true, tela: 'equipamentos', conta: 'equipamentos_ativos' },
   { ic: 'i-medicao',    nome: 'Medições',      desc: 'Boletim e acumulado', pronto: true, tela: 'medicoes', },
   { ic: 'i-reuniao',    nome: 'Reuniões',      desc: 'Pauta e ata',         pronto: true, tela: 'reunioes', },
   { ic: 'i-relatorio',  nome: 'Relatórios',    desc: 'Semana, mês e ano', pronto: true, tela: 'relatorios' },
   { ic: 'i-doc',        nome: 'Documentos',    desc: 'Arquivos e mural',    pronto: true, tela: 'documentos', }
+];
+
+/* O que mora dentro do Cadastro. Saiu do trilho principal porque cadastro
+   não é trabalho do dia: abre-se quando entra gente, máquina ou serviço
+   novo, e o resto do mês fica quieto. Sem "conta" aqui — o número de cada
+   um aparece dentro da aba, junto do que ele significa. */
+const CADASTROS = [
+  { ic: 'i-efetivo',   nome: 'Efetivo',      desc: 'Pessoas e contratos',
+    tela: 'efetivo',      conta: 'efetivo_ativo',         unid: ['pessoa ativa', 'pessoas ativas'] },
+  { ic: 'i-equip',     nome: 'Equipamentos', desc: 'Frota e horas',
+    tela: 'equipamentos', conta: 'equipamentos_ativos',   unid: ['na frota', 'na frota'] },
+  { ic: 'i-atividade', nome: 'Atividades',   desc: 'A lista que o diário usa',
+    tela: 'atividades',   conta: 'atividades_cadastradas', unid: ['atividade', 'atividades'] }
 ];
 
 /* ---------- datas ----------
@@ -120,6 +132,8 @@ function irPara(tela) {
   _tela = tela;
   $('tela-painel').hidden   = tela !== 'painel';
   $('tela-efetivo').hidden  = tela !== 'efetivo';
+  $('tela-cadastro').hidden = tela !== 'cadastro';
+  $('tela-atividades').hidden = tela !== 'atividades';
   $('tela-rdo').hidden      = tela !== 'rdo';
   $('tela-rdo-edit').hidden = tela !== 'rdo-edit';
   $('tela-equipamentos').hidden = tela !== 'equipamentos';
@@ -139,6 +153,8 @@ function irPara(tela) {
   $('btn-voltar').hidden    = tela === 'painel';
   renderModulos(_status);
   window.scrollTo(0, 0);
+  if (tela === 'cadastro') carregarCadastro();
+  if (tela === 'atividades') carregarAtividadesCad();
   if (tela === 'efetivo') carregarEfetivo();
   if (tela === 'rdo')     carregarRDOs();
   if (tela === 'equipamentos') carregarEquipamentos();
@@ -174,6 +190,7 @@ $('btn-voltar').addEventListener('click', async () => {
                               await carregarPainel(); return; }
   if (_tela === 'ata')      { _reuniao = null; irPara('reunioes');
                               await carregarPainel(); return; }
+  if (CADASTROS.some(c => c.tela === _tela)) { irPara('cadastro'); return; }
   irPara('painel');
 });
 
@@ -464,7 +481,8 @@ function renderModulos(s) {
           (_tela === 'rdo-edit' && m.tela === 'rdo') ||
           (_tela === 'nf-edit'  && m.tela === 'nfs') ||
           (['contrato','medicao'].includes(_tela) && m.tela === 'medicoes') ||
-          (_tela === 'ata' && m.tela === 'reunioes'))
+          (_tela === 'ata' && m.tela === 'reunioes') ||
+          (CADASTROS.some(c => c.tela === _tela) && m.tela === 'cadastro'))
         b.setAttribute('aria-current', 'page');
       b.addEventListener('click', () => irPara(m.tela));
     }
@@ -610,6 +628,269 @@ window.addEventListener('offline', sinal);
   const { data: { session } } = await db.auth.getSession();
   if (session) { await abrirApp(); } else { mostrar('login'); }
 })();
+
+/* ============================================================
+   CADASTRO — a aba que junta o que se cadastra uma vez só
+   Efetivo, equipamentos e atividades moram aqui dentro. O diário
+   não digita nome de nada: escolhe do que foi cadastrado.
+   ============================================================ */
+
+function carregarCadastro() {
+  $('cad-titulo').textContent = _obra ? _obra.nome : '—';
+  renderCadastro();
+  atualizarStatus();
+}
+
+/* Números frescos sem prender a tela: desenha com o que já tem e
+   redesenha quando o banco responde. */
+async function atualizarStatus() {
+  if (!_obra) return;
+  const { data } = await db.from('vw_status_obra').select('*').eq('obra_id', _obra.id).maybeSingle();
+  if (!data) return;
+  _status = data;
+  if (_tela === 'cadastro') renderCadastro();
+  renderModulos(_status);
+}
+
+function renderCadastro() {
+  const grade = $('cad-grade');
+  grade.innerHTML = '';
+  CADASTROS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'modulo';
+    b.type = 'button';
+    b.addEventListener('click', () => irPara(c.tela));
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'ic'); svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + c.ic);
+    svg.appendChild(use);
+
+    const nome = document.createElement('b'); nome.textContent = c.nome;
+    const desc = document.createElement('small');
+    // O número diz mais do que o rótulo genérico, quando ele existe.
+    const n = _status && _status[c.conta] != null ? Number(_status[c.conta]) : null;
+    desc.textContent = n === null ? c.desc
+                     : n === 0   ? 'nada cadastrado ainda'
+                                 : plural(n, c.unid[0], c.unid[1]);
+
+    b.append(svg, nome, desc);
+    grade.appendChild(b);
+  });
+}
+
+
+/* ============================================================
+   ATIVIDADES — a lista que o diário oferece
+   O acumulado vem da vw_atividade_acumulado, somado no banco. Se o
+   app somasse, dois apontadores lançando no mesmo dia fariam a
+   conta mentir para os dois.
+   ============================================================ */
+
+let _atividadesCad  = [];
+let _ativCadEditando = null;
+
+async function carregarAtividadesCad() {
+  $('atv-titulo').textContent = _obra ? _obra.nome : '—';
+  const area = $('atividades-lista');
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Carregando…');
+  const { data, error } = await db.from('vw_atividade_acumulado')
+    .select('atividade_id, descricao, local, unidade, ativo, quantidade_total, dias_lancados, ultimo_dia')
+    .eq('obra_id', _obra.id).order('descricao');
+
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler as atividades.', error.message); return; }
+  _atividadesCad = data || [];
+  renderAtivNumeros();
+  filtrarAtividades();
+}
+
+function renderAtivNumeros() {
+  const emUso   = _atividadesCad.filter(a => a.ativo);
+  const usadas  = emUso.filter(a => Number(a.dias_lancados) > 0).length;
+  const semUnid = emUso.filter(a => !a.unidade).length;
+  const fora    = _atividadesCad.length - emUso.length;
+  const tiles = [
+    { rot:'No cadastro',  val: emUso.length, sub: 'aparecem no diário' },
+    { rot:'Já lançadas',  val: usadas,
+      sub: usadas ? 'com quantidade somando' : 'nenhuma lançada ainda' },
+    { rot:'Sem unidade',  val: semUnid,
+      sub: semUnid ? 'não viram acumulado' : 'todas medem alguma coisa',
+      urgente: semUnid > 0 },
+    { rot:'Fora de uso',  val: fora, sub: 'guardadas no histórico' }
+  ];
+  const area = $('atv-numeros'); area.innerHTML = '';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className = 'num';
+    const r = document.createElement('p'); r.className = 'rotulo'; r.textContent = t.rot;
+    const v = document.createElement('b'); v.textContent = t.val;
+    const s = document.createElement('small'); s.textContent = t.sub;
+    if (t.urgente) s.className = 'alerta';
+    d.append(r, v, s); area.appendChild(d);
+  });
+}
+
+const numBR = (v) => Number(v || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+function acumuladoTexto(a) {
+  const q = Number(a.quantidade_total || 0);
+  if (!q) return '';
+  return numBR(q) + (a.unidade ? ' ' + a.unidade : '');
+}
+
+function linhaAtividade(a) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'item';
+
+  const corpo = document.createElement('span'); corpo.className = 'corpo';
+  const d = document.createElement('b'); d.textContent = a.descricao;
+  corpo.appendChild(d);
+
+  const partes = [];
+  if (a.local)   partes.push(a.local);
+  if (a.unidade) partes.push('em ' + a.unidade);
+  if (Number(a.dias_lancados) > 0)
+    partes.push(plural(Number(a.dias_lancados), 'dia lançado', 'dias lançados'));
+  if (partes.length) {
+    const s = document.createElement('small'); s.textContent = partes.join(' · ');
+    corpo.appendChild(s);
+  }
+  b.appendChild(corpo);
+
+  const acum = acumuladoTexto(a);
+  if (acum) {
+    const m = document.createElement('span'); m.className = 'medida'; m.textContent = acum;
+    b.appendChild(m);
+  }
+  b.addEventListener('click', () => abrirAtivCad(a));
+  return b;
+}
+
+function filtrarAtividades() {
+  const termo = ($('busca-atividade').value || '').trim().toLowerCase();
+  const emUso = _atividadesCad.filter(a => a.ativo);
+  const fora  = _atividadesCad.filter(a => !a.ativo);
+
+  const combina = (a) => !termo ||
+    [a.descricao, a.local, a.unidade].filter(Boolean).join(' ').toLowerCase().includes(termo);
+
+  const lista = emUso.filter(combina);
+  const area = $('atividades-lista');
+  area.innerHTML = '';
+
+  if (!lista.length) {
+    area.innerHTML = emUso.length
+      ? vazioHTML('Nada com esse termo.', 'Foram procuradas ' + emUso.length + ' atividades.')
+      : vazioHTML('Nenhuma atividade cadastrada.',
+                  'Cadastre o que a obra executa e o diário passa a oferecer a lista.');
+  } else {
+    const pilha = document.createElement('div'); pilha.className = 'pilha';
+    lista.forEach(a => pilha.appendChild(linhaAtividade(a)));
+    area.appendChild(pilha);
+  }
+
+  $('bloco-ativ-fora').hidden = !fora.length;
+  $('btn-ativ-fora').textContent = 'Fora de uso (' + fora.length + ')';
+  const foraArea = $('ativ-fora-lista');
+  foraArea.innerHTML = '';
+  fora.filter(combina).forEach(a => {
+    const p = document.createElement('button');
+    p.type = 'button'; p.className = 'ativ-usada';
+    p.textContent = a.descricao +
+      (Number(a.dias_lancados) > 0
+        ? ' · ' + plural(Number(a.dias_lancados), 'dia já lançado', 'dias já lançados')
+        : ' · nunca usada');
+    p.addEventListener('click', () => abrirAtivCad(a));
+    foraArea.appendChild(p);
+  });
+}
+
+$('busca-atividade').addEventListener('input', filtrarAtividades);
+$('btn-ativ-fora').addEventListener('click', () => {
+  const area = $('ativ-fora-lista');
+  area.hidden = !area.hidden;
+  $('btn-ativ-fora').setAttribute('aria-expanded', String(!area.hidden));
+});
+
+/* ---------- folha da atividade ---------- */
+
+function abrirAtivCad(a) {
+  _ativCadEditando = a || null;
+  $('titulo-ativ-cad').textContent = a ? 'Atividade' : 'Nova atividade';
+  $('ac-descricao').value = a ? a.descricao : '';
+  $('ac-local').value     = a && a.local ? a.local : '';
+  $('ac-unidade').value   = a && a.unidade ? a.unidade : '';
+  $('erro-ativ-cad').hidden = true;
+
+  const dica = $('dica-ativ-uso');
+  if (a && Number(a.dias_lancados) > 0) {
+    dica.textContent = 'Já lançada em ' +
+      plural(Number(a.dias_lancados), 'dia', 'dias') +
+      (acumuladoTexto(a) ? ', somando ' + acumuladoTexto(a) : '') +
+      (a.ultimo_dia ? ' · último em ' + dataBR(a.ultimo_dia) : '') +
+      '. Mudar a descrição aqui não reescreve os diários já assinados.';
+    dica.hidden = false;
+  } else { dica.hidden = true; }
+
+  $('btn-tirar-ativ').hidden  = !a || !a.ativo;
+  $('btn-voltar-ativ').hidden = !a || a.ativo;
+  $('folha-ativ-cad').hidden = false;
+  if (!a) $('ac-descricao').focus();
+}
+
+$('btn-nova-atividade-cad').addEventListener('click', () => abrirAtivCad(null));
+$('btn-fechar-ativ-cad').addEventListener('click', () => { $('folha-ativ-cad').hidden = true; });
+$('folha-ativ-cad').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-ativ-cad')) $('folha-ativ-cad').hidden = true;
+});
+
+$('form-ativ-cad').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-ativ-cad'); erro.hidden = true;
+  const descricao = $('ac-descricao').value.trim();
+  if (!descricao) return falhar(erro, 'Escreva o que é a atividade.');
+
+  const linha = {
+    descricao,
+    local:   $('ac-local').value.trim() || null,
+    unidade: $('ac-unidade').value.trim() || null
+  };
+
+  const { error } = _ativCadEditando
+    ? await db.from('atividades').update(linha).eq('id', _ativCadEditando.atividade_id)
+    : await db.from('atividades').insert({ ...linha, obra_id: _obra.id });
+
+  if (error) {
+    if (/uq_atividade_obra_desc/.test(error.message))
+      return falhar(erro, '"' + descricao + '" já está cadastrada nesta obra. ' +
+                          'Se estiver fora de uso, abra a lista de fora de uso e traga de volta.');
+    return falhar(erro, 'Não consegui salvar: ' + error.message);
+  }
+
+  $('folha-ativ-cad').hidden = true;
+  await carregarAtividadesCad();
+});
+
+$('btn-tirar-ativ').addEventListener('click', async () => {
+  if (!_ativCadEditando) return;
+  const { error } = await db.from('atividades')
+    .update({ ativo: false }).eq('id', _ativCadEditando.atividade_id);
+  if (error) return falhar($('erro-ativ-cad'), 'Não consegui tirar de uso: ' + error.message);
+  $('folha-ativ-cad').hidden = true;
+  await carregarAtividadesCad();
+});
+
+$('btn-voltar-ativ').addEventListener('click', async () => {
+  if (!_ativCadEditando) return;
+  const { error } = await db.from('atividades')
+    .update({ ativo: true }).eq('id', _ativCadEditando.atividade_id);
+  if (error) return falhar($('erro-ativ-cad'), 'Não consegui trazer de volta: ' + error.message);
+  $('folha-ativ-cad').hidden = true;
+  await carregarAtividadesCad();
+});
+
 
 /* ============================================================
    EFETIVO — quem trabalha na obra
@@ -920,6 +1201,7 @@ async function abrirFolhaPessoa() {
   avisarExperiencia();
   $('folha-pessoa').hidden = false;
   $('p-nome').focus();
+  await carregarEpiDaPessoa();
 }
 
 async function abrirPessoa(contratoId) {
@@ -954,9 +1236,118 @@ async function abrirPessoa(contratoId) {
   $('dica-cpf').hidden = true;
   $('folha-pessoa').hidden = false;
   await carregarAjuda();
+  await carregarEpiDaPessoa();
 }
 
 function fecharFolhaPessoa() { $('folha-pessoa').hidden = true; }
+
+/* ---------- EPI dentro do cadastro da pessoa ----------
+   EPI é informação do colaborador, não de um módulo separado: quem
+   admite alguém já sabe o que entregou na mão dele, e é ali que a
+   informação aparece sem custo nenhum. O módulo EPI continua existindo
+   para a ficha, o catálogo e a cobrança de assinatura. */
+let _epiAdmissao = new Set();
+
+function somarDias(iso, n) {
+  const d = new Date(iso + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + Number(n));
+  return d.toISOString().slice(0, 10);
+}
+
+async function carregarCatalogoEPI() {
+  if (_catalogo.length) return _catalogo;
+  const { data } = await db.from('epis')
+    .select('id, nome, ca, validade_uso_dias, ativo').order('nome');
+  _catalogo = data || [];
+  return _catalogo;
+}
+
+async function carregarEpiDaPessoa() {
+  const area = $('epi-do-contrato');
+  area.innerHTML = '';
+  _epiAdmissao = new Set();
+  await carregarCatalogoEPI();
+  const ativos = _catalogo.filter(e => e.ativo);
+
+  /* pessoa nova: marca-se o que sai do almoxarifado junto com a admissão */
+  if (!_editando) {
+    $('epi-explica').hidden = !ativos.length;
+    if (!ativos.length) {
+      area.innerHTML = vazioHTML('Nenhum EPI no catálogo.',
+        'Cadastre os tipos no módulo EPI e eles passam a aparecer aqui, na admissão.');
+      return;
+    }
+    const pilha = document.createElement('div'); pilha.className = 'pilha';
+    ativos.forEach(e => {
+      const rot = document.createElement('label'); rot.className = 'marca-caixa';
+      const cx = document.createElement('input'); cx.type = 'checkbox';
+      cx.addEventListener('change', () => {
+        if (cx.checked) _epiAdmissao.add(e.id); else _epiAdmissao.delete(e.id);
+        rot.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      });
+      const txt = document.createElement('span');
+      const b = document.createElement('b'); b.textContent = e.nome;
+      txt.appendChild(b);
+      const det = [];
+      if (e.ca) det.push('CA ' + e.ca);
+      if (e.validade_uso_dias) det.push('troca a cada ' + plural(e.validade_uso_dias, 'dia', 'dias'));
+      if (det.length) {
+        const s = document.createElement('small'); s.textContent = det.join(' · ');
+        txt.appendChild(s);
+      }
+      rot.append(cx, txt);
+      pilha.appendChild(rot);
+    });
+    area.appendChild(pilha);
+    return;
+  }
+
+  /* pessoa já cadastrada: o que ela recebeu, e a porta para entregar mais */
+  $('epi-explica').hidden = true;
+  const { data, error } = await db.from('epi_entregas')
+    .select('id, data_entrega, quantidade, motivo, assinatura_ok, ' +
+            'epi:epis(nome, ca, validade_uso_dias)')
+    .eq('contrato_id', _editando.contrato_id)
+    .order('data_entrega', { ascending: false });
+
+  const entregas = error ? [] : (data || []);
+
+  if (!entregas.length) {
+    const p = document.createElement('p'); p.className = 'ativ-usada';
+    p.textContent = error
+      ? 'Não consegui ler as entregas: ' + error.message
+      : 'Nenhum EPI entregue ainda para esta pessoa.';
+    area.appendChild(p);
+  } else {
+    entregas.forEach(en => {
+      const validade = en.epi ? en.epi.validade_uso_dias : null;
+      const troca = validade ? somarDias(en.data_entrega, validade) : null;
+
+      const linha = document.createElement('div'); linha.className = 'epi-linha';
+      if (troca && troca < hojeISO())   linha.dataset.estado = 'vencida';
+      else if (!en.assinatura_ok)       linha.dataset.estado = 'sem-assinatura';
+
+      const oque = document.createElement('span'); oque.className = 'oque';
+      oque.textContent = (en.epi ? en.epi.nome : 'EPI') +
+        (Number(en.quantidade) > 1 ? ' · ' + en.quantidade + ' un' : '') +
+        (en.assinatura_ok ? '' : ' · sem assinatura');
+
+      const quando = document.createElement('span'); quando.className = 'quando';
+      quando.textContent = dataBR(en.data_entrega) +
+        (troca ? ' · troca ' + dataBR(troca) : '');
+
+      linha.append(oque, quando);
+      area.appendChild(linha);
+    });
+  }
+
+  const bt = document.createElement('button');
+  bt.type = 'button'; bt.className = 'btn btn-secundario';
+  bt.style.width = '100%';
+  bt.textContent = '+ Entregar EPI';
+  bt.addEventListener('click', () => abrirEntrega(_editando.contrato_id));
+  area.appendChild(bt);
+}
 
 $('btn-nova-pessoa').addEventListener('click', abrirFolhaPessoa);
 $('btn-fechar-pessoa').addEventListener('click', fecharFolhaPessoa);
@@ -1010,6 +1401,7 @@ $('form-pessoa').addEventListener('submit', async (ev) => {
   botao.textContent = 'Salvar';
 
   if (r.erro) { erro.textContent = r.erro; erro.hidden = false; return; }
+  if (r.aviso) toastErro(r.aviso);
 
   fecharFolhaPessoa();
   await carregarEfetivo();
@@ -1045,10 +1437,27 @@ async function salvarNovo(dadosPessoa, dadosContrato, cpf) {
     pessoaId = data.id;
   }
 
-  const { error } = await db.from('contratos').insert({
+  const { data: contrato, error } = await db.from('contratos').insert({
     ...dadosContrato, pessoa_id: pessoaId, obra_id: _obra.id
-  });
+  }).select('id').single();
   if (error) return { erro: traduzir(error, dadosPessoa) };
+
+  // EPI marcado na admissão. Se falhar, a pessoa NÃO se perde: ela já
+  // está cadastrada, e o aviso diz o que ficou faltando lançar.
+  if (_epiAdmissao.size) {
+    const entregas = [..._epiAdmissao].map(epiId => ({
+      contrato_id:  contrato.id,
+      epi_id:       epiId,
+      data_entrega: dadosContrato.admissao,
+      quantidade:   1,
+      motivo:       'primeira_entrega',
+      entregue_por: _perfilNome || null,
+      assinatura_ok: false
+    }));
+    const r = await db.from('epi_entregas').insert(entregas);
+    if (r.error) return { aviso: 'Cadastrei a pessoa, mas não consegui lançar os EPI: ' +
+                                 r.error.message + ' — lance pelo módulo EPI.' };
+  }
   return {};
 }
 
@@ -1496,13 +1905,19 @@ $('btn-todos-presentes').addEventListener('click', async () => {
   avisarGravado();
 });
 
-/* ---------- atividades ---------- */
+/* ---------- atividades ----------
+   Duas portas: "Da lista" marca o que a obra executou hoje, escolhendo
+   do cadastro; "+ Avulsa" escreve à mão o que ainda não está cadastrado.
+   A linha do diário guarda a descrição COPIADA do cadastro — mexer no
+   cadastro amanhã não pode reescrever o diário assinado ontem. */
 let _atividades = [];
 let _atvEditando = null;
+let _escolhaAtiv = [];
 
 async function carregarAtividades() {
   const { data } = await db.from('rdo_atividades')
-    .select('id, descricao, local, percentual_executado').eq('rdo_id', _rdo.id);
+    .select('id, atividade_id, descricao, local, unidade, quantidade, percentual_executado')
+    .eq('rdo_id', _rdo.id);
   _atividades = data || [];
   const area = $('atividade-lista');
 
@@ -1520,16 +1935,29 @@ async function carregarAtividades() {
     const corpo = document.createElement('span'); corpo.className = 'corpo';
     const d = document.createElement('b'); d.textContent = a.descricao;
     corpo.appendChild(d);
-    if (a.local) {
-      const s = document.createElement('small'); s.textContent = a.local;
+
+    const partes = [];
+    if (a.local) partes.push(a.local);
+    if (a.percentual_executado != null)
+      partes.push(numBR(a.percentual_executado) + '% executado');
+    if (!a.atividade_id) partes.push('avulsa');
+    if (partes.length) {
+      const s = document.createElement('small'); s.textContent = partes.join(' · ');
       corpo.appendChild(s);
     }
     b.appendChild(corpo);
-    if (a.percentual_executado != null) {
+
+    // A quantidade é o que soma no mês; o percentual é só leitura do dia.
+    if (a.quantidade != null) {
       const m = document.createElement('span'); m.className = 'medida';
-      m.textContent = Number(a.percentual_executado).toLocaleString('pt-BR') + '%';
+      m.textContent = numBR(a.quantidade) + (a.unidade ? ' ' + a.unidade : '');
+      b.appendChild(m);
+    } else if (a.percentual_executado != null) {
+      const m = document.createElement('span'); m.className = 'medida';
+      m.textContent = numBR(a.percentual_executado) + '%';
       b.appendChild(m);
     }
+
     b.addEventListener('click', () => abrirAtividade(a));
     cx.appendChild(b);
   });
@@ -1537,10 +1965,29 @@ async function carregarAtividades() {
 
 function abrirAtividade(a) {
   _atvEditando = a || null;
-  $('titulo-atividade').textContent = a ? 'Atividade' : 'Nova atividade';
+  const doCadastro = !!(a && a.atividade_id);
+
+  $('titulo-atividade').textContent = a ? 'Atividade' : 'Nova atividade avulsa';
   $('a-descricao').value  = a ? a.descricao : '';
   $('a-local').value      = a && a.local ? a.local : '';
+  $('a-quantidade').value = a && a.quantidade != null ? a.quantidade : '';
   $('a-percentual').value = a && a.percentual_executado != null ? a.percentual_executado : '';
+
+  // Descrição de atividade do cadastro não se edita aqui: se pudesse,
+  // o mesmo serviço apareceria com dois nomes e o acumulado se partiria.
+  $('a-descricao').readOnly = doCadastro;
+
+  const rot = $('a-unidade-rot');
+  if (a && a.unidade) { rot.textContent = '(' + a.unidade + ')'; rot.hidden = false; }
+  else { rot.textContent = ''; rot.hidden = true; }
+
+  const dica = $('dica-ativ-acum');
+  if (doCadastro) {
+    dica.textContent = 'Vem do cadastro. A quantidade lançada aqui soma no ' +
+                       'acumulado desta atividade na semana, no mês e no ano.';
+    dica.hidden = false;
+  } else { dica.hidden = true; }
+
   $('btn-apagar-atividade').hidden = !a;
   $('erro-atividade').hidden = true;
   $('folha-atividade').hidden = false;
@@ -1564,7 +2011,16 @@ $('form-atividade').addEventListener('submit', async (ev) => {
   if (pct != null && (pct < 0 || pct > 100))
     return falhar(erro, 'O percentual vai de 0 a 100.');
 
-  const linha = { descricao, local: $('a-local').value.trim() || null, percentual_executado: pct };
+  const qtd = $('a-quantidade').value === '' ? null : Number($('a-quantidade').value);
+  if (qtd != null && qtd < 0)
+    return falhar(erro, 'A quantidade não pode ser negativa.');
+
+  const linha = {
+    descricao,
+    local: $('a-local').value.trim() || null,
+    quantidade: qtd,
+    percentual_executado: pct
+  };
   const { error } = _atvEditando
     ? await db.from('rdo_atividades').update(linha).eq('id', _atvEditando.id)
     : await db.from('rdo_atividades').insert({ ...linha, rdo_id: _rdo.id });
@@ -1580,6 +2036,118 @@ $('btn-apagar-atividade').addEventListener('click', async () => {
   await db.from('rdo_atividades').delete().eq('id', _atvEditando.id);
   $('folha-atividade').hidden = true;
   await carregarAtividades();
+});
+
+/* ---------- escolher atividades do dia na lista cadastrada ---------- */
+
+async function abrirEscolherAtividades() {
+  $('erro-escolher-ativ').hidden = true;
+  $('busca-escolher-ativ').value = '';
+  $('folha-escolher-ativ').hidden = false;
+  const area = $('escolher-ativ-lista');
+  area.innerHTML = vazioHTML('Carregando…');
+
+  const { data, error } = await db.from('atividades')
+    .select('id, descricao, local, unidade')
+    .eq('obra_id', _obra.id).eq('ativo', true).order('descricao');
+
+  if (error) { area.innerHTML = vazioHTML('Não consegui ler o cadastro.', error.message); return; }
+  _escolhaAtiv = data || [];
+  renderEscolhaAtiv();
+}
+
+function renderEscolhaAtiv() {
+  const area = $('escolher-ativ-lista');
+  area.innerHTML = '';
+
+  if (!_escolhaAtiv.length) {
+    area.innerHTML = vazioHTML('Nenhuma atividade cadastrada nesta obra.',
+      'Cadastre em Cadastro → Atividades e ela passa a aparecer aqui todos os dias.');
+    const ir = document.createElement('button');
+    ir.type = 'button'; ir.className = 'btn btn-secundario';
+    ir.textContent = 'Abrir o cadastro de atividades';
+    ir.addEventListener('click', () => {
+      $('folha-escolher-ativ').hidden = true;
+      irPara('atividades');
+    });
+    area.appendChild(ir);
+    return;
+  }
+
+  const termo = ($('busca-escolher-ativ').value || '').trim().toLowerCase();
+  const lista = _escolhaAtiv.filter(a => !termo ||
+    [a.descricao, a.local, a.unidade].filter(Boolean).join(' ').toLowerCase().includes(termo));
+
+  if (!lista.length) {
+    area.innerHTML = vazioHTML('Nada com esse termo.');
+    return;
+  }
+
+  const pilha = document.createElement('div'); pilha.className = 'pilha';
+  lista.forEach(a => {
+    const noDia = _atividades.find(x => x.atividade_id === a.id);
+    const rot = document.createElement('label');
+    rot.className = noDia ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+
+    const cx = document.createElement('input');
+    cx.type = 'checkbox'; cx.checked = !!noDia;
+
+    const txt = document.createElement('span');
+    const nome = document.createElement('b'); nome.textContent = a.descricao;
+    txt.appendChild(nome);
+    const partes = [];
+    if (a.local)   partes.push(a.local);
+    if (a.unidade) partes.push('medida em ' + a.unidade);
+    if (noDia && noDia.quantidade != null)
+      partes.push('hoje: ' + numBR(noDia.quantidade) + (a.unidade ? ' ' + a.unidade : ''));
+    if (partes.length) {
+      const s = document.createElement('small'); s.textContent = partes.join(' · ');
+      txt.appendChild(s);
+    }
+
+    cx.addEventListener('change', () => marcarAtividadeDoDia(a, cx));
+    rot.append(cx, txt);
+    pilha.appendChild(rot);
+  });
+  area.appendChild(pilha);
+}
+
+async function marcarAtividadeDoDia(a, caixa) {
+  const erro = $('erro-escolher-ativ'); erro.hidden = true;
+  const noDia = _atividades.find(x => x.atividade_id === a.id);
+
+  if (caixa.checked && !noDia) {
+    // A descrição, o local e a unidade viajam para o diário. Ele fica
+    // completo sozinho, sem depender do cadastro para ser lido depois.
+    const { error } = await db.from('rdo_atividades').insert({
+      rdo_id: _rdo.id, atividade_id: a.id,
+      descricao: a.descricao, local: a.local || null, unidade: a.unidade || null
+    });
+    if (error) { caixa.checked = false; return falhar(erro, 'Não consegui marcar: ' + error.message); }
+
+  } else if (!caixa.checked && noDia) {
+    // Desmarcar aqui apagaria o que já foi digitado. O app não perde
+    // informação por um toque: quem quer apagar de verdade abre a linha
+    // no diário, onde o botão de apagar diz o que faz.
+    if (noDia.quantidade != null || noDia.percentual_executado != null) {
+      caixa.checked = true;
+      return falhar(erro, '"' + a.descricao + '" já tem lançamento de hoje. ' +
+        'Para tirar, toque nela na lista do diário e use Apagar.');
+    }
+    const { error } = await db.from('rdo_atividades').delete().eq('id', noDia.id);
+    if (error) { caixa.checked = true; return falhar(erro, 'Não consegui tirar: ' + error.message); }
+  }
+
+  await carregarAtividades();
+  renderEscolhaAtiv();
+  avisarGravado();
+}
+
+$('btn-escolher-atividade').addEventListener('click', abrirEscolherAtividades);
+$('busca-escolher-ativ').addEventListener('input', renderEscolhaAtiv);
+$('btn-fechar-escolher-ativ').addEventListener('click', () => { $('folha-escolher-ativ').hidden = true; });
+$('folha-escolher-ativ').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-escolher-ativ')) $('folha-escolher-ativ').hidden = true;
 });
 
 /* ---------- fotos ---------- */
@@ -1672,11 +2240,11 @@ async function carregarEquipRDO() {
   _equipObra = daObra.data || [];
 
   const area = $('equip-lista');
-  $('btn-add-equip').hidden = !_equipObra.length;
+  $('acoes-equip').hidden = !_equipObra.length;
 
   if (!_equipObra.length) {
     area.innerHTML = vazioHTML('Nenhum equipamento cadastrado nesta obra.',
-      'A tela de Equipamentos ainda está em construção — quando existir, a frota aparece aqui.');
+      'Cadastre a frota em Cadastro → Equipamentos e ela passa a aparecer aqui todo dia.');
     return;
   }
   if (!_equipRDO.length) {
@@ -1789,6 +2357,96 @@ document.addEventListener('keydown', (ev) => {
 });
 
 ligarCamposDoRDO();
+
+/* ---------- escolher equipamentos do dia na frota cadastrada ----------
+   Mesmo desenho da escolha de atividades: marcar cria a linha com zero
+   hora, e as horas entram depois. Na obra se sabe de manhã quais
+   máquinas saíram; quantas horas cada uma rodou, só no fim do dia. */
+
+async function abrirEscolherEquip() {
+  $('erro-escolher-equip').hidden = true;
+  $('busca-escolher-equip').value = '';
+  $('folha-escolher-equip').hidden = false;
+  renderEscolhaEquip();
+}
+
+function renderEscolhaEquip() {
+  const area = $('escolher-equip-lista');
+  area.innerHTML = '';
+
+  if (!_equipObra.length) {
+    area.innerHTML = vazioHTML('Nenhum equipamento nesta obra.',
+      'Cadastre a frota em Cadastro → Equipamentos.');
+    return;
+  }
+
+  const termo = ($('busca-escolher-equip').value || '').trim().toLowerCase();
+  const lista = _equipObra.filter(e => !termo ||
+    [e.prefixo, e.tipo, e.modelo].filter(Boolean).join(' ').toLowerCase().includes(termo));
+
+  if (!lista.length) { area.innerHTML = vazioHTML('Nada com esse termo.'); return; }
+
+  const pilha = document.createElement('div'); pilha.className = 'pilha';
+  lista.forEach(e => {
+    const noDia = _equipRDO.find(x => x.equipamento_id === e.id);
+    const rot = document.createElement('label');
+    rot.className = noDia ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+
+    const cx = document.createElement('input');
+    cx.type = 'checkbox'; cx.checked = !!noDia;
+
+    const txt = document.createElement('span');
+    const nome = document.createElement('b');
+    nome.textContent = [e.prefixo, e.tipo].filter(Boolean).join(' · ');
+    txt.appendChild(nome);
+    const partes = [];
+    if (e.modelo) partes.push(e.modelo);
+    if (noDia && Number(noDia.horas_operando))
+      partes.push('hoje: ' + numBR(noDia.horas_operando) + ' h operando');
+    if (partes.length) {
+      const s = document.createElement('small'); s.textContent = partes.join(' · ');
+      txt.appendChild(s);
+    }
+
+    cx.addEventListener('change', () => marcarEquipDoDia(e, cx));
+    rot.append(cx, txt);
+    pilha.appendChild(rot);
+  });
+  area.appendChild(pilha);
+}
+
+async function marcarEquipDoDia(e, caixa) {
+  const erro = $('erro-escolher-equip'); erro.hidden = true;
+  const noDia = _equipRDO.find(x => x.equipamento_id === e.id);
+
+  if (caixa.checked && !noDia) {
+    const { error } = await db.from('rdo_equipamentos').insert({
+      rdo_id: _rdo.id, equipamento_id: e.id, horas_operando: 0, horas_paradas: 0
+    });
+    if (error) { caixa.checked = false; return falhar(erro, 'Não consegui marcar: ' + error.message); }
+
+  } else if (!caixa.checked && noDia) {
+    // Mesma regra da atividade: hora lançada não some por um toque.
+    if (Number(noDia.horas_operando) || Number(noDia.horas_paradas)) {
+      caixa.checked = true;
+      return falhar(erro, [e.prefixo, e.tipo].filter(Boolean).join(' · ') +
+        ' já tem hora lançada hoje. Para tirar, toque na máquina na lista do diário e use Apagar.');
+    }
+    const { error } = await db.from('rdo_equipamentos').delete().eq('id', noDia.id);
+    if (error) { caixa.checked = true; return falhar(erro, 'Não consegui tirar: ' + error.message); }
+  }
+
+  await carregarEquipRDO();
+  renderEscolhaEquip();
+  avisarGravado();
+}
+
+$('btn-escolher-equip').addEventListener('click', abrirEscolherEquip);
+$('busca-escolher-equip').addEventListener('input', renderEscolhaEquip);
+$('btn-fechar-escolher-equip').addEventListener('click', () => { $('folha-escolher-equip').hidden = true; });
+$('folha-escolher-equip').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-escolher-equip')) $('folha-escolher-equip').hidden = true;
+});
 
 /* ============================================================
    EQUIPAMENTOS — a frota da obra
@@ -2962,8 +3620,20 @@ async function dicaDaEntrega() {
 $('ep-contrato').addEventListener('change', dicaDaEntrega);
 $('ep-epi').addEventListener('change', dicaDaEntrega);
 
-async function abrirEntrega() {
+/* Aceita um contrato: chamada de dentro do cadastro da pessoa, já vem
+   com ela escolhida e travada — ninguém entrega EPI para o vizinho de
+   lista por escorregar o dedo. */
+async function abrirEntrega(contratoId) {
   if (!_efetivo.length) await carregarEfetivoSilencioso();
+  await carregarCatalogoEPI();
+  // A dica de "já recebeu em tal dia" lê as fichas; abrindo pela pessoa,
+  // elas ainda não foram carregadas.
+  if (!_fichas.length && _obra) {
+    const { data } = await db.from('vw_ficha_epi')
+      .select('contrato_id, nome, epi, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
+      .eq('obra', _obra.codigo).order('data_entrega', { ascending: false }).limit(500);
+    _fichas = data || [];
+  }
   _entregaEditando = null;
 
   const sc = $('ep-contrato');
@@ -2973,6 +3643,8 @@ async function abrirEntrega() {
     o.value = p.contrato_id; o.textContent = p.nome + ' · ' + p.funcao;
     sc.appendChild(o);
   });
+  sc.value = contratoId || '';
+  sc.disabled = !!contratoId;
 
   const se = $('ep-epi');
   se.innerHTML = '<option value="">— escolha —</option>';
@@ -2995,10 +3667,13 @@ async function abrirEntrega() {
   $('folha-entrega').hidden = false;
 }
 
-$('btn-nova-entrega').addEventListener('click', abrirEntrega);
-$('btn-fechar-entrega').addEventListener('click', () => { $('folha-entrega').hidden = true; });
+$('btn-nova-entrega').addEventListener('click', () => abrirEntrega());
+$('btn-fechar-entrega').addEventListener('click', () => {
+  $('folha-entrega').hidden = true; $('ep-contrato').disabled = false;
+});
 $('folha-entrega').addEventListener('click', (ev) => {
-  if (ev.target === $('folha-entrega')) $('folha-entrega').hidden = true;
+  if (ev.target !== $('folha-entrega')) return;
+  $('folha-entrega').hidden = true; $('ep-contrato').disabled = false;
 });
 
 $('form-entrega').addEventListener('submit', async (ev) => {
@@ -3021,7 +3696,10 @@ $('form-entrega').addEventListener('submit', async (ev) => {
   });
   if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
   $('folha-entrega').hidden = true;
-  await carregarEPI();
+  $('ep-contrato').disabled = false;
+  _fichas = [];                                   // força reler na próxima dica
+  if (_tela === 'epi') await carregarEPI();
+  if (!$('folha-pessoa').hidden) await carregarEpiDaPessoa();
 });
 
 /* ============================================================
@@ -4846,7 +5524,8 @@ async function montarImpressaoRDO() {
       .select('horas_normais, horas_extras, situacao, observacao, ' +
               'contrato:contratos(matricula, pessoa:pessoas(nome), funcao:funcoes(nome))')
       .eq('rdo_id', _rdo.id),
-    db.from('rdo_atividades').select('descricao, local, percentual_executado').eq('rdo_id', _rdo.id),
+    db.from('rdo_atividades')
+      .select('descricao, local, unidade, quantidade, percentual_executado').eq('rdo_id', _rdo.id),
     db.from('rdo_equipamentos')
       .select('horas_operando, horas_paradas, motivo_parada, equipamento:equipamentos(prefixo, tipo)')
       .eq('rdo_id', _rdo.id),
@@ -4933,9 +5612,15 @@ async function montarImpressaoRDO() {
   if ((atv.data || []).length) {
     s3.appendChild(tabelaImp(
       [{ rot:'Descrição', campo:'descricao' }, { rot:'Local', campo:'local' },
+       { rot:'Quantidade', campo:'qtd', num:true },
        { rot:'% exec.', campo:'pct', num:true }],
-      atv.data.map(a => ({ descricao:a.descricao, local:a.local || '',
-        pct: a.percentual_executado == null ? '' : Number(a.percentual_executado).toLocaleString('pt-BR') + '%' }))));
+      atv.data.map(a => ({
+        descricao: a.descricao,
+        local: a.local || '',
+        qtd: a.quantidade == null ? ''
+             : numBR(a.quantidade) + (a.unidade ? ' ' + a.unidade : ''),
+        pct: a.percentual_executado == null ? '' : numBR(a.percentual_executado) + '%'
+      }))));
   } else {
     const p = document.createElement('p'); p.className = 'imp-texto';
     p.textContent = 'Nenhuma atividade lançada.';

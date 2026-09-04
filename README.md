@@ -37,6 +37,40 @@ se o RDO de **hoje** já existe (`dias_sem_rdo` não serve: no primeiro dia
 da obra ele vem vazio, e vazio não é atraso). `vw_alertas` traz os prazos
 de experiência e viagem já com os dias restantes.
 
+## Cadastro
+
+Aba que reúne o que se cadastra uma vez e depois só se escolhe: **Efetivo**,
+**Equipamentos** e **Atividades**. As três telas continuam inteiras; saíram
+do trilho de módulos (`MODULOS`) e passaram a ser abertas por dentro do
+Cadastro (`CADASTROS`). Voltando de qualquer uma delas, o roteador cai no
+Cadastro, e o trilho acende o Cadastro enquanto se está lá dentro.
+
+`verificar.py` confere `CADASTROS` com o mesmo rigor de `MODULOS` — tela
+existente, escondida pelo roteador, com carregador — e confere também que
+todo ícone citado existe no desenho. Sem isso, tela tirada do trilho
+deixaria de ser conferida.
+
+## Atividades
+
+`atividades` é o catálogo por obra: `descricao`, `local`, `unidade`,
+`ativo`. O índice `uq_atividade_obra_desc` compara
+`lower(btrim(descricao))`, então grafia diferente do mesmo serviço é
+recusada em vez de partir o acumulado em dois.
+
+Baixa é lógica (`ativo = false`): os diários antigos apontam para a
+atividade, e apagar quebraria o histórico.
+
+`vw_atividade_acumulado` soma `rdo_atividades.quantidade` por atividade e
+conta os dias lançados. **O aplicativo não soma nada disso** — dois
+apontadores lançando no mesmo dia fariam a conta do aplicativo mentir para
+os dois.
+
+| Regra do banco | O que o usuário lê |
+|---|---|
+| `uq_atividade_obra_desc` | já está cadastrada; veja o bloco "fora de uso" |
+| `uq_rdo_atividade` | a mesma atividade não entra duas vezes no mesmo dia |
+| `quantidade >= 0` | barrado na tela antes de mandar |
+
 ## Efetivo
 
 Lista de `vw_efetivo` filtrada pelo **código** da obra — a view expõe
@@ -57,6 +91,17 @@ Regras que viram mensagem em português em vez de erro cru:
 
 Baixa é lógica: grava `desligamento` e `motivo_desligamento`, some do
 efetivo e aparece em "Desligados". Nada é apagado.
+
+**EPI entra junto do cadastro da pessoa.** Numa pessoa nova, o catálogo de
+EPI ativo aparece em caixas no pé da ficha; o que for marcado vira
+`epi_entregas` com `data_entrega = admissao`, `motivo = 'primeira_entrega'`
+e `assinatura_ok = false`, gravado depois do `contratos.insert(...)
+.select('id')`. Se essa gravação falhar, a pessoa **não** se perde: ela já
+está cadastrada e o aviso diz o que ficou faltando lançar.
+
+Numa pessoa já cadastrada, o mesmo lugar mostra o histórico com a troca
+prevista e abre a ficha de entrega com o contrato já escolhido e o seletor
+travado.
 
 ## RDO
 
@@ -79,6 +124,24 @@ data)` — e não com o efetivo de hoje.
 | `uq_rdo_equip` | equipamento já lançado no dia; edite o lançamento |
 | `situacao` in (…) | lista fechada no seletor, nunca texto livre |
 | `percentual 0..100` | barrado na tela antes de mandar |
+
+As atividades do dia saem do catálogo (botão "Da lista") ou de texto livre
+(botão "+ Avulsa"). Escolhendo do catálogo, `rdo_atividades` recebe uma
+**cópia** de `descricao`, `local` e `unidade`, mais o vínculo
+`atividade_id`. A cópia é o que faz o diário continuar verdadeiro depois
+que o cadastro mudar; o vínculo é o que faz o acumulado somar. Por isso a
+descrição de uma linha vinda do catálogo é somente leitura dentro do
+diário.
+
+Desmarcar na folha de escolha uma atividade que já tem `quantidade` ou
+`percentual_executado` é recusado: a marca volta e a tela manda apagar
+pela linha do diário. O app não tem `confirm()` em lugar nenhum — perder
+o que já foi digitado por um toque errado não é opção que se ofereça.
+
+Os equipamentos do dia seguem o mesmo desenho: "Da lista" marca as
+máquinas da frota e cria a linha com zero hora; "+ Um a um" abre a folha
+com máquina e horas juntas. Desmarcar máquina com hora lançada é recusado
+do mesmo jeito.
 
 `vw_rdo_resumo` e `vw_efetivo` expõem `o.codigo` em `obra` — todas as
 consultas filtram pelo código, nunca pelo nome.

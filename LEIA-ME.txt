@@ -37,9 +37,48 @@ O que a tela mostra
 Tudo isso sai de duas consultas ao banco (vw_status_obra e vw_alertas).
 Nada é inventado: com o banco vazio, a tela diz que está vazio.
 
+Cadastro
+--------
+A aba que junta o que se cadastra uma vez e depois só se escolhe:
+EFETIVO, EQUIPAMENTOS e ATIVIDADES. Elas saíram do trilho de módulos e
+passaram a morar aqui dentro, porque cadastro não é trabalho do dia: abre
+quando entra gente, máquina ou serviço novo, e o resto do mês fica quieto.
+
+Cada botão já diz quanta coisa tem: "12 pessoas ativas", "3 na frota",
+"8 atividades". Voltando de qualquer uma delas, você cai no Cadastro,
+não no painel.
+
+A regra por trás da aba: NO DIÁRIO NÃO SE DIGITA NOME DE NADA. Nem de
+gente, nem de máquina, nem de serviço. Digitar duas vezes o mesmo serviço
+com grafia diferente parte o acumulado em dois e não tem conserto depois.
+
+Atividades
+----------
+A lista que o diário oferece na hora de apontar o dia.
+
+Cadastre uma vez: DESCRIÇÃO (obrigatória), LOCAL PADRÃO e UNIDADE de
+medida (m³, m², kg, un, h...). A unidade é o que permite somar depois;
+sem ela a quantidade do dia fica solta e não vira acumulado do mês. A
+tela avisa quantas ficaram sem unidade.
+
+A mesma descrição não entra duas vezes na mesma obra — a comparação
+ignora maiúscula e espaço nas pontas, então "Concretagem" e
+" concretagem " são a mesma coisa e a segunda é recusada com o motivo
+escrito em português.
+
+TIRAR DE USO não apaga: a atividade sai da lista que o diário oferece e
+vai para o bloco "Fora de uso", no pé da tela, de onde volta com um
+toque. Apagar de verdade quebraria os diários antigos que apontam para
+ela.
+
+Cada linha mostra o ACUMULADO — quanto já foi executado no total e em
+quantos dias. Esse número é somado pelo banco, não pelo aplicativo: dois
+apontadores lançando no mesmo dia fariam a conta do aplicativo mentir
+para os dois.
+
 Efetivo
 -------
-Toque em "Efetivo" no painel. A tela lista quem tem contrato ativo nesta
+Toque em "Cadastro" e depois em "Efetivo". A tela lista quem tem contrato ativo nesta
 obra, com função, matrícula, desde quando, e o regime de moradia:
 
   LOCAL      mora na região, não entra em giro de viagem
@@ -85,18 +124,49 @@ O que entra no diário:
                      jornada e apontador
   DSS                horário, tema e quem ministrou
   Efetivo do dia     a chamada, com horas normais e extras
-  Atividades         o que foi executado, onde, e o percentual
-  Equipamentos       horas operando e paradas (aparece quando houver
-                     frota cadastrada — essa tela ainda não existe)
+  Atividades         escolhidas da lista cadastrada ("Da lista") ou
+                     escritas na hora ("+ Avulsa"); com quantidade,
+                     local e percentual
+  Equipamentos       horas operando e paradas, escolhidos da frota
+                     cadastrada em Cadastro > Equipamentos
   Fotos              o LINK da foto no Drive, não o arquivo
   Observações        ocorrências do dia e eventos de meio ambiente
 
 O resumo no alto da chamada mostra "presentes de total · homem-hora",
 e é a mesma conta que aparece na lista de diários.
 
+AS ATIVIDADES TÊM DUAS PORTAS. "Da lista" abre a lista cadastrada em
+Cadastro > Atividades: marque o que a obra executou hoje e elas entram no
+diário de uma vez. Depois é só tocar em cada uma para lançar a
+quantidade — a unidade já vem do cadastro, e o número soma no acumulado
+da semana, do mês e do ano.
+
+"+ Avulsa" é para o que não estava previsto: escreve-se na hora, o
+diário aceita, e a linha fica marcada como avulsa. Ela não soma em
+acumulado nenhum, porque não tem cadastro atrás.
+
+A descrição de uma atividade vinda da lista não se edita dentro do
+diário. Se pudesse, o mesmo serviço apareceria com dois nomes e o
+acumulado se partiria. O que o diário guarda é uma CÓPIA da descrição,
+do local e da unidade: mexer no cadastro amanhã não reescreve o diário
+que a obra assinou ontem.
+
+Desmarcar uma atividade que já tem lançamento do dia NÃO apaga nada: a
+marca volta sozinha e a tela explica que, para tirar de verdade, é preciso
+tocar nela na lista do diário e usar "Apagar". Um toque errado na lista de
+escolha não pode levar embora o que já foi digitado.
+
+O EQUIPAMENTO FUNCIONA IGUAL. "Da lista" abre a frota cadastrada: marque
+as máquinas que trabalharam hoje e elas entram no diário com zero hora.
+As horas entram depois, tocando em cada uma — que é como a obra funciona:
+de manhã se sabe quais máquinas saíram, quantas horas rodaram só no fim
+do dia. "+ Um a um" continua existindo para quem prefere lançar máquina e
+horas de uma vez. E máquina com hora já lançada também não sai por um
+toque na caixinha.
+
 Equipamentos
 ------------
-A frota da obra. Cadastre aqui e o equipamento passa a aparecer no RDO
+Em Cadastro > Equipamentos. A frota da obra. Cadastre aqui e o equipamento passa a aparecer no RDO
 para apontar horas.
 
 O PREFIXO É ÚNICO EM TODAS AS OBRAS, não só nesta. Dois canteiros não
@@ -362,6 +432,21 @@ entrega" para "troca", e a tela mostra quando foi a última.
 
 ENTREGA SEM ASSINATURA FICA MARCADA EM VERMELHO. Ficha não assinada não
 prova fornecimento.
+
+O EPI TAMBÉM ENTRA PELO CADASTRO DA PESSOA, que é onde ele nasce de
+verdade. Cadastrando alguém novo, o catálogo aparece em caixinhas no pé
+da ficha: marque o que saiu do almoxarifado na admissão e as entregas
+são lançadas junto com o contrato, na data de admissão, com a assinatura
+pendente.
+
+Abrindo uma pessoa já cadastrada, o mesmo lugar mostra o que ela já
+recebeu, quando, e quando vence a troca — vencida em vermelho, sem
+assinatura em amarelo — e traz o botão "+ Entregar EPI", que abre a ficha
+de entrega já com ela escolhida e travada. Ninguém entrega EPI para o
+vizinho de lista por escorregar o dedo.
+
+O módulo EPI continua inteiro para o outro lado do trabalho: a ficha da
+obra toda, o catálogo e a cobrança de assinatura.
 
 Notas fiscais
 -------------

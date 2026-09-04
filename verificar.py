@@ -11,6 +11,14 @@ existem = set(re.findall(r'id="([^"]+)"', H))
 for i in sorted(usados - existem):
     falhas.append('o JS usa o id "%s" que não existe no HTML' % i)
 
+# id repetido: $() devolve o primeiro e a segunda tela fica muda. Já
+# aconteceu com "at-titulo", que a ata da reunião e as atividades
+# disputaram sem ninguém perceber.
+from collections import Counter
+for i, n in Counter(re.findall(r'id="([^"]+)"', H)).items():
+    if n > 1:
+        falhas.append('o id "%s" aparece %d vezes no HTML' % (i, n))
+
 bloco = J[J.index('const MODULOS'):J.index('];', J.index('const MODULOS'))]
 for linha in bloco.split('\n'):
     if 'nome:' not in linha: continue
@@ -30,6 +38,20 @@ for linha in bloco.split('\n'):
     elif tela:
         falhas.append('módulo "%s" tem tela mas está marcado em construção' % nome)
 
+# As telas de dentro do Cadastro saíram do trilho principal e por isso
+# escapavam da conferência acima. Aqui elas voltam para dentro dela.
+sub = J[J.index('const CADASTROS'):J.index('];', J.index('const CADASTROS'))]
+for t in re.findall(r"tela: '([^']+)'", sub):
+    if 'id="tela-%s"' % t not in H:
+        falhas.append('o Cadastro aponta para tela-%s, que não existe' % t)
+    if "$('tela-%s').hidden" % t not in J:
+        falhas.append('tela-%s não é escondida pelo roteador' % t)
+    if "if (tela === '%s')" % t not in J:
+        falhas.append('tela-%s não tem carregador no roteador' % t)
+for ic in re.findall(r"ic: '([^']+)'", sub) + re.findall(r"ic: '([^']+)'", bloco):
+    if 'symbol id="%s"' % ic not in H:
+        falhas.append('o ícone %s não existe no desenho' % ic)
+
 # Colisão de nome de classe: um modificador aplicado no JS que também é
 # um componente no CSS herda fundo, borda e espaçamento dele. Aconteceu
 # com .num (quadro do painel) e .aviso (caixa de mensagem).
@@ -44,4 +66,5 @@ if falhas:
     print('FALHOU:')
     for f in falhas: print('  -', f)
     sys.exit(1)
-print('verificação: tudo certo (%d ids, %d módulos)' % (len(usados), bloco.count('nome:')))
+print('verificação: tudo certo (%d ids, %d módulos, %d cadastros)'
+      % (len(usados), bloco.count('nome:'), sub.count('nome:')))

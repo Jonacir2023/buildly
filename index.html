@@ -19,6 +19,8 @@
 <svg class="svg-oculto" aria-hidden="true">
   <symbol id="i-rdo" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 16h7"/></symbol>
   <symbol id="i-efetivo" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 20c0-2.5-.9-4.2-2.4-5.2"/></symbol>
+  <symbol id="i-cadastro" viewBox="0 0 24 24"><path d="M3 6h18v14H3z"/><path d="M3 10.5h18"/><path d="M9 6V4h6v2"/><path d="M7 14.5h4M7 17h6"/></symbol>
+  <symbol id="i-atividade" viewBox="0 0 24 24"><path d="M3 7h9M3 12h9M3 17h6"/><path d="M16 4h5v16h-5z"/><path d="M16 8h2M16 12h2M16 16h2"/></symbol>
   <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10.5 20a2 2 0 0 0 3 0"/></symbol>
   <symbol id="i-epi" viewBox="0 0 24 24"><path d="M3 16h18v2H3z"/><path d="M5 16a7 7 0 0 1 14 0"/><path d="M10 3.6a7 7 0 0 0-1.4 5.6M14 3.6a7 7 0 0 1 1.4 5.6"/><path d="M10 3.5h4v3h-4z"/></symbol>
   <symbol id="i-ocorrencia" viewBox="0 0 24 24"><path d="M12 3.5 22 20H2z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".9" fill="currentColor" stroke="none"/></symbol>
@@ -127,6 +129,59 @@
       </section>
 
      </section>
+
+     <!-- ============ CADASTRO ============ -->
+     <section id="tela-cadastro" hidden>
+
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Cadastro</p>
+          <h1 id="cad-titulo">—</h1>
+        </div>
+      </div>
+
+      <p class="explica">O que o diário usa todos os dias sai daqui. Cadastre uma vez
+         e depois é só escolher da lista — no apontamento não se digita
+         nome de gente, de máquina nem de serviço.</p>
+
+      <div class="modulos" id="cad-grade"></div>
+
+     </section>
+
+
+     <!-- ============ ATIVIDADES (cadastro) ============ -->
+     <section id="tela-atividades" hidden>
+
+      <div class="mod-topo">
+        <div>
+          <p class="rotulo">Atividades</p>
+          <h1 id="atv-titulo">—</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-nova-atividade-cad" type="button">+ Atividade</button>
+      </div>
+
+      <p class="explica">A lista que o diário oferece na hora de apontar o dia. Cadastre
+         a atividade uma vez, com a unidade de medida, e no RDO é só marcar
+         e lançar a quantidade do dia.</p>
+
+      <div class="numeros" id="atv-numeros"></div>
+
+      <label class="busca">
+        <span class="sr">Buscar</span>
+        <input type="search" id="busca-atividade" autocomplete="off"
+               placeholder="Buscar por descrição, local ou unidade">
+      </label>
+
+      <div id="atividades-lista"></div>
+
+      <div class="bloco" id="bloco-ativ-fora" hidden>
+        <button class="btn-texto btn-abre" id="btn-ativ-fora" type="button"
+                aria-expanded="false">Fora de uso (0)</button>
+        <div id="ativ-fora-lista" hidden></div>
+      </div>
+
+     </section>
+
 
      <!-- ============ EFETIVO ============ -->
      <section id="tela-efetivo" hidden>
@@ -672,7 +727,10 @@
       <section class="cartao">
         <div class="bloco-topo">
           <h2>Atividades executadas</h2>
-          <button class="btn-texto" type="button" id="btn-add-atividade">+ Atividade</button>
+        </div>
+        <div class="acoes-rapidas">
+          <button class="btn-texto" type="button" id="btn-escolher-atividade">Escolher da lista</button>
+          <button class="btn-texto" type="button" id="btn-add-atividade">+ Avulsa</button>
         </div>
         <div id="atividade-lista"></div>
       </section>
@@ -681,7 +739,10 @@
       <section class="cartao">
         <div class="bloco-topo">
           <h2>Equipamentos</h2>
-          <button class="btn-texto" type="button" id="btn-add-equip" hidden>+ Equipamento</button>
+        </div>
+        <div class="acoes-rapidas" id="acoes-equip" hidden>
+          <button class="btn-texto" type="button" id="btn-escolher-equip">Escolher da lista</button>
+          <button class="btn-texto" type="button" id="btn-add-equip">+ Um a um</button>
         </div>
         <div id="equip-lista"></div>
       </section>
@@ -872,6 +933,14 @@
         <div id="ajuda-historico"></div>
       </div>
 
+      <div id="bloco-epi">
+        <p class="rotulo secao">EPI</p>
+        <p class="explica" id="epi-explica" hidden>Marque o que foi entregue na admissão.
+           Fica registrado com a data de admissão e a assinatura pendente,
+           até alguém confirmar na ficha de entrega.</p>
+        <div id="epi-do-contrato"></div>
+      </div>
+
       <p class="aviso" id="aviso-experiencia" hidden></p>
       <p class="erro" id="erro-pessoa" hidden></p>
 
@@ -929,20 +998,105 @@
         <textarea id="a-descricao" rows="3" required
                   placeholder="Concretagem da laje do reservatório, 42 m³"></textarea>
       </label>
-      <div class="frow-2 curta-dir">
+      <label class="campo">
+        <span>Local</span>
+        <input type="text" id="a-local" placeholder="Bloco B — eixo 4/7">
+      </label>
+      <div class="frow-2">
         <label class="campo">
-          <span>Local</span>
-          <input type="text" id="a-local" placeholder="Bloco B — eixo 4/7">
+          <span>Quantidade <b class="unid" id="a-unidade-rot" hidden></b></span>
+          <input type="number" id="a-quantidade" inputmode="decimal" min="0" step="0.01">
         </label>
         <label class="campo">
           <span>% executado</span>
           <input type="number" id="a-percentual" inputmode="decimal" min="0" max="100" step="1">
         </label>
       </div>
+      <p class="dica" id="dica-ativ-acum" hidden></p>
       <p class="erro" id="erro-atividade" hidden></p>
       <button class="btn btn-primario" type="submit" id="btn-salvar-atividade">Salvar</button>
       <button class="btn btn-perigo" type="button" id="btn-apagar-atividade" hidden>Apagar</button>
     </form>
+  </div>
+</div>
+
+<!-- ============ ATIVIDADE DO CADASTRO ============ -->
+<div class="folha" id="folha-ativ-cad" hidden role="dialog" aria-modal="true" aria-label="Atividade do cadastro">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-ativ-cad">Nova atividade</h2>
+      <button class="icone" id="btn-fechar-ativ-cad" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form id="form-ativ-cad" novalidate>
+      <label class="campo">
+        <span>Descrição *</span>
+        <input type="text" id="ac-descricao" required autocapitalize="sentences"
+               placeholder="Concretagem de laje">
+      </label>
+      <div class="frow-2 curta-dir">
+        <label class="campo">
+          <span>Local padrão</span>
+          <input type="text" id="ac-local" placeholder="Bloco B — eixo 4/7">
+        </label>
+        <label class="campo">
+          <span>Unidade</span>
+          <input type="text" id="ac-unidade" list="lista-unidades" spellcheck="false"
+                 maxlength="10" placeholder="m³">
+        </label>
+      </div>
+      <datalist id="lista-unidades">
+        <option value="m"></option><option value="m²"></option><option value="m³"></option>
+        <option value="kg"></option><option value="t"></option><option value="un"></option>
+        <option value="peça"></option><option value="h"></option><option value="vb"></option>
+      </datalist>
+      <p class="explica">A unidade é o que deixa somar depois. Sem ela a quantidade
+         do dia fica solta e não vira acumulado do mês.</p>
+      <p class="dica" id="dica-ativ-uso" hidden></p>
+      <p class="erro" id="erro-ativ-cad" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-ativ-cad">Salvar</button>
+      <button class="btn btn-perigo" type="button" id="btn-tirar-ativ" hidden>Tirar de uso</button>
+      <button class="btn btn-secundario" type="button" id="btn-voltar-ativ" hidden>Voltar para a lista</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ESCOLHER EQUIPAMENTOS DO DIA ============ -->
+<div class="folha folha-alta" id="folha-escolher-equip" hidden role="dialog" aria-modal="true"
+     aria-label="Escolher equipamentos do dia">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Equipamentos do dia</h2>
+      <button class="icone" id="btn-fechar-escolher-equip" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <label class="busca">
+      <span class="sr">Buscar equipamento</span>
+      <input type="search" id="busca-escolher-equip" autocomplete="off"
+             placeholder="Buscar por prefixo, tipo ou modelo">
+    </label>
+    <p class="explica">Marque o que trabalhou hoje. As horas entram depois,
+       tocando na máquina dentro do diário.</p>
+    <div class="rolagem" id="escolher-equip-lista"></div>
+    <p class="erro" id="erro-escolher-equip" hidden></p>
+  </div>
+</div>
+
+<!-- ============ ESCOLHER ATIVIDADES DO DIA ============ -->
+<div class="folha folha-alta" id="folha-escolher-ativ" hidden role="dialog" aria-modal="true"
+     aria-label="Escolher atividades do dia">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Atividades do dia</h2>
+      <button class="icone" id="btn-fechar-escolher-ativ" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <label class="busca">
+      <span class="sr">Buscar atividade</span>
+      <input type="search" id="busca-escolher-ativ" autocomplete="off"
+             placeholder="Buscar na lista cadastrada">
+    </label>
+    <p class="explica">Marque o que a obra executou hoje. A quantidade entra depois,
+       tocando no item dentro do diário.</p>
+    <div class="rolagem" id="escolher-ativ-lista"></div>
+    <p class="erro" id="erro-escolher-ativ" hidden></p>
   </div>
 </div>
 
