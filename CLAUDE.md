@@ -107,6 +107,13 @@ decide.
 `vw_efetivo` expõe `funcao_id` além do nome da função — é o que a lista
 de EPI usa para separar exigido de opcional.
 
+## Todo PDF passa por `emitirFolha()`
+
+Nenhuma folha chama `imprimirFolha()`/`window.print()` direto: passa por
+`emitirFolha(tipo, referencia, resumo, nome)`, que grava a impressão
+digital em `emissoes` e escreve o código no rodapé. Folha nova segue o
+mesmo caminho, com um `tipo` novo na lista fechada da tabela (e no dublê).
+
 ## Dado derivado mora no banco
 
 Nenhum total é somado pelo app. Se o app somasse, qualquer gravação por

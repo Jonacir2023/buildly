@@ -333,6 +333,27 @@ engenheiro e pela diretoria.
 Nada disso se digita. Sai do que já foi lançado em Medições e em Notas
 fiscais; medição em aberto entra pelo que já tem lançado e é marcada.
 
+CÓDIGO DE VERIFICAÇÃO NO RODAPÉ. Todo PDF que sai do app — diário,
+relatório de diários, chuva, boletim de medição, custos — leva no rodapé
+um código de 12 caracteres (XXXX-XXXX-XXXX). Na hora de gerar, o app
+calcula a impressão digital do conteúdo impresso (SHA-256), grava no banco
+junto com quem emitiu, quando, e os números que importam daquele papel
+(presentes e homem-hora do diário, dias perdidos da chuva, valor da
+medição, totais de custo).
+
+Quem receber o papel e quiser conferir digita o código na busca (a lupa):
+o app mostra o registro — que documento era, quem emitiu, quando, e os
+números. Se o número do papel não bate com o do registro, o papel foi
+alterado depois de emitido. Se o código não existe, o papel não saiu daqui.
+
+Isso NÃO é assinatura digital com validade jurídica (ICP-Brasil exige
+certificado). É prova de origem e de integridade, que é o que a
+fiscalização costuma questionar. E a conferência exige login: quem
+verifica é gente da obra, a pedido de quem recebeu.
+
+Se na hora de gerar não houver ligação com o banco, o papel sai dizendo
+"emitido sem registro de verificação" em vez de um código falso.
+
 Aba própria, no fim dos módulos. Três coisas na tela:
 
 1. PERÍODO: Semana, Mês ou Ano. As setas ‹ › voltam um período — é

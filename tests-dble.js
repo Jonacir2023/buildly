@@ -15,7 +15,7 @@
     reunioes: [], reuniao_participantes: [], reuniao_topicos: [], reuniao_pauta: [],
     documentos: [], mural: [], avisos: [], solicitacoes: [], ajuda_custo: [],
     rdos: [], rdo_presencas: [], rdo_atividades: [], rdo_fotos: [], rdo_equipamentos: [],
-    atividades: [], epi_funcao: [],
+    atividades: [], epi_funcao: [], emissoes: [],
     perfis: [{id:'u1',nome:'Jonacir Cazelli',papel:'gestor'}]
   };
   const hoje = () => new Date().toISOString().slice(0,10);
@@ -445,6 +445,15 @@
       const chave = (s) => String(s||'').trim().toLowerCase();
       if (outros.some(a => a.obra_id===l.obra_id && chave(a.descricao)===chave(l.descricao)))
         return 'duplicate key value violates unique constraint "uq_atividade_obra_desc"';
+    }
+    if (nome==='emissoes') {
+      if (!['rdo','diarios','chuva','medicao','custos'].includes(l.tipo))
+        return 'new row violates check constraint "emissoes_tipo_check"';
+      if (!/^[0-9a-f]{64}$/.test(String(l.hash||'')))
+        return 'new row violates check constraint "emissoes_hash_check"';
+      if (outros.some(e => String(e.hash).slice(0,12) === String(l.hash).slice(0,12)))
+        return 'duplicate key value violates unique constraint "uq_emissao_codigo"';
+      if (l.emitido_em === undefined) l.emitido_em = new Date().toISOString();
     }
     if (nome==='epi_funcao' && outros.some(v=>v.epi_id===l.epi_id && v.funcao_id===l.funcao_id))
       return 'duplicate key value violates unique constraint "epi_funcao_pkey"';

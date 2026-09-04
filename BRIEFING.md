@@ -237,6 +237,13 @@ tamanho perde o dia inteiro de apontamento quando o sinal cai no canteiro.
 **Lista fechada, nunca texto livre**, onde o banco tem `check`. O seletor
 existe para o dado nascer certo.
 
+**Todo PDF leva código de verificação.** SHA-256 do texto impresso,
+gravado em `emissoes` com quem emitiu, quando e os números do papel. O
+código de 12 caracteres no rodapé, digitado na busca, mostra o registro.
+Não é assinatura digital (isso exige certificado ICP-Brasil e serviço
+pago); é prova de origem e integridade. Sem ligação com o banco, o papel
+sai dizendo que não tem registro — nunca um código falso.
+
 **Entrega de EPI é por caixinha, várias de uma vez.** Uma linha de
 `epi_entregas` por item, mesma data, motivo e quantidade. Quem entrega
 quatro EPI na admissão de um pedreiro não abre quatro telas.
@@ -319,7 +326,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **622 verificações de tela** em 18 suítes,
+Duas frentes, sempre. Hoje são **649 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:

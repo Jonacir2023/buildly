@@ -330,6 +330,25 @@ O boletim de medição sai em paisagem via `@page paisagem` mais a classe
 `.imp-paisagem` na folha; as outras folhas limpam a classe antes de
 montar.
 
+### Código de verificação
+
+`emitirFolha(tipo, referencia, resumo, nomeArquivo)` fecha toda folha
+impressa: calcula o SHA-256 do `textContent` da folha (espaço e quebra de
+linha normalizados) com `crypto.subtle`, grava em `emissoes` e escreve no
+rodapé os 12 primeiros hex do hash como `XXXX-XXXX-XXXX`. Só então chama
+a impressão. Se não houver `crypto.subtle` (contexto sem https) ou o
+insert falhar, o rodapé diz "emitido sem registro de verificação" — código
+sem registro atrás não verifica nada.
+
+`emissoes` guarda `tipo` (lista fechada), `referencia`, `resumo` (jsonb
+com os números do papel), `hash` (check de 64 hex), `emitido_em` e
+`emitido_por`. `uq_emissao_codigo` é único sobre `left(hash, 12)`: o
+banco recusa colisão de código em vez de o app fingir que não viu.
+
+A busca reconhece um termo só hexadecimal de 6 a 12 caracteres (com ou
+sem traços) e consulta `emissoes` por prefixo do hash, mostrando o registro
+como cartão fixo (não é botão: não leva a lugar nenhum, é para conferir).
+
 ### Custos · previsto × realizado
 
 `vw_lancamento_financeiro` dá uma linha por dinheiro com data: medição de

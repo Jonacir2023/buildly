@@ -5450,6 +5450,26 @@ const contem = (campos, termo) =>
 
 let _relogioBusca = null;
 
+const NOME_EMISSAO = {
+  rdo: 'Diário de obra', diarios: 'Relatório de diários', chuva: 'Relatório de chuva',
+  medicao: 'Boletim de medição', custos: 'Relatório de custos'
+};
+const NOME_RESUMO = {
+  presentes: 'presentes', efetivo: 'no efetivo', homem_hora: 'homem-hora', atividades: 'atividades',
+  diarios: 'diários', presencas: 'presenças', dias_com_diario: 'dias com diário',
+  dias_com_chuva: 'dias com chuva', dias_perdidos: 'dias perdidos', medicao: 'medição nº',
+  valor_medicao: 'valor da medição', valor_acumulado: 'acumulado',
+  a_receber: 'a receber', a_pagar: 'a pagar', notas_fiscais: 'notas fiscais'
+};
+// Os números que o papel mostra, para conferir com o que está impresso.
+function resumoEmissao(r) {
+  return Object.entries(r).map(([k, v]) => {
+    const val = /^(valor_|a_receber|a_pagar|notas_fiscais)/.test(k) ? reais(v)
+              : Number(v).toLocaleString('pt-BR');
+    return (NOME_RESUMO[k] || k) + ' ' + val;
+  }).join(' · ');
+}
+
 async function buscarNaObra(termo) {
   const area = $('busca-resultado');
   const t = limparTermo(termo);
@@ -5463,7 +5483,12 @@ async function buscarNaObra(termo) {
 
   area.innerHTML = vazioHTML('Procurando…');
 
-  const [efe, eq, tf, oc, epi, nf, dc, rn, mu, rdo] = await Promise.all([
+  // Código do rodapé de um PDF: só hexadecimal, com ou sem traços. Menos
+  // de 6 caracteres seria adivinhação; 12 é o código inteiro.
+  const cod = hashDoCodigo(t);
+  const pareceCodigo = cod.length >= 6 && cod.length <= 12 && cod.length === t.replace(/[-\s]/g, '').length;
+
+  const [efe, eq, tf, oc, epi, nf, dc, rn, mu, rdo, emi] = await Promise.all([
     db.from('vw_efetivo').select('contrato_id, nome, funcao, matricula, cracha')
       .eq('obra', _obra.codigo).or(contem(['nome','matricula','cracha','funcao'], t)).limit(8),
     db.from('equipamentos').select('id, prefixo, tipo, marca, modelo, placa, ativo')
@@ -5484,10 +5509,21 @@ async function buscarNaObra(termo) {
     db.from('mural').select('id, texto, autor, criado_em')
       .eq('obra_id', _obra.id).or(contem(['texto','autor'], t)).limit(6),
     db.from('rdos').select('id, numero, data, observacoes, apontador, dss_tema')
-      .eq('obra_id', _obra.id).or(contem(['observacoes','apontador','dss_tema'], t)).limit(6)
+      .eq('obra_id', _obra.id).or(contem(['observacoes','apontador','dss_tema'], t)).limit(6),
+    pareceCodigo
+      ? db.from('emissoes').select('id, tipo, referencia, resumo, hash, emitido_em, emitido_por')
+          .eq('obra_id', _obra.id).ilike('hash', cod + '%').limit(3)
+      : Promise.resolve({ data: [] })
   ]);
 
   const grupos = [
+    { rot:'Documento emitido', linhas:(emi.data||[]).map(e => ({
+        nm: NOME_EMISSAO[e.tipo] + ' — ' + e.referencia,
+        sub: 'Código ' + codigoDoHash(e.hash) + ' · emitido em ' +
+             dataBR(String(e.emitido_em).slice(0, 10)) +
+             (e.emitido_por ? ' por ' + e.emitido_por : '') +
+             (Object.keys(e.resumo || {}).length ? ' · ' + resumoEmissao(e.resumo) : ''),
+        fixo: true })) },
     { rot:'Efetivo', linhas:(efe.data||[]).map(p => ({
         nm:p.nome, sub:[p.funcao, p.matricula && 'mat. '+p.matricula].filter(Boolean).join(' · '),
         ir: async () => { irPara('efetivo'); await carregarEfetivo(); abrirPessoa(p.contrato_id); } })) },
@@ -5530,8 +5566,11 @@ async function buscarNaObra(termo) {
   const quantos = grupos.reduce((s, g) => s + g.linhas.length, 0);
 
   if (!quantos) {
-    area.innerHTML = vazioHTML('Nada encontrado com "' + termo.trim() + '".',
-      'A busca olha nome, número, assunto e descrição — não o conteúdo de arquivo no Drive.');
+    area.innerHTML = pareceCodigo
+      ? vazioHTML('Nenhum documento com o código "' + termo.trim() + '".',
+          'Confira os 12 caracteres do rodapé. Se estiverem certos, este papel não saiu daqui — ou saiu sem ligação com o banco.')
+      : vazioHTML('Nada encontrado com "' + termo.trim() + '".',
+          'A busca olha nome, número, assunto e descrição — não o conteúdo de arquivo no Drive.');
     return;
   }
 
@@ -5547,8 +5586,10 @@ async function buscarNaObra(termo) {
     const lista = document.createElement('div');
     lista.className = 'lista';
     g.linhas.forEach(l => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'achado';
+      // registro de emissão não leva a lugar nenhum: é para ler e conferir
+      const b = document.createElement(l.fixo ? 'div' : 'button');
+      if (!l.fixo) b.type = 'button';
+      b.className = 'achado';
       const miolo = document.createElement('span'); miolo.className = 'miolo';
       const nm = document.createElement('span'); nm.className = 'nm';
       realcar(nm, l.nm, t);
@@ -5556,7 +5597,7 @@ async function buscarNaObra(termo) {
       realcar(sub, l.sub, t);
       miolo.append(nm, sub);
       b.appendChild(miolo);
-      b.addEventListener('click', async () => {
+      if (!l.fixo) b.addEventListener('click', async () => {
         $('folha-busca').hidden = true;
         await l.ir();
       });
@@ -5831,20 +5872,18 @@ async function montarImpressaoRDO() {
     ' de ' + dataBR(_rdo.data) + ' · emitido em ' + dataBR(hojeISO()) +
     (_perfilNome ? ' por ' + _perfilNome : '');
   folha.appendChild(rod);
-  return true;
+  return { presentes: presentes.length, efetivo: presencas.length, homem_hora: hh,
+           atividades: (atv.data || []).length };
 }
 
 $('btn-imprimir-rdo').addEventListener('click', async () => {
   const b = $('btn-imprimir-rdo');
   b.disabled = true; b.textContent = 'Montando…';
-  const pronto = await montarImpressaoRDO();
+  const resumo = await montarImpressaoRDO();
   b.disabled = false; b.textContent = 'Gerar PDF do diário';
-  if (!pronto) return falhar($('erro-rdo'), 'Não consegui montar a folha do diário.');
-  // O título da janela vira o nome sugerido do arquivo.
-  const antes = document.title;
-  document.title = `RDO ${_rdo.numero} - ${_obra.codigo} - ${_rdo.data}`;
-  window.print();
-  document.title = antes;
+  if (!resumo) return falhar($('erro-rdo'), 'Não consegui montar a folha do diário.');
+  await emitirFolha('rdo', 'RDO nº ' + _rdo.numero + ' · ' + dataBR(_rdo.data), resumo,
+    `RDO ${_rdo.numero} - ${_obra.codigo} - ${_rdo.data}`);
 });
 
 /* ============================================================
@@ -6941,6 +6980,52 @@ function imprimirFolha(nomeArquivo) {
   document.title = antes;
 }
 
+/* ---------- verificação do documento ----------
+   Cada PDF deixa no banco a impressão digital (SHA-256) do texto impresso,
+   mais os números que importam. O rodapé leva um código curto; quem
+   recebe o papel digita o código na busca e vê se o documento existe, quem
+   emitiu, quando, e se os números batem. Não é assinatura digital — é a
+   prova de que aquele papel saiu daqui, com aquele conteúdo, naquele dia. */
+async function impressaoDigital(texto) {
+  if (!(window.crypto && crypto.subtle)) return null;   // só em https ou localhost
+  const dados = new TextEncoder().encode(String(texto).replace(/\s+/g, ' ').trim());
+  const buf = await crypto.subtle.digest('SHA-256', dados);
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const codigoDoHash = (h) => h.slice(0, 12).toUpperCase().replace(/(.{4})(?=.)/g, '$1-');
+const hashDoCodigo = (c) => String(c || '').replace(/[^0-9a-fA-F]/g, '').toLowerCase();
+
+/* Fecha a folha: calcula a impressão digital do que está montado, grava
+   o registro e escreve o código no rodapé. Só então imprime. Se o
+   registro não puder ser gravado, o papel sai dizendo isso — código sem
+   registro atrás não verifica nada, e fingir seria pior que não ter. */
+async function emitirFolha(tipo, referencia, resumo, nomeArquivo) {
+  const folha = $('folha-impressao');
+  const ver = document.createElement('p'); ver.className = 'imp-verifica';
+  const hash = await impressaoDigital(folha.textContent);
+  let gravado = false;
+
+  if (hash) {
+    const { error } = await db.from('emissoes').insert({
+      obra_id: _obra.id, tipo, referencia, resumo: resumo || {}, hash,
+      emitido_por: _perfilNome || null
+    });
+    gravado = !error;
+  }
+
+  if (gravado) {
+    const b = document.createElement('b'); b.textContent = codigoDoHash(hash);
+    ver.append('Código de verificação ', b,
+      ' — confira este documento digitando o código na busca do BUILDLy.');
+  } else {
+    ver.textContent = 'Emitido sem registro de verificação: não houve ligação com o banco na hora da emissão.';
+  }
+  folha.appendChild(ver);
+  imprimirFolha(nomeArquivo);
+  return gravado;
+}
+
 const COND_CURTA = {
   praticavel: 'Praticável',
   parcialmente_impraticavel: 'Parcial',
@@ -6948,7 +7033,7 @@ const COND_CURTA = {
 };
 
 /* ---------- relatório de diários ---------- */
-$('btn-pdf-rdo').addEventListener('click', () => {
+$('btn-pdf-rdo').addEventListener('click', async () => {
   const { ini, fim, rot } = limitesDoPeriodo();
   const folha = $('folha-impressao');
   folha.className = '';
@@ -7012,11 +7097,13 @@ $('btn-pdf-rdo').addEventListener('click', () => {
 
   folha.appendChild(assinaturasImp('Engenheiro responsável', 'Fiscalização'));
   folha.appendChild(rodapeImp('Relatório de diários · ' + rot));
-  imprimirFolha(`Diarios - ${_obra.codigo} - ${ini}_a_${fim}`);
+  await emitirFolha('diarios', 'Relatório de diários · ' + rot,
+    { diarios: _diasRel.length, homem_hora: somaRel('homem_hora'), presencas: somaRel('presentes') },
+    `Diarios - ${_obra.codigo} - ${ini}_a_${fim}`);
 });
 
 /* ---------- relatório de chuva ---------- */
-$('btn-pdf-chuva').addEventListener('click', () => {
+$('btn-pdf-chuva').addEventListener('click', async () => {
   const { ini, fim, rot } = limitesDoPeriodo();
   const folha = $('folha-impressao');
   folha.className = '';
@@ -7088,13 +7175,15 @@ $('btn-pdf-chuva').addEventListener('click', () => {
 
   folha.appendChild(assinaturasImp('Engenheiro responsável', 'Fiscalização'));
   folha.appendChild(rodapeImp('Relatório de chuva · ' + rot));
-  imprimirFolha(`Chuva - ${_obra.codigo} - ${ini}_a_${fim}`);
+  await emitirFolha('chuva', 'Relatório de chuva · ' + rot,
+    { dias_com_diario: _diasRel.length, dias_com_chuva: comChuva.length, dias_perdidos: perdidos },
+    `Chuva - ${_obra.codigo} - ${ini}_a_${fim}`);
 });
 
 /* ---------- PDF de custos ---------- */
 const TIPO_LANC = { medicao_receber: 'Medição · a receber', medicao_pagar: 'Medição · a pagar', nota_fiscal: 'Nota fiscal' };
 
-$('btn-pdf-custo').addEventListener('click', () => {
+$('btn-pdf-custo').addEventListener('click', async () => {
   const { ini, fim, rot } = limitesDoPeriodo();
   const folha = $('folha-impressao');
   folha.className = '';
@@ -7169,7 +7258,9 @@ $('btn-pdf-custo').addEventListener('click', () => {
 
   folha.appendChild(assinaturasImp('Engenheiro responsável', 'Diretoria'));
   folha.appendChild(rodapeImp('Relatório de custos · ' + rot));
-  imprimirFolha(`Custos - ${_obra.codigo} - ${ini}_a_${fim}`);
+  await emitirFolha('custos', 'Relatório de custos · ' + rot,
+    { a_receber: receber, a_pagar: pagar, notas_fiscais: nfTotal },
+    `Custos - ${_obra.codigo} - ${ini}_a_${fim}`);
 });
 
 /* ---------- PDF do boletim de medição ----------
@@ -7274,5 +7365,8 @@ $('btn-pdf-medicao').addEventListener('click', async () => {
     'Boletim de medição nº ' + _medicao.numero + ' · ' + _contrato.nome));
 
   b.disabled = false; b.textContent = 'Gerar PDF do boletim';
-  imprimirFolha(`Medicao ${_medicao.numero} - ${_obra.codigo} - ${_medicao.mes_referencia}`);
+  await emitirFolha('medicao',
+    'Boletim de medição nº ' + _medicao.numero + ' · ' + _contrato.nome,
+    { medicao: _medicao.numero, valor_medicao: totalAtual, valor_acumulado: totalAcum },
+    `Medicao ${_medicao.numero} - ${_obra.codigo} - ${_medicao.mes_referencia}`);
 });

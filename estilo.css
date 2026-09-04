@@ -975,6 +975,8 @@ textarea {
     margin-top: 10pt; border-top: .5pt solid #000; padding-top: 3pt;
     font-size: 7.5pt;
   }
+  .imp-verifica { margin-top: 2pt; font-size: 7.5pt; }
+  .imp-verifica b { font-family: var(--mono); letter-spacing: .06em; }
 }
 
 /* ---------- sino de avisos ---------- */
