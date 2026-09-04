@@ -75,6 +75,30 @@
       B.rdos.some(r => r.id === o.rdo_id && r.obra_id === 'o1'));
   }
 
+  const CHUVA_RX = /(chuva|chuvoso|garoa|chuvisco|temporal|tempestade)/i;
+  function rdoDia() {
+    return B.rdos.map(r => {
+      const ps = B.rdo_presencas.filter(p => p.rdo_id === r.id);
+      const so = (sit) => ps.filter(p => p.situacao === sit).length;
+      const pres = ps.filter(p => p.situacao === 'presente');
+      return { rdo_id:r.id, obra:'TESTE', numero:r.numero, data:r.data,
+        clima_manha:r.clima_manha, clima_tarde:r.clima_tarde,
+        condicao_trabalho:r.condicao_trabalho, jornada:r.jornada, apontador:r.apontador,
+        choveu: CHUVA_RX.test(r.clima_manha||'') || CHUVA_RX.test(r.clima_tarde||''),
+        presentes: pres.length, faltas: so('falta'),
+        faltas_justificadas: so('falta_justificada'), atestados: so('atestado'),
+        ferias: so('ferias'), folgas: so('folga'), efetivo_previsto: ps.length,
+        homem_hora: pres.reduce((s,p)=>s+Number(p.horas_normais||0)+Number(p.horas_extras||0),0),
+        horas_extras: pres.reduce((s,p)=>s+Number(p.horas_extras||0),0),
+        atividades: B.rdo_atividades.filter(a=>a.rdo_id===r.id).length,
+        fotos: B.rdo_fotos.filter(f=>f.rdo_id===r.id).length,
+        equip_operando: B.rdo_equipamentos.filter(e=>e.rdo_id===r.id)
+          .reduce((s,e)=>s+Number(e.horas_operando||0),0),
+        equip_paradas: B.rdo_equipamentos.filter(e=>e.rdo_id===r.id)
+          .reduce((s,e)=>s+Number(e.horas_paradas||0),0) };
+    });
+  }
+
   function statusObra() {
     const ativos = efetivo();
     const rs = B.rdos.slice().sort((a,b)=>a.data<b.data?1:-1);
@@ -195,7 +219,8 @@
                      vw_status_obra: statusObra, vw_alertas: () => [],
                      vw_disponibilidade_equipamento: disponibilidade,
                      vw_ficha_epi: fichaEpi, vw_medicao_item: medicaoItem,
-                     vw_contrato_saldo: contratoSaldo, vw_chuva_mes: chuvaMes };
+                     vw_contrato_saldo: contratoSaldo, vw_chuva_mes: chuvaMes,
+                     vw_rdo_dia: rdoDia };
 
   function tabela(nome) {
     const cond = [];   // funções de filtro

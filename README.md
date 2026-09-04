@@ -223,6 +223,28 @@ Atenção a nome de classe: `.num` já é o quadro de número do painel, e a
 célula numérica da tabela impressa herdava fundo e raio dele. Por isso a
 classe da impressão é `.imp-n`.
 
+## Relatórios
+
+`vw_rdo_dia` dá uma linha por diário com presentes, faltas, atestados,
+homem-hora, horas extras, atividades, fotos e horas de equipamento.
+Existe para o app não baixar `rdo_presencas` de um ano inteiro (365 dias
+× 20 pessoas) só para somar faltas.
+
+O total do período é soma simples dessas linhas, feita na tela — isso é
+apresentação. A derivação de dado está na view.
+
+Período: semana (segunda a domingo), mês ou ano, com deslocamento para
+trás. Dia útil é segunda a sábado; domingo não conta como dia sem
+diário.
+
+Os três PDF (diários, chuva, medição) usam as mesmas peças do diário:
+`cabecalhoImp`, `secaoImp`, `campoImp`, `tabelaImp`, `assinaturasImp`,
+`rodapeImp`. Quem recebe reconhece o documento.
+
+O boletim de medição sai em paisagem via `@page paisagem` mais a classe
+`.imp-paisagem` na folha; as outras folhas limpam a classe antes de
+montar.
+
 ## Calendário do RDO
 
 Grade do mês em `tela-rdo`, acima da lista. Consulta `rdos` por

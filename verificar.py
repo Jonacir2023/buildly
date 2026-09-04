@@ -30,6 +30,16 @@ for linha in bloco.split('\n'):
     elif tela:
         falhas.append('módulo "%s" tem tela mas está marcado em construção' % nome)
 
+# Colisão de nome de classe: um modificador aplicado no JS que também é
+# um componente no CSS herda fundo, borda e espaçamento dele. Aconteceu
+# com .num (quadro do painel) e .aviso (caixa de mensagem).
+C = open('/home/user/buildly/estilo.css').read()
+COMPONENTES = {m for m in re.findall(r'^\.([a-z][a-z0-9-]*)\s*\{', C, re.M)}
+for classe, modificador in re.findall(r"className\s*=\s*'([a-z-]+)'\s*\+\s*\([^)]*'\s+([a-z-]+)'", J):
+    if modificador in COMPONENTES and modificador not in ('lido','atrasada','baixada','encerrada','apagado'):
+        falhas.append('a classe "%s" é usada como modificador de "%s" e também é um componente no CSS'
+                      % (modificador, classe))
+
 if falhas:
     print('FALHOU:')
     for f in falhas: print('  -', f)

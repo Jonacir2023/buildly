@@ -1125,3 +1125,25 @@ textarea {
   font-size: 13px; color: var(--ink-soft);
   border-left: 3px solid var(--line-forte); padding: 4px var(--e3);
 }
+
+/* ---------- relatórios ---------- */
+#tela-relatorios { display: flex; flex-direction: column; gap: var(--e4); }
+#tela-relatorios .cartao .btn { width: 100%; }
+.rl-linha {
+  display: flex; align-items: baseline; gap: var(--e3);
+  font-size: 14px; padding: 5px 0;
+}
+.rl-linha + .rl-linha { border-top: 1px solid var(--line); }
+.rl-linha .que { flex: 1 1 auto; color: var(--ink-soft); }
+.rl-linha .qto {
+  font-family: var(--mono); font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.rl-linha.forte .que { color: var(--ink); font-weight: 500; }
+.rl-linha .qto-vermelho { color: var(--danger); }
+
+/* folha de medição sai deitada: a planilha não cabe em pé */
+@media print {
+  @page paisagem { size: A4 landscape; margin: 12mm 10mm; }
+  .imp-paisagem { page: paisagem; }
+}

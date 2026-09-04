@@ -244,6 +244,48 @@ No computador: escolha "Salvar como PDF" na janela de impressão.
 
 O nome do arquivo já vem sugerido: RDO 12 - TESTE - 2026-09-04.
 
+Relatórios
+----------
+Aba própria, no fim dos módulos. Três coisas na tela:
+
+1. PERÍODO: Semana, Mês ou Ano. As setas ‹ › voltam um período — é
+   assim que se tira o relatório do mês passado, depois que o mês fecha.
+   Semana conta de segunda a domingo.
+
+2. DIÁRIOS E EFETIVO: quantos diários no período contra quantos dias
+   úteis, dias sem lançar, homem-hora, efetivo médio, presenças, horas
+   extras, faltas, atestados, férias, atividades, fotos e horas de
+   equipamento.
+
+3. CHUVA E PARALISAÇÃO: dias com chuva, dias perdidos, impraticáveis,
+   parciais, e quantos dias choveu de manhã e à tarde.
+
+Cada um tem seu botão de PDF. São os seis relatórios: diários da
+semana, do mês e do ano; chuva da semana, do mês e do ano.
+
+Os PDF saem no mesmo padrão do diário — folha A4, cabeçalho da obra,
+tabela e duas linhas de assinatura (Engenheiro responsável e
+Fiscalização). O de chuva lista só os dias que tiveram chuva ou
+paralisação, com a conta do dia perdido item a item.
+
+DIA ÚTIL aqui é de segunda a sábado. Domingo não conta como dia sem
+diário: obra parada no domingo não é falta de apontamento.
+
+PDF da medição
+--------------
+No boletim de medição aberto, botão "Gerar PDF do boletim".
+
+SAI DEITADO, e é de propósito: a planilha tem contratado, valor
+unitário, anterior, nesta medição, acumulado, saldo e os dois valores —
+não cabe em pé sem espremer a descrição do serviço.
+
+Traz também a posição do contrato (contratado, medido, saldo, avanço em
+percentual) e, se algum item foi medido acima do contratado, um aviso
+em destaque nomeando quais.
+
+A assinatura muda com o tipo: contrato de cliente assina
+"Fiscalização / Cliente"; de empreiteiro assina "Empreiteiro".
+
 Calendário do RDO
 -----------------
 No alto da tela do RDO, o mês inteiro em grade.

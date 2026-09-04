@@ -39,6 +39,7 @@ const MODULOS = [
   { ic: 'i-equip',      nome: 'Equipamentos',  desc: 'Frota e horas',       pronto: true, tela: 'equipamentos', conta: 'equipamentos_ativos' },
   { ic: 'i-medicao',    nome: 'Medições',      desc: 'Boletim e acumulado', pronto: true, tela: 'medicoes', },
   { ic: 'i-reuniao',    nome: 'Reuniões',      desc: 'Pauta e ata',         pronto: true, tela: 'reunioes', },
+  { ic: 'i-relatorio',  nome: 'Relatórios',    desc: 'Semana, mês e ano', pronto: true, tela: 'relatorios' },
   { ic: 'i-doc',        nome: 'Documentos',    desc: 'Arquivos e mural',    pronto: true, tela: 'documentos', }
 ];
 
@@ -128,6 +129,7 @@ function irPara(tela) {
   $('tela-nfs').hidden = tela !== 'nfs';
   $('tela-nf-edit').hidden = tela !== 'nf-edit';
   $('tela-documentos').hidden = tela !== 'documentos';
+  $('tela-relatorios').hidden = tela !== 'relatorios';
   $('tela-reunioes').hidden = tela !== 'reunioes';
   $('tela-ata').hidden = tela !== 'ata';
   $('tela-medicoes').hidden = tela !== 'medicoes';
@@ -145,6 +147,7 @@ function irPara(tela) {
   if (tela === 'alertas') carregarAlertas();
   if (tela === 'nfs') carregarNFs();
   if (tela === 'documentos') carregarDocumentos();
+  if (tela === 'relatorios') carregarRelatorios();
   if (tela === 'reunioes') carregarReunioes();
   if (tela === 'medicoes') carregarMedicoes();
   if (tela === 'epi') carregarEPI();
@@ -253,6 +256,7 @@ async function carregarObras() {
   if (_tela === 'alertas') await carregarAlertas();
   if (_tela === 'nfs') await carregarNFs();
   if (_tela === 'documentos') await carregarDocumentos();
+  if (_tela === 'relatorios') await carregarRelatorios();
   if (_tela === 'reunioes') await carregarReunioes();
   if (_tela === 'medicoes') await carregarMedicoes();
   if (_tela === 'epi') await carregarEPI();
@@ -4832,6 +4836,7 @@ function tabelaImp(colunas, linhas, rodape) {
 async function montarImpressaoRDO() {
   if (!_rdo || !_obra) return false;
   const folha = $('folha-impressao');
+  folha.className = '';
   folha.innerHTML = '';
 
   // Recarrego as partes: a folha tem que sair com o que está gravado,
@@ -5695,4 +5700,479 @@ $('form-encerra-ajuda').addEventListener('submit', async (ev) => {
   $('folha-encerra-ajuda').hidden = true;
   await carregarAjuda();
   await carregarEfetivo();
+});
+
+/* ============================================================
+   RELATÓRIOS
+   Período (semana, mês, ano) × dois relatórios. Dá as seis saídas
+   com menos entulho do que seis botões soltos, e as setas ‹ ›
+   permitem gerar o mês passado — que é quando o relatório do mês
+   é realmente pedido, depois que o mês fecha.
+   ============================================================ */
+
+let _periodo = ler('rl-periodo') || 'mes';
+let _deslocamento = 0;          // quantos períodos para trás
+let _diasRel = [];              // linhas da vw_rdo_dia no período
+
+function limitesDoPeriodo() {
+  const hoje = new Date(hojeISO() + 'T12:00:00Z');
+  let ini, fim, rot;
+
+  if (_periodo === 'semana') {
+    // Semana de segunda a domingo, que é como a obra conta.
+    const dia = (hoje.getUTCDay() + 6) % 7;
+    const seg = new Date(hoje); seg.setUTCDate(hoje.getUTCDate() - dia - 7 * _deslocamento);
+    const dom = new Date(seg);  dom.setUTCDate(seg.getUTCDate() + 6);
+    ini = seg.toISOString().slice(0, 10);
+    fim = dom.toISOString().slice(0, 10);
+    rot = dataBR(ini) + ' a ' + dataBR(fim);
+  } else if (_periodo === 'mes') {
+    const d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - _deslocamento, 1));
+    ini = d.toISOString().slice(0, 10);
+    fim = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
+    rot = new Intl.DateTimeFormat('pt-BR', { timeZone:'UTC', month:'long', year:'numeric' })
+            .format(d);
+  } else {
+    const a = hoje.getUTCFullYear() - _deslocamento;
+    ini = a + '-01-01'; fim = a + '-12-31';
+    rot = 'Ano de ' + a;
+  }
+  return { ini, fim, rot };
+}
+
+// Dia útil = segunda a sábado. Domingo não entra na conta de dia sem
+// diário: obra parada no domingo não é falta de apontamento.
+function diasUteis(ini, fim) {
+  let n = 0;
+  const d = new Date(ini + 'T12:00:00Z'), f = new Date(fim + 'T12:00:00Z');
+  const hoje = new Date(hojeISO() + 'T12:00:00Z');
+  while (d <= f) {
+    if (d <= hoje && d.getUTCDay() !== 0) n++;
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return n;
+}
+
+function trocarPeriodo(qual) {
+  _periodo = qual; _deslocamento = 0;
+  guardar('rl-periodo', qual);
+  ['semana','mes','ano'].forEach(p =>
+    $('per-' + p).setAttribute('aria-pressed', String(p === qual)));
+  carregarRelatorios();
+}
+['semana','mes','ano'].forEach(p =>
+  $('per-' + p).addEventListener('click', () => trocarPeriodo(p)));
+$('per-antes').addEventListener('click', () => { _deslocamento++; carregarRelatorios(); });
+$('per-depois').addEventListener('click', () => {
+  if (_deslocamento > 0) { _deslocamento--; carregarRelatorios(); }
+});
+
+async function carregarRelatorios() {
+  $('rl-titulo').textContent = _obra ? _obra.nome : '—';
+  if (!_obra) return;
+
+  ['semana','mes','ano'].forEach(p =>
+    $('per-' + p).setAttribute('aria-pressed', String(p === _periodo)));
+
+  const { ini, fim, rot } = limitesDoPeriodo();
+  $('per-rotulo').textContent = rot;
+  $('per-depois').disabled = _deslocamento === 0;
+
+  const { data, error } = await db.from('vw_rdo_dia')
+    .select('*').eq('obra', _obra.codigo).gte('data', ini).lte('data', fim).order('data');
+
+  _diasRel = error ? [] : (data || []);
+  renderRelatorioRDO(ini, fim);
+  renderRelatorioChuva(ini, fim);
+}
+
+const somaRel = (campo) => _diasRel.reduce((s, d) => s + Number(d[campo] || 0), 0);
+
+function tilesEm(id, tiles) {
+  const area = $(id); area.innerHTML = '';
+  tiles.forEach(t => {
+    const d = document.createElement('div'); d.className = 'num';
+    const r = document.createElement('p'); r.className = 'rotulo'; r.textContent = t.rot;
+    const v = document.createElement('b'); v.textContent = t.val;
+    if (String(t.val).length > 6) v.style.fontSize = '20px';
+    const s = document.createElement('small'); s.textContent = t.sub;
+    if (t.urgente) s.className = 'alerta';
+    d.append(r, v, s); area.appendChild(d);
+  });
+}
+
+function linhasEm(id, linhas) {
+  const area = $(id); area.innerHTML = '';
+  linhas.forEach(l => {
+    const p = document.createElement('div');
+    p.className = 'rl-linha' + (l.forte ? ' forte' : '');
+    const q = document.createElement('span'); q.className = 'que'; q.textContent = l.que;
+    const n = document.createElement('span');
+    n.className = 'qto' + (l.aviso ? ' qto-vermelho' : '');
+    n.textContent = l.qto;
+    p.append(q, n); area.appendChild(p);
+  });
+}
+
+function renderRelatorioRDO(ini, fim) {
+  const uteis = diasUteis(ini, fim);
+  const lancados = _diasRel.length;
+  const hh = somaRel('homem_hora');
+  const he = somaRel('horas_extras');
+  const presencas = somaRel('presentes');
+  const media = lancados ? Math.round(presencas / lancados * 10) / 10 : 0;
+  const faltando = Math.max(uteis - lancados, 0);
+
+  tilesEm('rl-numeros-rdo', [
+    { rot:'Diários', val: lancados, sub: uteis + ' dias úteis no período' },
+    { rot:'Sem lançar', val: faltando,
+      sub: faltando ? 'não contam em medição' : 'nenhum dia em aberto', urgente: faltando > 0 },
+    { rot:'Homem-hora', val: hh.toLocaleString('pt-BR'), sub:'só de quem esteve presente' },
+    { rot:'Efetivo médio', val: media.toLocaleString('pt-BR'), sub:'pessoas por dia' }
+  ]);
+
+  linhasEm('rl-detalhe-rdo', [
+    { que:'Presenças somadas', qto: presencas.toLocaleString('pt-BR'), forte:true },
+    { que:'Horas extras',      qto: he.toLocaleString('pt-BR') + ' h' },
+    { que:'Faltas',            qto: somaRel('faltas'), aviso: somaRel('faltas') > 0 },
+    { que:'Faltas justificadas', qto: somaRel('faltas_justificadas') },
+    { que:'Atestados',         qto: somaRel('atestados') },
+    { que:'Férias e folgas',   qto: somaRel('ferias') + somaRel('folgas') },
+    { que:'Atividades lançadas', qto: somaRel('atividades') },
+    { que:'Fotos anexadas',    qto: somaRel('fotos') },
+    { que:'Equipamento — horas operando', qto: somaRel('equip_operando').toLocaleString('pt-BR') },
+    { que:'Equipamento — horas paradas',  qto: somaRel('equip_paradas').toLocaleString('pt-BR') }
+  ]);
+}
+
+function renderRelatorioChuva(ini, fim) {
+  const comChuva = _diasRel.filter(d => d.choveu).length;
+  const impr = _diasRel.filter(d => d.condicao_trabalho === 'impraticavel').length;
+  const parc = _diasRel.filter(d => d.condicao_trabalho === 'parcialmente_impraticavel').length;
+  const prat = _diasRel.filter(d => d.condicao_trabalho === 'praticavel').length;
+  const semCond = _diasRel.filter(d => !d.condicao_trabalho).length;
+  const perdidos = impr + 0.5 * parc;
+
+  tilesEm('rl-numeros-chuva', [
+    { rot:'Dias com chuva', val: comChuva, sub: _diasRel.length + ' dias com diário' },
+    { rot:'Dias perdidos', val: perdidos.toLocaleString('pt-BR'),
+      sub:'impraticável + meio parcial', urgente: perdidos > 0 },
+    { rot:'Impraticável', val: impr, sub:'dia inteiro parado' },
+    { rot:'Parcial', val: parc, sub:'meio dia parado' }
+  ]);
+
+  linhasEm('rl-detalhe-chuva', [
+    { que:'Praticável',              qto: prat, forte:true },
+    { que:'Parcialmente impraticável', qto: parc },
+    { que:'Impraticável',            qto: impr, aviso: impr > 0 },
+    { que:'Sem condição informada',  qto: semCond, aviso: semCond > 0 },
+    { que:'Chuva pela manhã',        qto: _diasRel.filter(d => e_chuva_js(d.clima_manha)).length },
+    { que:'Chuva à tarde',           qto: _diasRel.filter(d => e_chuva_js(d.clima_tarde)).length }
+  ]);
+}
+
+// Mesma regra da função e_chuva() do banco: sem caixa, sem acento.
+function e_chuva_js(txt) {
+  return /(chuva|chuvoso|garoa|chuvisco|temporal|tempestade)/i
+    .test(String(txt || '').normalize('NFD').replace(/[̀-ͯ]/g, ''));
+}
+
+/* ============================================================
+   PDF DOS RELATÓRIOS
+   Mesmo motor do diário: monta a folha, chama a impressão do
+   navegador. Mesmo cabeçalho, mesma tabela, mesma assinatura —
+   quem recebe reconhece o documento.
+   ============================================================ */
+
+function cabecalhoImp(titulo, subtitulo, selo) {
+  const topo = document.createElement('div'); topo.className = 'imp-topo';
+  const esq = document.createElement('div');
+  const h1 = document.createElement('h1'); h1.textContent = titulo;
+  const sub = document.createElement('p'); sub.className = 'sub';
+  sub.textContent = [_obra.codigo + ' — ' + _obra.nome,
+                     [_obra.cidade, _obra.uf].filter(Boolean).join('/'),
+                     _obra.empresa_executora, _obra.consorcio,
+                     subtitulo].filter(Boolean).join(' · ');
+  esq.append(h1, sub);
+  const num = document.createElement('span'); num.className = 'imp-num';
+  num.textContent = selo;
+  topo.append(esq, num);
+  return topo;
+}
+
+function assinaturasImp(esquerda, direita) {
+  const ass = document.createElement('div'); ass.className = 'imp-assina';
+  const a1 = document.createElement('div'); a1.textContent = esquerda;
+  const a2 = document.createElement('div'); a2.textContent = direita;
+  ass.append(a1, a2);
+  return ass;
+}
+
+function rodapeImp(oque) {
+  const rod = document.createElement('p'); rod.className = 'imp-rodape';
+  rod.textContent = 'BUILDLy · ' + _obra.codigo + ' · ' + oque +
+    ' · emitido em ' + dataBR(hojeISO()) + (_perfilNome ? ' por ' + _perfilNome : '');
+  return rod;
+}
+
+function imprimirFolha(nomeArquivo) {
+  const antes = document.title;
+  document.title = nomeArquivo;
+  window.print();
+  document.title = antes;
+}
+
+const COND_CURTA = {
+  praticavel: 'Praticável',
+  parcialmente_impraticavel: 'Parcial',
+  impraticavel: 'Impraticável'
+};
+
+/* ---------- relatório de diários ---------- */
+$('btn-pdf-rdo').addEventListener('click', () => {
+  const { ini, fim, rot } = limitesDoPeriodo();
+  const folha = $('folha-impressao');
+  folha.className = '';
+  folha.innerHTML = '';
+
+  folha.appendChild(cabecalhoImp('Relatório de Diários de Obra',
+    dataBR(ini) + ' a ' + dataBR(fim), rot));
+
+  const uteis = diasUteis(ini, fim);
+  const hh = somaRel('homem_hora');
+  const presencas = somaRel('presentes');
+
+  const s1 = secaoImp('Resumo do período');
+  const g = document.createElement('div'); g.className = 'imp-campos';
+  g.append(
+    campoImp('Diários lançados', String(_diasRel.length)),
+    campoImp('Dias úteis', String(uteis)),
+    campoImp('Dias sem diário', String(Math.max(uteis - _diasRel.length, 0))),
+    campoImp('Homem-hora', hh.toLocaleString('pt-BR')));
+  s1.appendChild(g);
+  const g2 = document.createElement('div'); g2.className = 'imp-campos';
+  g2.style.marginTop = '4pt';
+  g2.append(
+    campoImp('Presenças somadas', presencas.toLocaleString('pt-BR')),
+    campoImp('Horas extras', somaRel('horas_extras').toLocaleString('pt-BR')),
+    campoImp('Faltas', String(somaRel('faltas'))),
+    campoImp('Atestados', String(somaRel('atestados'))));
+  s1.appendChild(g2);
+  folha.appendChild(s1);
+
+  const s2 = secaoImp('Dia a dia');
+  if (_diasRel.length) {
+    s2.appendChild(tabelaImp(
+      [{ rot:'Nº', campo:'n', num:true }, { rot:'Data', campo:'data' },
+       { rot:'Clima manhã', campo:'cm' }, { rot:'Clima tarde', campo:'ct' },
+       { rot:'Condição', campo:'cond' },
+       { rot:'Efetivo', campo:'ef', num:true },
+       { rot:'H-hora', campo:'hh', num:true },
+       { rot:'H. extras', campo:'he', num:true },
+       { rot:'Faltas', campo:'ft', num:true }],
+      _diasRel.map(d => ({
+        n: d.numero, data: dataBR(d.data),
+        cm: d.clima_manha || '—', ct: d.clima_tarde || '—',
+        cond: COND_CURTA[d.condicao_trabalho] || '—',
+        ef: d.presentes,
+        hh: Number(d.homem_hora).toLocaleString('pt-BR'),
+        he: Number(d.horas_extras) ? Number(d.horas_extras).toLocaleString('pt-BR') : '',
+        ft: Number(d.faltas) ? d.faltas : ''
+      })),
+      [{ txt:'Total', span:5 },
+       { txt: String(presencas), num:true },
+       { txt: hh.toLocaleString('pt-BR'), num:true },
+       { txt: somaRel('horas_extras').toLocaleString('pt-BR'), num:true },
+       { txt: String(somaRel('faltas')), num:true }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhum diário lançado neste período.';
+    s2.appendChild(p);
+  }
+  folha.appendChild(s2);
+
+  folha.appendChild(assinaturasImp('Engenheiro responsável', 'Fiscalização'));
+  folha.appendChild(rodapeImp('Relatório de diários · ' + rot));
+  imprimirFolha(`Diarios - ${_obra.codigo} - ${ini}_a_${fim}`);
+});
+
+/* ---------- relatório de chuva ---------- */
+$('btn-pdf-chuva').addEventListener('click', () => {
+  const { ini, fim, rot } = limitesDoPeriodo();
+  const folha = $('folha-impressao');
+  folha.className = '';
+  folha.innerHTML = '';
+
+  folha.appendChild(cabecalhoImp('Relatório de Chuva e Paralisação',
+    dataBR(ini) + ' a ' + dataBR(fim), rot));
+
+  const impr = _diasRel.filter(d => d.condicao_trabalho === 'impraticavel');
+  const parc = _diasRel.filter(d => d.condicao_trabalho === 'parcialmente_impraticavel');
+  const prat = _diasRel.filter(d => d.condicao_trabalho === 'praticavel');
+  const semCond = _diasRel.filter(d => !d.condicao_trabalho);
+  const comChuva = _diasRel.filter(d => d.choveu);
+  const perdidos = impr.length + 0.5 * parc.length;
+
+  const s1 = secaoImp('Resumo do período');
+  const g = document.createElement('div'); g.className = 'imp-campos';
+  g.append(
+    campoImp('Dias com diário', String(_diasRel.length)),
+    campoImp('Dias com chuva', String(comChuva.length)),
+    campoImp('Impraticáveis', String(impr.length)),
+    campoImp('Parciais', String(parc.length)));
+  s1.appendChild(g);
+  const g2 = document.createElement('div'); g2.className = 'imp-campos tres';
+  g2.style.marginTop = '4pt';
+  g2.append(
+    campoImp('Praticáveis', String(prat.length)),
+    campoImp('Sem condição informada', String(semCond.length)),
+    campoImp('DIAS PERDIDOS', perdidos.toLocaleString('pt-BR')));
+  s1.appendChild(g2);
+  const nota = document.createElement('p'); nota.className = 'imp-texto';
+  nota.style.marginTop = '5pt';
+  nota.textContent =
+    'Dia perdido = dia impraticável inteiro + meio dia de cada parcialmente impraticável. ' +
+    'Os dados saem do Relatório Diário de Obra lançado, não de estimativa. ' +
+    'Dia sem condição informada não entra na conta.';
+  s1.appendChild(nota);
+  folha.appendChild(s1);
+
+  const s2 = secaoImp('Dias com chuva ou paralisação');
+  const relevantes = _diasRel.filter(d =>
+    d.choveu || d.condicao_trabalho === 'impraticavel' ||
+    d.condicao_trabalho === 'parcialmente_impraticavel');
+
+  if (relevantes.length) {
+    s2.appendChild(tabelaImp(
+      [{ rot:'Nº', campo:'n', num:true }, { rot:'Data', campo:'data' },
+       { rot:'Dia', campo:'sem' },
+       { rot:'Clima manhã', campo:'cm' }, { rot:'Clima tarde', campo:'ct' },
+       { rot:'Condição de trabalho', campo:'cond' },
+       { rot:'Dia perdido', campo:'perda', num:true }],
+      relevantes.map(d => ({
+        n: d.numero, data: dataBR(d.data),
+        sem: new Intl.DateTimeFormat('pt-BR', { timeZone:'UTC', weekday:'short' })
+               .format(new Date(d.data + 'T12:00:00Z')).replace('.', ''),
+        cm: d.clima_manha || '—', ct: d.clima_tarde || '—',
+        cond: COND_CURTA[d.condicao_trabalho] || 'não informada',
+        perda: d.condicao_trabalho === 'impraticavel' ? '1'
+             : d.condicao_trabalho === 'parcialmente_impraticavel' ? '0,5' : '—'
+      })),
+      [{ txt:'Total de dias perdidos', span:6 },
+       { txt: perdidos.toLocaleString('pt-BR'), num:true }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhum dia com chuva ou paralisação neste período.';
+    s2.appendChild(p);
+  }
+  folha.appendChild(s2);
+
+  folha.appendChild(assinaturasImp('Engenheiro responsável', 'Fiscalização'));
+  folha.appendChild(rodapeImp('Relatório de chuva · ' + rot));
+  imprimirFolha(`Chuva - ${_obra.codigo} - ${ini}_a_${fim}`);
+});
+
+/* ---------- PDF do boletim de medição ----------
+   Sai deitado: a planilha tem contratado, anterior, atual, acumulado e
+   saldo, e isso não cabe em pé sem espremer a descrição do serviço. */
+$('btn-pdf-medicao').addEventListener('click', async () => {
+  if (!_medicao || !_contrato) return;
+  const b = $('btn-pdf-medicao');
+  b.disabled = true; b.textContent = 'Montando…';
+
+  const { data: saldo } = await db.from('vw_contrato_saldo')
+    .select('valor_contratado, valor_medido, valor_saldo, medicoes_lancadas')
+    .eq('contrato_id', _contrato.id).maybeSingle();
+
+  const folha = $('folha-impressao');
+  folha.className = 'imp-paisagem';
+  folha.innerHTML = '';
+
+  folha.appendChild(cabecalhoImp('Boletim de Medição',
+    _contrato.nome + (_contrato.empresa ? ' · ' + _contrato.empresa : '') +
+    (_contrato.numero_contrato ? ' · contrato ' + _contrato.numero_contrato : ''),
+    'Medição nº ' + _medicao.numero + '  ·  ' + _medicao.mes_referencia));
+
+  const s1 = secaoImp('Período e contrato');
+  const g = document.createElement('div'); g.className = 'imp-campos';
+  g.append(
+    campoImp('Período medido', dataBR(_medicao.data_inicio) + ' a ' + dataBR(_medicao.data_fim)),
+    campoImp('Tipo', _contrato.tipo === 'cliente' ? 'Cliente — a obra recebe'
+                                                  : 'Empreiteiro — a obra paga'),
+    campoImp('Situação', _medicao.fechada ? 'Fechada' : 'Aberta'),
+    campoImp('Medição', 'nº ' + _medicao.numero +
+      (saldo ? ' de ' + saldo.medicoes_lancadas : '')));
+  s1.appendChild(g);
+  folha.appendChild(s1);
+
+  const totalAtual = _mdItens.reduce((s, i) => s + Number(i.valor_atual || 0), 0);
+  const totalAcum  = _mdItens.reduce((s, i) => s + Number(i.valor_acumulado || 0), 0);
+
+  const s2 = secaoImp('Planilha de medição');
+  if (_mdItens.length) {
+    s2.appendChild(tabelaImp(
+      [{ rot:'Item', campo:'item' }, { rot:'Descrição', campo:'desc' },
+       { rot:'Un', campo:'un' },
+       { rot:'Contratado', campo:'qc', num:true },
+       { rot:'Vl. unit.', campo:'vu', num:true },
+       { rot:'Anterior', campo:'qa', num:true },
+       { rot:'Nesta med.', campo:'qm', num:true },
+       { rot:'Acumulado', campo:'qac', num:true },
+       { rot:'Saldo', campo:'qs', num:true },
+       { rot:'Valor nesta med.', campo:'va', num:true },
+       { rot:'Valor acumulado', campo:'vac', num:true }],
+      _mdItens.map(i => ({
+        item: i.item || '', desc: i.descricao, un: i.unidade || '',
+        qc:  Number(i.qtd_contratada).toLocaleString('pt-BR'),
+        vu:  reais(i.valor_unitario),
+        qa:  Number(i.qtd_anterior).toLocaleString('pt-BR'),
+        qm:  Number(i.qtd_atual).toLocaleString('pt-BR'),
+        qac: Number(i.qtd_acumulada).toLocaleString('pt-BR'),
+        qs:  Number(i.qtd_saldo).toLocaleString('pt-BR'),
+        va:  reais(i.valor_atual),
+        vac: reais(i.valor_acumulado)
+      })),
+      [{ txt:'Totais', span:9 },
+       { txt: reais(totalAtual), num:true },
+       { txt: reais(totalAcum), num:true }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'O contrato não tem itens.';
+    s2.appendChild(p);
+  }
+  folha.appendChild(s2);
+
+  if (saldo) {
+    const s3 = secaoImp('Posição do contrato');
+    const g3 = document.createElement('div'); g3.className = 'imp-campos';
+    const pct = Number(saldo.valor_contratado) > 0
+      ? Math.round(100 * Number(saldo.valor_medido) / Number(saldo.valor_contratado)) + '%'
+      : '—';
+    g3.append(
+      campoImp('Valor contratado', reais(saldo.valor_contratado)),
+      campoImp('Medido até aqui', reais(saldo.valor_medido)),
+      campoImp('Saldo a medir', reais(saldo.valor_saldo)),
+      campoImp('Avanço', pct));
+    s3.appendChild(g3);
+    folha.appendChild(s3);
+  }
+
+  const estourados = _mdItens.filter(i => Number(i.qtd_saldo) < 0);
+  if (estourados.length) {
+    const aviso = document.createElement('p'); aviso.className = 'imp-texto';
+    aviso.style.cssText = 'border:1pt solid #000;padding:4pt;margin-top:6pt';
+    aviso.textContent = 'Atenção: ' +
+      plural(estourados.length, 'item medido acima do contratado', 'itens medidos acima do contratado') +
+      ' — ' + estourados.map(i => (i.item ? i.item + ' ' : '') + i.descricao).join('; ') + '.';
+    folha.appendChild(aviso);
+  }
+
+  folha.appendChild(assinaturasImp(
+    'Engenheiro responsável',
+    _contrato.tipo === 'cliente' ? 'Fiscalização / Cliente' : 'Empreiteiro'));
+  folha.appendChild(rodapeImp(
+    'Boletim de medição nº ' + _medicao.numero + ' · ' + _contrato.nome));
+
+  b.disabled = false; b.textContent = 'Gerar PDF do boletim';
+  imprimirFolha(`Medicao ${_medicao.numero} - ${_obra.codigo} - ${_medicao.mes_referencia}`);
 });

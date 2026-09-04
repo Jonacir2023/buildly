@@ -340,6 +340,12 @@ Estão aqui porque cada um custou tempo.
     lançamento.
 13. **Comparar texto de botão diferenciando maiúscula** no teste. O CSS
     põe em versalete.
+14. **Reusar nome de classe do CSS como modificador.** Três vezes:
+    `.num` e `.aviso` trouxeram fundo, borda e espaçamento junto.
+    Modificador leva prefixo próprio. O `verificar.py` já checa.
+15. **`pg.evaluate` do Playwright executa a função que o trecho
+    devolve.** Substituir `window.print` por uma função contadora já
+    conta uma chamada. Zere o contador depois de instalar.
 
 ---
 

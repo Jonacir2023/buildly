@@ -27,6 +27,7 @@
   <symbol id="i-equip" viewBox="0 0 24 24"><circle cx="6.5" cy="17.5" r="2.6"/><circle cx="17" cy="17.5" r="2.6"/><path d="M4 14V8h5l3 4h7v5.5"/><path d="M9 8V5h4"/></symbol>
   <symbol id="i-medicao" viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6 20V11M11 20V6M16 20v-6M21 20V9"/></symbol>
   <symbol id="i-reuniao" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10.5h7"/></symbol>
+  <symbol id="i-relatorio" viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9.5 8h5M9.5 12h5M9.5 16h3"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M4 5h6l2 2.5h8V19H4z"/><path d="M8 13h8"/></symbol>
   <symbol id="i-baixo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4"/></symbol>
@@ -403,6 +404,7 @@
       <div class="numeros" id="md-e-numeros"></div>
       <div class="acoes-rapidas">
         <button class="btn-texto" type="button" id="btn-fechar-medicao">Fechar medição</button>
+        <button class="btn-texto" type="button" id="btn-pdf-medicao">Gerar PDF do boletim</button>
       </div>
       <p class="aviso" id="aviso-medicao" hidden></p>
       <div id="md-e-itens"></div>
@@ -497,6 +499,48 @@
         <input type="search" id="busca-dc" autocomplete="off"
                placeholder="Buscar por título ou categoria"></label>
       <div id="dc-lista"></div>
+     </section>
+
+
+     <!-- ============ RELATÓRIOS ============ -->
+     <section id="tela-relatorios" hidden>
+      <div class="mod-topo">
+        <div><p class="rotulo">Relatórios</p><h1 id="rl-titulo">—</h1></div>
+      </div>
+
+      <div class="troca-vista" role="group" aria-label="Período do relatório">
+        <button class="vista" id="per-semana" type="button" aria-pressed="false">Semana</button>
+        <button class="vista" id="per-mes"    type="button" aria-pressed="true">Mês</button>
+        <button class="vista" id="per-ano"    type="button" aria-pressed="false">Ano</button>
+      </div>
+
+      <div class="cal-topo">
+        <button class="icone" id="per-antes" type="button" aria-label="Período anterior">‹</button>
+        <h2 id="per-rotulo">—</h2>
+        <button class="icone" id="per-depois" type="button" aria-label="Próximo período">›</button>
+      </div>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Diários e efetivo</h2>
+        </div>
+        <div class="numeros" id="rl-numeros-rdo"></div>
+        <div id="rl-detalhe-rdo"></div>
+        <button class="btn btn-primario" type="button" id="btn-pdf-rdo">Gerar PDF de diários</button>
+      </section>
+
+      <section class="cartao">
+        <div class="bloco-topo">
+          <h2>Chuva e paralisação</h2>
+        </div>
+        <div class="numeros" id="rl-numeros-chuva"></div>
+        <div id="rl-detalhe-chuva"></div>
+        <button class="btn btn-primario" type="button" id="btn-pdf-chuva">Gerar PDF de chuva</button>
+      </section>
+
+      <p class="nota-chuva">Os dois relatórios saem no mesmo padrão do diário: folha A4,
+         cabeçalho da obra, tabela e linha de assinatura. Servem para anexar a medição,
+         a pleito de prorrogação de prazo e a prestação de contas.</p>
      </section>
 
      <!-- ============ RDO — lista ============ -->
