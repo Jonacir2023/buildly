@@ -1018,3 +1018,92 @@ textarea {
 .chip[data-st="pendente"] { background: var(--warn-weak); color: var(--warn); }
 .chip[data-st="aceita"]   { background: var(--ok-weak);   color: var(--ok); }
 .chip[data-st="recusada"] { background: var(--surface-2); color: var(--ink-soft); }
+
+/* ============================================================
+   QUADRO DE TAREFAS
+   Arrastar com dedo de luva, no sol, falha. Por isso o cartão
+   tem a seta de um toque além do arrasto: quem está no canteiro
+   usa a seta, quem está no computador arrasta.
+   ============================================================ */
+.troca-vista {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: var(--surface-2); border: 1px solid var(--line-forte);
+  border-radius: 99px; align-self: flex-start;
+}
+.vista {
+  font-family: var(--cond); font-weight: 600; font-size: 14px;
+  letter-spacing: .06em; text-transform: uppercase;
+  background: none; border: none; border-radius: 99px;
+  padding: 8px 18px; min-height: 40px; color: var(--ink-soft); cursor: pointer;
+}
+.vista[aria-pressed="true"] { background: var(--surface); color: var(--accent-text); }
+
+.kanban {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 78vw;
+  gap: var(--e3); overflow-x: auto; padding-bottom: var(--e2);
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+}
+@media (min-width: 720px)  { .kanban { grid-auto-columns: 1fr; overflow-x: visible; } }
+
+.coluna {
+  scroll-snap-align: start;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--e3);
+  display: flex; flex-direction: column; gap: var(--e2);
+  min-height: 140px;
+}
+.coluna > header {
+  display: flex; align-items: baseline; gap: var(--e2);
+  font-family: var(--cond); font-weight: 700; font-size: 16px;
+  padding: 0 2px var(--e1);
+}
+.coluna > header .quantos {
+  font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+  font-variant-numeric: tabular-nums; margin-left: auto;
+}
+.coluna[data-col="aberta"]       > header { color: var(--info); }
+.coluna[data-col="em_andamento"] > header { color: var(--accent-text); }
+.coluna[data-col="concluida"]    > header { color: var(--ok); }
+.coluna[data-col="cancelada"]    > header { color: var(--ink-soft); }
+.coluna.alvo { border-color: var(--accent-mark); background: var(--accent-weak); }
+.coluna .vazia {
+  font-size: 13px; color: var(--ink-soft); text-align: center;
+  border: 1px dashed var(--line-forte); border-radius: var(--r-md); padding: var(--e4) var(--e3);
+}
+
+.cartao-tarefa {
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--line-forte);
+  border-radius: var(--r-md); padding: var(--e3);
+  display: flex; align-items: flex-start; gap: var(--e2);
+  touch-action: pan-y;
+}
+.cartao-tarefa[data-prio="alta"]  { border-left-color: var(--danger); }
+.cartao-tarefa[data-prio="media"] { border-left-color: var(--warn); }
+.cartao-tarefa[data-prio="baixa"] { border-left-color: var(--ok); }
+.cartao-tarefa.atrasada { background: var(--danger-weak); }
+.cartao-tarefa.arrastando { opacity: .4; }
+
+.cartao-tarefa .corpo {
+  flex: 1 1 auto; min-width: 0; background: none; border: none; padding: 0;
+  text-align: left; font-family: var(--sans); font-size: 15px; color: var(--ink);
+  cursor: pointer; min-height: 0;
+}
+.cartao-tarefa .corpo b { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.cartao-tarefa .corpo small { display: block; font-size: 13px; color: var(--ink-soft); }
+.cartao-tarefa .corpo .venceu { color: var(--danger); font-weight: 600; }
+
+.empurra {
+  flex: none; width: 40px; min-height: 40px; padding: 0;
+  background: var(--surface-2); border: 1px solid var(--line-forte);
+  border-radius: var(--r-sm); color: var(--accent-text);
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.empurra:disabled { visibility: hidden; }
+
+/* o cartão que segue o dedo enquanto arrasta */
+.fantasma {
+  position: fixed; z-index: 60; pointer-events: none;
+  width: 240px; opacity: .95; transform: rotate(-1.5deg);
+  box-shadow: var(--sombra);
+}

@@ -2434,7 +2434,7 @@ async function carregarTarefas() {
   carregarPedidos();
   renderTfNumeros();
   renderTfFiltros();
-  filtrarTarefas();
+  trocarVista(_vistaTf);
 }
 
 const tfPendente = (t) => t.status === 'aberta' || t.status === 'em_andamento';
@@ -2540,7 +2540,9 @@ function filtrarTarefas() {
   });
 }
 
-$('busca-tf').addEventListener('input', filtrarTarefas);
+$('busca-tf').addEventListener('input', () => {
+  if (_vistaTf === 'quadro') renderQuadro(); else filtrarTarefas();
+});
 
 function pintarSetores(escolhido) {
   const sel = $('t-setor');
@@ -5294,3 +5296,215 @@ $('btn-recusar-pedido').addEventListener('click', async () => {
   $('folha-pedido').hidden = true;
   await carregarTarefas();
 });
+
+/* ============================================================
+   QUADRO DE TAREFAS (kanban)
+   Colunas por status. Duas formas de mover, de propósito:
+   arrastar, para quem está no computador; e a seta de um toque,
+   para quem está no canteiro — arrastar com luva, no sol, falha.
+   ============================================================ */
+
+const COLUNAS_TF = [
+  ['aberta',       'Aberta'],
+  ['em_andamento', 'Em andamento'],
+  ['concluida',    'Concluída'],
+  ['cancelada',    'Cancelada']
+];
+// Para onde a seta empurra. Cancelada não tem seguinte: sair dela é
+// decisão, não fluxo, e se faz abrindo a tarefa.
+const SEGUINTE_TF = { aberta:'em_andamento', em_andamento:'concluida' };
+
+let _vistaTf = ler('tf-vista') || 'quadro';
+
+function trocarVista(qual) {
+  _vistaTf = qual;
+  guardar('tf-vista', qual);
+  $('vista-quadro').setAttribute('aria-pressed', String(qual === 'quadro'));
+  $('vista-lista').setAttribute('aria-pressed',  String(qual === 'lista'));
+  $('tf-quadro').hidden  = qual !== 'quadro';
+  $('tf-lista').hidden   = qual !== 'lista';
+  $('tf-filtros').hidden = qual !== 'lista';
+  $('busca-tf').parentElement.hidden = false;
+  if (qual === 'quadro') renderQuadro(); else filtrarTarefas();
+}
+$('vista-quadro').addEventListener('click', () => trocarVista('quadro'));
+$('vista-lista').addEventListener('click',  () => trocarVista('lista'));
+
+function renderQuadro() {
+  const termo = ($('busca-tf').value || '').trim().toLowerCase();
+  const vistas = termo
+    ? _tarefas.filter(t => [t.assunto, t.responsavel, t.setor, t.descricao]
+        .filter(Boolean).join(' ').toLowerCase().includes(termo))
+    : _tarefas;
+
+  const area = $('tf-quadro');
+
+  if (!_tarefas.length) {
+    area.innerHTML = vazioHTML('Nenhuma tarefa nesta obra.',
+      'Tarefa é o que ficou combinado e precisa de alguém e de uma data.');
+    return;
+  }
+
+  // Coluna vazia de cancelada não aparece: quadro com coluna morta
+  // rouba largura de tela no celular.
+  const colunas = COLUNAS_TF.filter(([v]) =>
+    v !== 'cancelada' || vistas.some(t => t.status === 'cancelada'));
+
+  area.innerHTML = '<div class="kanban"></div>';
+  const k = area.firstElementChild;
+
+  colunas.forEach(([valor, rot]) => {
+    const col = document.createElement('section');
+    col.className = 'coluna';
+    col.dataset.col = valor;
+
+    const cab = document.createElement('header');
+    const nome = document.createElement('span'); nome.textContent = rot;
+    const qtd = document.createElement('span'); qtd.className = 'quantos';
+    cab.append(nome, qtd);
+    col.appendChild(cab);
+
+    const dela = vistas.filter(t => t.status === valor).sort((a, b) => {
+      const pa = a.data_termino || '9999-12-31', pb = b.data_termino || '9999-12-31';
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+    qtd.textContent = dela.length;
+
+    if (!dela.length) {
+      const v = document.createElement('p'); v.className = 'vazia';
+      v.textContent = termo ? 'nada nesta busca' : 'nada aqui';
+      col.appendChild(v);
+    } else {
+      dela.forEach(t => col.appendChild(cartaoTarefa(t)));
+    }
+    k.appendChild(col);
+  });
+}
+
+function cartaoTarefa(t) {
+  const c = document.createElement('div');
+  c.className = 'cartao-tarefa' + (tfAtrasada(t) ? ' atrasada' : '');
+  c.dataset.prio = t.prioridade;
+  c.dataset.id = t.id;
+
+  const corpo = document.createElement('button');
+  corpo.type = 'button'; corpo.className = 'corpo';
+  const b = document.createElement('b'); b.textContent = t.assunto;
+  const s = document.createElement('small');
+  if (t.data_termino) {
+    const pedaco = document.createElement('span');
+    if (tfAtrasada(t)) pedaco.className = 'venceu';
+    pedaco.textContent = (tfAtrasada(t) ? 'venceu ' : 'prazo ') + dataBR(t.data_termino);
+    s.append(document.createTextNode([t.responsavel, t.setor].filter(Boolean).join(' · ')));
+    if (t.responsavel || t.setor) s.append(document.createTextNode(' · '));
+    s.appendChild(pedaco);
+  } else {
+    s.textContent = [t.responsavel, t.setor].filter(Boolean).join(' · ') || 'sem responsável';
+  }
+  corpo.append(b, s);
+  corpo.addEventListener('click', () => abrirTarefa(t));
+
+  const seta = document.createElement('button');
+  seta.type = 'button'; seta.className = 'empurra';
+  const proximo = SEGUINTE_TF[t.status];
+  if (!proximo) { seta.disabled = true; }
+  else {
+    seta.textContent = '›';
+    seta.title = 'Mover para ' + STATUS_TF[proximo];
+    seta.setAttribute('aria-label', t.assunto + ' — mover para ' + STATUS_TF[proximo]);
+    seta.addEventListener('click', (ev) => { ev.stopPropagation(); moverTarefa(t, proximo); });
+  }
+
+  c.append(corpo, seta);
+  ligarArrasto(c, t);
+  return c;
+}
+
+async function moverTarefa(t, novo) {
+  if (t.status === novo) return;
+  // concluido_em não vai daqui: quem carimba é o gatilho do banco.
+  const { error } = await db.from('tarefas').update({ status: novo }).eq('id', t.id);
+  if (error) { falhar($('erro-tarefa'), 'Não consegui mover: ' + error.message); return; }
+  t.status = novo;
+  renderTfNumeros();
+  renderTfFiltros();
+  renderQuadro();
+  carregarPainel();
+}
+
+/* ---------- arrastar ----------
+   Ponteiro em vez de drag-and-drop do HTML: o HTML5 não funciona em
+   toque. Só começa a arrastar depois de 8px de movimento, senão um
+   toque tremido no cartão viraria arrasto e ninguém conseguiria abrir
+   a tarefa. */
+function ligarArrasto(cartao, t) {
+  let fantasma = null, arrastando = false, x0 = 0, y0 = 0, colunaAlvo = null;
+  let rolando = null;
+
+  // No celular o quadro rola na horizontal, e a coluna de destino pode
+  // estar fora da tela. Sem isto, arrastar para ela seria impossível:
+  // ponto fora da tela não tem elemento embaixo.
+  function rolarNaBorda(x) {
+    const k = cartao.closest('.kanban');
+    clearInterval(rolando); rolando = null;
+    if (!k || k.scrollWidth <= k.clientWidth) return;
+    const r = k.getBoundingClientRect();
+    const margem = 56;
+    let passo = 0;
+    if (x < r.left + margem)       passo = -14;
+    else if (x > r.right - margem) passo = 14;
+    if (passo) rolando = setInterval(() => { k.scrollLeft += passo; }, 16);
+  }
+
+  cartao.addEventListener('pointerdown', (ev) => {
+    if (ev.target.closest('.empurra')) return;
+    if (ev.button !== undefined && ev.button !== 0) return;
+    x0 = ev.clientX; y0 = ev.clientY;
+
+    const mover = (e2) => {
+      if (!arrastando) {
+        if (Math.hypot(e2.clientX - x0, e2.clientY - y0) < 8) return;
+        arrastando = true;
+        cartao.classList.add('arrastando');
+        fantasma = cartao.cloneNode(true);
+        fantasma.classList.add('fantasma');
+        fantasma.classList.remove('arrastando');
+        document.body.appendChild(fantasma);
+      }
+      fantasma.style.left = (e2.clientX - 120) + 'px';
+      fantasma.style.top  = (e2.clientY - 26) + 'px';
+
+      rolarNaBorda(e2.clientX);
+
+      // Ponto fora da tela não devolve elemento; trago para dentro da
+      // borda antes de perguntar o que está embaixo.
+      const px = Math.min(Math.max(e2.clientX, 1), window.innerWidth - 2);
+      const py = Math.min(Math.max(e2.clientY, 1), window.innerHeight - 2);
+      const sob = document.elementFromPoint(px, py);
+      const col = sob && sob.closest ? sob.closest('.coluna') : null;
+      if (col !== colunaAlvo) {
+        if (colunaAlvo) colunaAlvo.classList.remove('alvo');
+        colunaAlvo = col;
+        if (colunaAlvo) colunaAlvo.classList.add('alvo');
+      }
+    };
+
+    const soltar = async () => {
+      clearInterval(rolando); rolando = null;
+      document.removeEventListener('pointermove', mover);
+      document.removeEventListener('pointerup', soltar);
+      document.removeEventListener('pointercancel', soltar);
+      if (fantasma) { fantasma.remove(); fantasma = null; }
+      cartao.classList.remove('arrastando');
+      if (colunaAlvo) colunaAlvo.classList.remove('alvo');
+      const destino = colunaAlvo ? colunaAlvo.dataset.col : null;
+      colunaAlvo = null;
+      if (arrastando && destino) await moverTarefa(t, destino);
+      arrastando = false;
+    };
+
+    document.addEventListener('pointermove', mover);
+    document.addEventListener('pointerup', soltar);
+    document.addEventListener('pointercancel', soltar);
+  });
+}

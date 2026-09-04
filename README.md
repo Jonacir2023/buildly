@@ -128,6 +128,27 @@ ao RDO nunca era contada — justamente o registro sem pessoa
 identificada, como quase acidente da obra. A view passou a contar os
 dois vínculos.
 
+## Quadro de tarefas
+
+Colunas por `status`. A vista escolhida fica em `localStorage` sob
+`p3::tf-vista`.
+
+Mover é possível de duas formas de propósito: a seta de um toque (o
+caminho do canteiro — arrastar com luva ao sol falha) e o arrasto por
+Pointer Events, não HTML5 drag-and-drop, que não funciona em toque.
+
+O arrasto só começa depois de 8 px de movimento: sem isso, um toque
+tremido no cartão viraria arrasto e ninguém abriria a tarefa.
+
+Duas correções que o teste de arrasto revelou:
+`document.elementFromPoint` devolve `null` fora da viewport, e no
+celular a coluna de destino costuma estar fora — o ponto é trazido para
+dentro da borda antes de perguntar o que está embaixo, e o `.kanban`
+rola sozinho quando o ponteiro chega perto da borda.
+
+`concluido_em` continua vindo do gatilho: mover para Concluída no quadro
+não escreve a data pelo app.
+
 ## Robô de avisos
 
 `gerar_avisos()` roda por `pg_cron` às 09:00 UTC (06:00 em São Paulo) e

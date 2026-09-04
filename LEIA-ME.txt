@@ -146,9 +146,29 @@ acidentes dos últimos 90 dias.
 
 Tarefas
 -------
-O que ficou combinado e precisa de alguém. Filtros por pendentes,
-atrasadas, concluídas e todas. Pendente vem antes de encerrada, e dentro
-disso o prazo mais curto primeiro.
+O que ficou combinado e precisa de alguém. Duas formas de ver, e o botão
+QUADRO / LISTA no alto escolhe. O app lembra a sua escolha.
+
+QUADRO (padrão) — colunas por situação: Aberta, Em andamento, Concluída.
+A coluna Cancelada só aparece quando existe alguma cancelada; coluna
+morta rouba largura de tela no celular.
+
+  DUAS FORMAS DE MOVER O CARTÃO, de propósito:
+  A seta › de um toque empurra para a coluna seguinte. É o caminho do
+  canteiro — arrastar com luva, no sol, falha.
+  Arrastar também funciona, para quem está no computador. No celular o
+  quadro rola sozinho quando o dedo chega na borda, para alcançar
+  coluna que está fora da tela.
+
+  A borda colorida à esquerda do cartão é a prioridade: vermelha alta,
+  âmbar média, verde baixa. Cartão atrasado fica com fundo vermelho.
+  Tocar no cartão abre a tarefa; tocar na seta só move.
+
+LISTA — a mesma coisa em lista, com filtros por pendentes, atrasadas,
+concluídas e todas. Pendente vem antes de encerrada, e dentro disso o
+prazo mais curto primeiro.
+
+A busca no alto filtra as duas.
 
 A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
 status vira concluída, e limpa se você reabrir. Isso vale por qualquer

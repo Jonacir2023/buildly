@@ -220,11 +220,18 @@
         <button class="btn btn-primario" id="btn-nova-tarefa" type="button">+ Tarefa</button>
       </div>
       <div class="numeros" id="tf-numeros"></div>
-      <div class="filtros" id="tf-filtros"></div>
+
+      <div class="troca-vista" role="group" aria-label="Como ver as tarefas">
+        <button class="vista" id="vista-quadro" type="button" aria-pressed="true">Quadro</button>
+        <button class="vista" id="vista-lista"  type="button" aria-pressed="false">Lista</button>
+      </div>
+
+      <div class="filtros" id="tf-filtros" hidden></div>
       <label class="busca"><span class="sr">Buscar</span>
         <input type="search" id="busca-tf" autocomplete="off"
                placeholder="Buscar por assunto, responsável ou setor"></label>
-      <div id="tf-lista"></div>
+      <div id="tf-quadro"></div>
+      <div id="tf-lista" hidden></div>
 
       <div class="bloco" id="bloco-pedidos" hidden>
         <button class="btn-texto btn-abre" id="btn-pedidos" type="button"
