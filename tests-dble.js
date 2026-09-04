@@ -225,14 +225,18 @@
       lt:  (k,v) => { cond.push(r => r[k] <  v); return o; },
       gte: (k,v) => { cond.push(r => r[k] >= v); return o; },
       not: (k)   => { cond.push(r => r[k] != null); return o; },
+      ilike: (k,v) => { const alvo = String(v).replace(/%/g,'').toLowerCase();
+        cond.push(r => String(r[k]||'').toLowerCase().includes(alvo)); return o; },
       is:  (k,v) => { cond.push(r => (v === null ? r[k] == null : r[k] === v)); return o; },
       or:  (expr)=> {
-        // só a forma que o app usa: "desligamento.is.null,desligamento.gte.DATA"
         const partes = expr.split(',');
         cond.push(r => partes.some(p => {
-          const [campo, op, val] = p.split('.');
+          const i1 = p.indexOf('.'), i2 = p.indexOf('.', i1+1);
+          const campo = p.slice(0, i1), op = p.slice(i1+1, i2), val = p.slice(i2+1);
           if (op === 'is') return r[campo] == null;
           if (op === 'gte') return r[campo] != null && r[campo] >= val;
+          if (op === 'ilike') return String(r[campo]||'').toLowerCase()
+            .includes(val.replace(/\*/g,'').toLowerCase());
           return false;
         }));
         return o;

@@ -874,3 +874,105 @@ textarea {
 }
 .cal-resumo b { color: var(--ink); font-weight: 600; }
 .cal-resumo b.falta { color: var(--danger); }
+
+/* ---------- busca em toda a obra ---------- */
+.folha-alta .folha-caixa {
+  height: 92svh; display: flex; flex-direction: column; gap: var(--e3);
+}
+.folha-alta #busca-resultado { flex: 1 1 auto; overflow-y: auto; }
+.folha-alta .folha-topo { margin-bottom: 0; }
+
+.grupo-busca + .grupo-busca { margin-top: var(--e4); }
+.grupo-busca > .rotulo { margin-bottom: var(--e2); }
+.achado {
+  background: var(--surface); padding: var(--e3);
+  display: flex; align-items: center; gap: var(--e3);
+  width: 100%; text-align: left; color: var(--ink); border: none;
+  font-family: var(--sans); font-size: 15px; cursor: pointer;
+}
+.achado:hover { background: var(--surface-2); }
+.achado .miolo { flex: 1 1 auto; min-width: 0; }
+.achado .nm { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.achado .sub { display: block; font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.achado mark { background: var(--accent-weak); color: var(--accent-text); border-radius: 3px; }
+
+/* ============================================================
+   IMPRESSÃO DO RDO
+   O RDO é documento: o que vale para o cliente e para a
+   fiscalização é o papel assinado. Esta folha existe só para
+   virar PDF — some tudo que é de tela e entra o que é de
+   documento (cabeçalho da obra, tabela, campo de assinatura).
+   ============================================================ */
+#folha-impressao { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 14mm 12mm; }
+
+  body { background: #fff !important; color: #000 !important; }
+  #app, .folha, .carregando, .tela-login { display: none !important; }
+
+  #folha-impressao {
+    display: block !important;
+    font-family: "Barlow", system-ui, sans-serif;
+    font-size: 10.5pt; line-height: 1.35; color: #000;
+  }
+  #folha-impressao * { color: #000 !important; }
+
+  .imp-topo {
+    border-bottom: 2px solid #000; padding-bottom: 6pt; margin-bottom: 10pt;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12pt;
+  }
+  .imp-topo h1 {
+    font-family: "Barlow Semi Condensed", sans-serif; font-size: 17pt;
+    margin: 0; line-height: 1.1;
+  }
+  .imp-topo .sub { font-size: 9.5pt; margin: 2pt 0 0; }
+  .imp-num {
+    font-family: "IBM Plex Mono", monospace; font-size: 14pt; font-weight: 600;
+    border: 1.5pt solid #000; border-radius: 3pt; padding: 3pt 8pt; white-space: nowrap;
+  }
+
+  .imp-secao { margin: 0 0 9pt; break-inside: avoid; }
+  .imp-secao > h2 {
+    font-family: "Barlow Semi Condensed", sans-serif; font-size: 10pt;
+    letter-spacing: .1em; text-transform: uppercase;
+    border-bottom: .75pt solid #000; padding-bottom: 2pt; margin: 0 0 5pt;
+  }
+  .imp-campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4pt 10pt; }
+  .imp-campos.tres { grid-template-columns: repeat(3, 1fr); }
+  .imp-campo b {
+    display: block; font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .imp-campo span { display: block; font-size: 10.5pt; }
+
+  table.imp { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  table.imp th, table.imp td {
+    border: .5pt solid #000; padding: 2.5pt 4pt; text-align: left; vertical-align: top;
+  }
+  table.imp th {
+    font-family: "Barlow Semi Condensed", sans-serif; font-size: 8.5pt;
+    letter-spacing: .06em; text-transform: uppercase; background: #eee !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  table.imp td.imp-n {
+    text-align: right; font-family: "IBM Plex Mono", monospace;
+    background: none !important; border: .5pt solid #000 !important;
+    border-radius: 0 !important; padding: 2.5pt 4pt !important;
+    display: table-cell !important; flex-direction: unset !important;
+  }
+  table.imp tfoot td { font-weight: 700; }
+
+  .imp-texto { white-space: pre-wrap; min-height: 22pt; }
+
+  .imp-assina {
+    margin-top: 18pt; display: grid; grid-template-columns: 1fr 1fr; gap: 24pt;
+    break-inside: avoid;
+  }
+  .imp-assina div { border-top: .75pt solid #000; padding-top: 3pt; font-size: 9pt; }
+
+  .imp-rodape {
+    margin-top: 10pt; border-top: .5pt solid #000; padding-top: 3pt;
+    font-size: 7.5pt;
+  }
+}

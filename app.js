@@ -1772,7 +1772,7 @@ document.addEventListener('keydown', (ev) => {
   ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia','folha-tarefa','folha-entrega','folha-epi',
    'folha-nova-nf','folha-item','folha-contrato','folha-ct-item',
    'folha-nova-medicao','folha-reuniao','folha-participante','folha-topico',
-   'folha-documento','folha-recado']
+   'folha-documento','folha-recado','folha-busca']
     .forEach(id => { $(id).hidden = true; });
 });
 
@@ -4584,4 +4584,413 @@ $('cal-antes').addEventListener('click', () => {
 $('cal-depois').addEventListener('click', () => {
   _mesCal = somarMes(_mesCal || hojeISO().slice(0, 7), 1);
   carregarCalendario();
+});
+
+/* ============================================================
+   BUSCA EM TODA A OBRA
+   Resolve o "não lembro onde lancei isso". Cada módulo já tem a
+   sua busca; esta atravessa todos e leva direto ao registro.
+
+   A procura é feita no banco, não no que está carregado na tela:
+   o app só guarda o que você já abriu, e o que se procura é
+   justamente o que não está à vista.
+   ============================================================ */
+
+// O termo entra num filtro do PostgREST separado por vírgula, e
+// parêntese e vírgula quebram a sintaxe. Limpo antes de mandar.
+function limparTermo(t) {
+  return (t || '').trim().replace(/[,()*%\\]/g, ' ').replace(/\s+/g, ' ');
+}
+const contem = (campos, termo) =>
+  campos.map(c => `${c}.ilike.*${termo}*`).join(',');
+
+let _relogioBusca = null;
+
+async function buscarNaObra(termo) {
+  const area = $('busca-resultado');
+  const t = limparTermo(termo);
+
+  if (t.length < 2) {
+    area.innerHTML = '';
+    if (termo.trim()) area.innerHTML = vazioHTML('Escreva pelo menos duas letras.');
+    return;
+  }
+  if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
+
+  area.innerHTML = vazioHTML('Procurando…');
+
+  const [efe, eq, tf, oc, epi, nf, dc, rn, mu, rdo] = await Promise.all([
+    db.from('vw_efetivo').select('contrato_id, nome, funcao, matricula, cracha')
+      .eq('obra', _obra.codigo).or(contem(['nome','matricula','cracha','funcao'], t)).limit(8),
+    db.from('equipamentos').select('id, prefixo, tipo, marca, modelo, placa, ativo')
+      .eq('obra_id', _obra.id).or(contem(['prefixo','tipo','marca','modelo','placa'], t)).limit(8),
+    db.from('tarefas').select('id, assunto, responsavel, setor, status, prioridade, data_termino, data_lancamento, descricao, concluido_em')
+      .eq('obra_id', _obra.id).or(contem(['assunto','responsavel','setor','descricao'], t)).limit(8),
+    db.from('ocorrencias')
+      .select('id, data, tipo, descricao, contrato_id, rdo_id, contrato:contratos!inner(obra_id, pessoa:pessoas(nome))')
+      .eq('contrato.obra_id', _obra.id).ilike('descricao', `%${t}%`).limit(6),
+    db.from('vw_ficha_epi').select('contrato_id, nome, epi, ca, data_entrega')
+      .eq('obra', _obra.codigo).or(contem(['nome','epi','ca'], t)).limit(6),
+    db.from('nfs').select('id, numero, serie, fornecedor, categoria, data, total')
+      .eq('obra_id', _obra.id).or(contem(['numero','serie','fornecedor','categoria'], t)).limit(8),
+    db.from('documentos').select('id, titulo, categoria, url, notas')
+      .eq('obra_id', _obra.id).or(contem(['titulo','categoria','notas'], t)).limit(6),
+    db.from('reunioes').select('id, titulo, data, local')
+      .eq('obra_id', _obra.id).or(contem(['titulo','local'], t)).limit(6),
+    db.from('mural').select('id, texto, autor, criado_em')
+      .eq('obra_id', _obra.id).or(contem(['texto','autor'], t)).limit(6),
+    db.from('rdos').select('id, numero, data, observacoes, apontador, dss_tema')
+      .eq('obra_id', _obra.id).or(contem(['observacoes','apontador','dss_tema'], t)).limit(6)
+  ]);
+
+  const grupos = [
+    { rot:'Efetivo', linhas:(efe.data||[]).map(p => ({
+        nm:p.nome, sub:[p.funcao, p.matricula && 'mat. '+p.matricula].filter(Boolean).join(' · '),
+        ir: async () => { irPara('efetivo'); await carregarEfetivo(); abrirPessoa(p.contrato_id); } })) },
+    { rot:'Equipamentos', linhas:(eq.data||[]).map(e => ({
+        nm:e.prefixo + ' · ' + e.tipo,
+        sub:[e.marca, e.modelo, e.placa, e.ativo ? null : 'fora da frota'].filter(Boolean).join(' · '),
+        ir: async () => { irPara('equipamentos'); await carregarEquipamentos(); abrirEquipamento(e); } })) },
+    { rot:'Tarefas', linhas:(tf.data||[]).map(t2 => ({
+        nm:t2.assunto,
+        sub:[STATUS_TF[t2.status], t2.responsavel, t2.setor].filter(Boolean).join(' · '),
+        ir: async () => { irPara('tarefas'); await carregarTarefas(); abrirTarefa(t2); } })) },
+    { rot:'Ocorrências', linhas:(oc.data||[]).map(o => ({
+        nm:(o.contrato && o.contrato.pessoa ? o.contrato.pessoa.nome : 'A obra'),
+        sub:[NOME_TIPO_OC[o.tipo], dataBR(o.data), o.descricao].filter(Boolean).join(' · '),
+        ir: async () => { irPara('ocorrencias'); await carregarOcorrencias();
+                          const achada = _ocorrencias.find(x => x.id === o.id);
+                          if (achada) abrirOcorrencia(achada); } })) },
+    { rot:'EPI', linhas:(epi.data||[]).map(f => ({
+        nm:f.nome, sub:[f.epi, f.ca && 'CA '+f.ca, dataBR(f.data_entrega)].filter(Boolean).join(' · '),
+        ir: async () => { irPara('epi'); await carregarEPI(); } })) },
+    { rot:'Notas fiscais', linhas:(nf.data||[]).map(n => ({
+        nm:'nº ' + n.numero + (n.serie ? '/'+n.serie : '') + ' · ' + n.fornecedor,
+        sub:[dataBR(n.data), n.categoria, reais(n.total)].filter(Boolean).join(' · '),
+        ir: async () => { irPara('nfs'); await carregarNFs(); abrirNF(n.id); } })) },
+    { rot:'Documentos', linhas:(dc.data||[]).map(d => ({
+        nm:d.titulo, sub:[d.categoria, d.notas].filter(Boolean).join(' · '),
+        ir: async () => { irPara('documentos'); await carregarDocumentos(); abrirDocumento(d); } })) },
+    { rot:'Reuniões', linhas:(rn.data||[]).map(r => ({
+        nm:r.titulo, sub:[dataBR(r.data), r.local].filter(Boolean).join(' · '),
+        ir: async () => { irPara('reunioes'); await carregarReunioes(); abrirAta(r.id); } })) },
+    { rot:'Mural', linhas:(mu.data||[]).map(m => ({
+        nm:m.texto, sub:m.autor + ' · ' + dataBR(String(m.criado_em).slice(0,10)),
+        ir: async () => { irPara('documentos'); await carregarDocumentos(); } })) },
+    { rot:'RDO', linhas:(rdo.data||[]).map(r => ({
+        nm:'RDO nº ' + r.numero + ' · ' + dataBR(r.data),
+        sub:[r.apontador, r.dss_tema, r.observacoes].filter(Boolean).join(' · '),
+        ir: async () => { irPara('rdo'); await carregarRDOs(); abrirRDO(r.id); } })) }
+  ].filter(g => g.linhas.length);
+
+  const quantos = grupos.reduce((s, g) => s + g.linhas.length, 0);
+
+  if (!quantos) {
+    area.innerHTML = vazioHTML('Nada encontrado com "' + termo.trim() + '".',
+      'A busca olha nome, número, assunto e descrição — não o conteúdo de arquivo no Drive.');
+    return;
+  }
+
+  area.innerHTML = '';
+  grupos.forEach(g => {
+    const bloco = document.createElement('div');
+    bloco.className = 'grupo-busca';
+    const rot = document.createElement('p');
+    rot.className = 'rotulo';
+    rot.textContent = g.rot + ' · ' + g.linhas.length;
+    bloco.appendChild(rot);
+
+    const lista = document.createElement('div');
+    lista.className = 'lista';
+    g.linhas.forEach(l => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'achado';
+      const miolo = document.createElement('span'); miolo.className = 'miolo';
+      const nm = document.createElement('span'); nm.className = 'nm';
+      realcar(nm, l.nm, t);
+      const sub = document.createElement('span'); sub.className = 'sub';
+      realcar(sub, l.sub, t);
+      miolo.append(nm, sub);
+      b.appendChild(miolo);
+      b.addEventListener('click', async () => {
+        $('folha-busca').hidden = true;
+        await l.ir();
+      });
+      lista.appendChild(b);
+    });
+    bloco.appendChild(lista);
+    area.appendChild(bloco);
+  });
+}
+
+// Marca o pedaço encontrado sem montar HTML com texto do banco:
+// nome de fornecedor com "<" viraria tag se eu concatenasse string.
+function realcar(el, texto, termo) {
+  el.textContent = '';
+  const t = String(texto || '');
+  const alvo = termo.toLowerCase();
+  let i = 0;
+  while (i < t.length) {
+    const achou = t.toLowerCase().indexOf(alvo, i);
+    if (achou < 0 || !alvo) { el.append(t.slice(i)); break; }
+    if (achou > i) el.append(t.slice(i, achou));
+    const m = document.createElement('mark');
+    m.textContent = t.slice(achou, achou + alvo.length);
+    el.appendChild(m);
+    i = achou + alvo.length;
+  }
+}
+
+$('btn-busca').addEventListener('click', () => {
+  $('busca-geral').value = '';
+  $('busca-resultado').innerHTML = '';
+  $('folha-busca').hidden = false;
+  $('busca-geral').focus();
+});
+$('btn-fechar-busca').addEventListener('click', () => { $('folha-busca').hidden = true; });
+$('folha-busca').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-busca')) $('folha-busca').hidden = true;
+});
+
+// Espera a digitação parar: dez consultas a cada tecla derrubariam a
+// mão de qualquer conexão de canteiro.
+$('busca-geral').addEventListener('input', () => {
+  clearTimeout(_relogioBusca);
+  const v = $('busca-geral').value;
+  _relogioBusca = setTimeout(() => buscarNaObra(v), 300);
+});
+
+/* ============================================================
+   PDF DO DIÁRIO
+   Monta uma folha A4 com o conteúdo do RDO e chama a impressão
+   do próprio navegador. Sem biblioteca: no iPhone é Compartilhar
+   e "Salvar em Arquivos" como PDF, e no computador é imprimir
+   em PDF. Menos peça para quebrar, e sai igual em todo aparelho.
+   ============================================================ */
+
+const CLIMA_IMP = (v) => v || '—';
+
+function campoImp(rot, valor) {
+  const d = document.createElement('div'); d.className = 'imp-campo';
+  const b = document.createElement('b'); b.textContent = rot;
+  const s = document.createElement('span'); s.textContent = valor == null || valor === '' ? '—' : valor;
+  d.append(b, s);
+  return d;
+}
+
+function secaoImp(titulo) {
+  const s = document.createElement('section'); s.className = 'imp-secao';
+  const h = document.createElement('h2'); h.textContent = titulo;
+  s.appendChild(h);
+  return s;
+}
+
+function tabelaImp(colunas, linhas, rodape) {
+  const t = document.createElement('table'); t.className = 'imp';
+  const thead = document.createElement('thead');
+  const tr = document.createElement('tr');
+  colunas.forEach(c => { const th = document.createElement('th'); th.textContent = c.rot; tr.appendChild(th); });
+  thead.appendChild(tr); t.appendChild(thead);
+  const tb = document.createElement('tbody');
+  linhas.forEach(l => {
+    const tr2 = document.createElement('tr');
+    colunas.forEach(c => {
+      const td = document.createElement('td');
+      if (c.num) td.className = 'imp-n';
+      td.textContent = l[c.campo] == null ? '' : l[c.campo];
+      tr2.appendChild(td);
+    });
+    tb.appendChild(tr2);
+  });
+  t.appendChild(tb);
+  if (rodape) {
+    const tf = document.createElement('tfoot');
+    const tr3 = document.createElement('tr');
+    rodape.forEach(r => {
+      const td = document.createElement('td');
+      if (r.num) td.className = 'imp-n';
+      if (r.span) td.colSpan = r.span;
+      td.textContent = r.txt;
+      tr3.appendChild(td);
+    });
+    tf.appendChild(tr3); t.appendChild(tf);
+  }
+  return t;
+}
+
+async function montarImpressaoRDO() {
+  if (!_rdo || !_obra) return false;
+  const folha = $('folha-impressao');
+  folha.innerHTML = '';
+
+  // Recarrego as partes: a folha tem que sair com o que está gravado,
+  // não com o que sobrou na memória da tela.
+  const [pres, atv, eqp, fts] = await Promise.all([
+    db.from('rdo_presencas')
+      .select('horas_normais, horas_extras, situacao, observacao, ' +
+              'contrato:contratos(matricula, pessoa:pessoas(nome), funcao:funcoes(nome))')
+      .eq('rdo_id', _rdo.id),
+    db.from('rdo_atividades').select('descricao, local, percentual_executado').eq('rdo_id', _rdo.id),
+    db.from('rdo_equipamentos')
+      .select('horas_operando, horas_paradas, motivo_parada, equipamento:equipamentos(prefixo, tipo)')
+      .eq('rdo_id', _rdo.id),
+    db.from('rdo_fotos').select('url_drive, legenda, ordem').eq('rdo_id', _rdo.id).order('ordem')
+  ]);
+
+  const presencas = (pres.data || []).sort((a, b) =>
+    (a.contrato?.pessoa?.nome || '').localeCompare(b.contrato?.pessoa?.nome || '', 'pt-BR'));
+
+  /* cabeçalho */
+  const topo = document.createElement('div'); topo.className = 'imp-topo';
+  const esq = document.createElement('div');
+  const h1 = document.createElement('h1'); h1.textContent = 'Relatório Diário de Obra';
+  const sub = document.createElement('p'); sub.className = 'sub';
+  sub.textContent = [_obra.codigo + ' — ' + _obra.nome,
+                     [_obra.cidade, _obra.uf].filter(Boolean).join('/'),
+                     _obra.empresa_executora, _obra.consorcio].filter(Boolean).join(' · ');
+  esq.append(h1, sub);
+  const num = document.createElement('span'); num.className = 'imp-num';
+  num.textContent = 'Nº ' + _rdo.numero + '  ·  ' + dataBR(_rdo.data);
+  topo.append(esq, num);
+  folha.appendChild(topo);
+
+  /* condições */
+  const s1 = secaoImp('Condições do dia');
+  const g1 = document.createElement('div'); g1.className = 'imp-campos';
+  const semana = new Intl.DateTimeFormat('pt-BR', { timeZone:'UTC', weekday:'long' })
+    .format(new Date(_rdo.data + 'T12:00:00Z'));
+  g1.append(
+    campoImp('Dia da semana', semana),
+    campoImp('Clima manhã', CLIMA_IMP(_rdo.clima_manha)),
+    campoImp('Clima tarde', CLIMA_IMP(_rdo.clima_tarde)),
+    campoImp('Condição', CONDICAO[_rdo.condicao_trabalho] || '—'));
+  s1.appendChild(g1);
+  const g2 = document.createElement('div'); g2.className = 'imp-campos tres';
+  g2.style.marginTop = '4pt';
+  g2.append(
+    campoImp('Jornada', _rdo.jornada),
+    campoImp('Apontador', _rdo.apontador),
+    campoImp('DSS', [_rdo.dss_horario ? String(_rdo.dss_horario).slice(0,5) : null,
+                     _rdo.dss_tema].filter(Boolean).join(' — ')));
+  s1.appendChild(g2);
+  if (_rdo.dss_ministrado_por) {
+    const g3 = document.createElement('div'); g3.className = 'imp-campos tres';
+    g3.style.marginTop = '4pt';
+    g3.append(campoImp('DSS ministrado por', _rdo.dss_ministrado_por));
+    s1.appendChild(g3);
+  }
+  folha.appendChild(s1);
+
+  /* efetivo */
+  const s2 = secaoImp('Efetivo do dia');
+  const rotSit = Object.fromEntries(SITUACOES);
+  const linhas = presencas.map(p => ({
+    nome: p.contrato?.pessoa?.nome || '—',
+    funcao: p.contrato?.funcao?.nome || '',
+    mat: p.contrato?.matricula || '',
+    sit: rotSit[p.situacao] || p.situacao,
+    hn: Number(p.horas_normais).toLocaleString('pt-BR'),
+    he: Number(p.horas_extras) ? Number(p.horas_extras).toLocaleString('pt-BR') : ''
+  }));
+  const presentes = presencas.filter(p => p.situacao === 'presente');
+  const hh = presentes.reduce((s, p) =>
+    s + Number(p.horas_normais || 0) + Number(p.horas_extras || 0), 0);
+
+  if (linhas.length) {
+    s2.appendChild(tabelaImp(
+      [{ rot:'Nome', campo:'nome' }, { rot:'Função', campo:'funcao' },
+       { rot:'Matrícula', campo:'mat' }, { rot:'Situação', campo:'sit' },
+       { rot:'H. normais', campo:'hn', num:true }, { rot:'H. extras', campo:'he', num:true }],
+      linhas,
+      [{ txt:`${presentes.length} presente(s) de ${presencas.length}`, span:4 },
+       { txt: hh.toLocaleString('pt-BR'), num:true },
+       { txt:'homem-hora', num:false }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhum efetivo lançado neste dia.';
+    s2.appendChild(p);
+  }
+  folha.appendChild(s2);
+
+  /* atividades */
+  const s3 = secaoImp('Atividades executadas');
+  if ((atv.data || []).length) {
+    s3.appendChild(tabelaImp(
+      [{ rot:'Descrição', campo:'descricao' }, { rot:'Local', campo:'local' },
+       { rot:'% exec.', campo:'pct', num:true }],
+      atv.data.map(a => ({ descricao:a.descricao, local:a.local || '',
+        pct: a.percentual_executado == null ? '' : Number(a.percentual_executado).toLocaleString('pt-BR') + '%' }))));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhuma atividade lançada.';
+    s3.appendChild(p);
+  }
+  folha.appendChild(s3);
+
+  /* equipamentos */
+  if ((eqp.data || []).length) {
+    const s4 = secaoImp('Equipamentos');
+    s4.appendChild(tabelaImp(
+      [{ rot:'Prefixo', campo:'pref' }, { rot:'Tipo', campo:'tipo' },
+       { rot:'H. operando', campo:'op', num:true }, { rot:'H. paradas', campo:'par', num:true },
+       { rot:'Motivo da parada', campo:'motivo' }],
+      eqp.data.map(e => ({ pref:e.equipamento?.prefixo || '', tipo:e.equipamento?.tipo || '',
+        op:Number(e.horas_operando).toLocaleString('pt-BR'),
+        par:Number(e.horas_paradas).toLocaleString('pt-BR'),
+        motivo:e.motivo_parada || '' }))));
+    folha.appendChild(s4);
+  }
+
+  /* observações */
+  const s5 = secaoImp('Observações');
+  const o1 = document.createElement('p'); o1.className = 'imp-texto';
+  o1.textContent = _rdo.observacoes || 'Sem observações.';
+  s5.appendChild(o1);
+  if (_rdo.eventos_meio_ambiente) {
+    const h = document.createElement('b');
+    h.style.cssText = 'display:block;font-size:7.5pt;text-transform:uppercase;margin-top:5pt';
+    h.textContent = 'Meio ambiente';
+    const o2 = document.createElement('p'); o2.className = 'imp-texto';
+    o2.textContent = _rdo.eventos_meio_ambiente;
+    s5.append(h, o2);
+  }
+  folha.appendChild(s5);
+
+  /* fotos: o PDF leva o link, porque a foto mora no Drive */
+  if ((fts.data || []).length) {
+    const s6 = secaoImp('Fotos anexas');
+    s6.appendChild(tabelaImp(
+      [{ rot:'#', campo:'n', num:true }, { rot:'Legenda', campo:'leg' }, { rot:'Link', campo:'url' }],
+      fts.data.map((f, i) => ({ n:i+1, leg:f.legenda || '', url:f.url_drive }))));
+    folha.appendChild(s6);
+  }
+
+  /* assinaturas */
+  const ass = document.createElement('div'); ass.className = 'imp-assina';
+  const a1 = document.createElement('div');
+  a1.textContent = _rdo.apontador ? _rdo.apontador + ' — Apontador' : 'Apontador';
+  const a2 = document.createElement('div');
+  a2.textContent = 'Engenheiro responsável';
+  ass.append(a1, a2);
+  folha.appendChild(ass);
+
+  const rod = document.createElement('p'); rod.className = 'imp-rodape';
+  rod.textContent = 'BUILDLy · ' + _obra.codigo + ' · RDO nº ' + _rdo.numero +
+    ' de ' + dataBR(_rdo.data) + ' · emitido em ' + dataBR(hojeISO()) +
+    (_perfilNome ? ' por ' + _perfilNome : '');
+  folha.appendChild(rod);
+  return true;
+}
+
+$('btn-imprimir-rdo').addEventListener('click', async () => {
+  const b = $('btn-imprimir-rdo');
+  b.disabled = true; b.textContent = 'Montando…';
+  const pronto = await montarImpressaoRDO();
+  b.disabled = false; b.textContent = 'Gerar PDF do diário';
+  if (!pronto) return falhar($('erro-rdo'), 'Não consegui montar a folha do diário.');
+  // O título da janela vira o nome sugerido do arquivo.
+  const antes = document.title;
+  document.title = `RDO ${_rdo.numero} - ${_obra.codigo} - ${_rdo.data}`;
+  window.print();
+  document.title = antes;
 });

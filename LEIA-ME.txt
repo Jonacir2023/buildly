@@ -154,6 +154,32 @@ A DATA DE CONCLUSÃO NÃO SE DIGITA: o banco carimba sozinho quando o
 status vira concluída, e limpa se você reabrir. Isso vale por qualquer
 caminho, não só pela tela.
 
+Buscar em toda a obra
+---------------------
+A lupa no alto da tela, ao lado do botão de sair. Procura ao mesmo tempo
+em efetivo, equipamentos, tarefas, ocorrências, EPI, notas fiscais,
+documentos, reuniões, mural e RDO — e leva direto ao registro.
+
+Serve para o "não lembro onde lancei isso". Cada módulo continua tendo a
+sua busca própria; esta atravessa todos.
+
+Procura por nome, matrícula, prefixo, placa, número da nota, fornecedor,
+assunto, descrição e observação do RDO. NÃO procura dentro de arquivo no
+Drive — só no que está escrito no Buildly.
+
+PDF do diário
+-------------
+No diário aberto, botão "Gerar PDF do diário".
+
+Sai uma folha A4 com cabeçalho da obra, condições do dia, DSS, tabela do
+efetivo com horas e homem-hora somado, atividades, equipamentos,
+observações, links das fotos e duas linhas de assinatura.
+
+No iPhone: toque no botão, depois em Compartilhar e "Salvar em Arquivos".
+No computador: escolha "Salvar como PDF" na janela de impressão.
+
+O nome do arquivo já vem sugerido: RDO 12 - TESTE - 2026-09-04.
+
 Calendário do RDO
 -----------------
 No alto da tela do RDO, o mês inteiro em grade.

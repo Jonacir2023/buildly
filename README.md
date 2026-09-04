@@ -128,6 +128,31 @@ ao RDO nunca era contada — justamente o registro sem pessoa
 identificada, como quase acidente da obra. A view passou a contar os
 dois vínculos.
 
+## Busca em toda a obra
+
+Dez consultas em paralelo com `ilike` no PostgREST, uma por tabela, com
+300 ms de espera depois da última tecla — dez consultas por tecla
+derrubariam a conexão de canteiro.
+
+O termo é limpo antes de entrar no filtro `or(...)`: vírgula e parêntese
+quebram a sintaxe do PostgREST. O realce do trecho encontrado é montado
+com `document.createElement`, nunca por concatenação de HTML — nome de
+fornecedor com `<` viraria tag.
+
+## PDF do diário
+
+Sem biblioteca: uma folha `#folha-impressao` montada no DOM e
+`window.print()`. Menos peça para quebrar, e sai igual em qualquer
+aparelho — no iPhone é Compartilhar > Salvar em Arquivos.
+
+Toda a folha vive dentro de `@media print`; fora dela é `display:none`.
+As partes são relidas do banco na hora de montar: a folha tem que sair
+com o que está gravado, não com o que sobrou na memória da tela.
+
+Atenção a nome de classe: `.num` já é o quadro de número do painel, e a
+célula numérica da tabela impressa herdava fundo e raio dele. Por isso a
+classe da impressão é `.imp-n`.
+
 ## Calendário do RDO
 
 Grade do mês em `tela-rdo`, acima da lista. Consulta `rdos` por

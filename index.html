@@ -29,6 +29,7 @@
   <symbol id="i-reuniao" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10.5h7"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M4 5h6l2 2.5h8V19H4z"/><path d="M8 13h8"/></symbol>
   <symbol id="i-baixo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4"/></symbol>
   <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M11 5 4 12l7 7"/><path d="M4 12h16"/></symbol>
   <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14 4h4.5v16H14"/><path d="M10 8l-4 4 4 4M6.5 12H16"/></symbol>
 </svg>
@@ -69,6 +70,10 @@
     </button>
 
     <div class="topo-dir">
+      <button class="icone" id="btn-busca" type="button"
+              title="Buscar em toda a obra" aria-label="Buscar em toda a obra">
+        <svg class="ic" aria-hidden="true"><use href="#i-busca"></use></svg>
+      </button>
       <span class="sinal" id="sinal" hidden>sem sinal</span>
       <button class="icone" id="btn-voltar" type="button" hidden
               title="Voltar ao painel" aria-label="Voltar ao painel">
@@ -519,6 +524,11 @@
             <p id="rdo-e-semana" class="rotulo">—</p>
           </div>
           <span class="gravou" id="gravou" hidden>gravado</span>
+        </div>
+        <div class="faixa-acao" style="margin-top:var(--e3)">
+          <button class="btn btn-secundario" id="btn-imprimir-rdo" type="button">
+            Gerar PDF do diário
+          </button>
         </div>
       </div>
 
@@ -1490,6 +1500,28 @@
     </form>
   </div>
 </div>
+
+
+<!-- ============ BUSCA EM TODA A OBRA ============ -->
+<div class="folha folha-alta" id="folha-busca" hidden role="dialog" aria-modal="true"
+     aria-label="Buscar em toda a obra">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Buscar na obra</h2>
+      <button class="icone" id="btn-fechar-busca" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <label class="busca">
+      <span class="sr">O que procurar</span>
+      <input type="search" id="busca-geral" autocomplete="off" enterkeyhint="search"
+             placeholder="Nome, prefixo, número da nota, assunto…">
+    </label>
+    <p class="explica" id="busca-dica">Procura ao mesmo tempo em efetivo, equipamentos,
+       tarefas, ocorrências, EPI, notas fiscais, documentos, reuniões, recados e RDO.</p>
+    <div id="busca-resultado"></div>
+  </div>
+</div>
+
+<div id="folha-impressao" aria-hidden="true"></div>
 
 <div class="carregando" id="carregando"><span></span></div>
 

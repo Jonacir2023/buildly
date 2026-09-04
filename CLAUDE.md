@@ -69,6 +69,16 @@ outro caminho (N8N, SQL, importação) deixaria o número mentindo.
 | `tarefas.concluido_em` | gatilho `tarefas_conclusao` |
 | acumulado da medição | `vw_medicao_item`, com janela sobre o número |
 
+## Data é sempre no fuso da obra
+
+`hojeISO()` usa `America/Sao_Paulo`, não o relógio do aparelho: celular
+configurado errado não pode fazer o RDO cair no dia anterior.
+
+Consequência para os testes: perto da meia-noite UTC a data da máquina e
+a da obra discordam, e a certa é a da obra. Os testes calculam "hoje"
+com `ZoneInfo('America/Sao_Paulo')` — já quebraram uma vez por não fazer
+isso, e o app estava certo.
+
 ## Como testar antes de entregar
 
 Duas frentes, sempre, antes de qualquer `push`:
