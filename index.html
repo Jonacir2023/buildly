@@ -822,6 +822,12 @@
         </span>
       </label>
 
+      <div id="bloco-ajuda" hidden>
+        <p class="rotulo secao">Ajuda de custo</p>
+        <div id="ajuda-atual"></div>
+        <div id="ajuda-historico"></div>
+      </div>
+
       <p class="aviso" id="aviso-experiencia" hidden></p>
       <p class="erro" id="erro-pessoa" hidden></p>
 
@@ -1600,6 +1606,78 @@
         Aceitar e virar tarefa
       </button>
       <button class="btn btn-perigo" type="button" id="btn-recusar-pedido">Recusar</button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ============ AJUDA DE CUSTO ============ -->
+<div class="folha" id="folha-ajuda" hidden role="dialog" aria-modal="true" aria-label="Ajuda de custo">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2 id="titulo-ajuda">Conceder ajuda de custo</h2>
+      <button class="icone" id="btn-fechar-ajuda" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <p class="explica" id="explica-ajuda"></p>
+
+    <form id="form-ajuda" novalidate>
+      <div class="frow-2">
+        <label class="campo">
+          <span>Início *</span>
+          <input type="date" id="aj-inicio" required>
+        </label>
+        <label class="campo">
+          <span>Valor mensal (R$)</span>
+          <input type="number" id="aj-valor" min="0" step="0.01" inputmode="decimal">
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Endereço da locação</span>
+        <input type="text" id="aj-endereco" placeholder="Onde a pessoa vai morar">
+      </label>
+
+      <div class="frow-2">
+        <label class="campo">
+          <span>Autorizado por</span>
+          <input type="text" id="aj-autorizador">
+        </label>
+        <label class="campo">
+          <span>Data da autorização</span>
+          <input type="date" id="aj-data-aut">
+        </label>
+      </div>
+
+      <label class="campo">
+        <span>Observação</span>
+        <input type="text" id="aj-observacao">
+      </label>
+
+      <p class="aviso" id="aviso-ajuda" hidden></p>
+      <p class="erro" id="erro-ajuda" hidden></p>
+      <button class="btn btn-primario" type="submit" id="btn-salvar-ajuda">Conceder</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ENCERRAR AJUDA ============ -->
+<div class="folha" id="folha-encerra-ajuda" hidden role="dialog" aria-modal="true"
+     aria-label="Encerrar ajuda de custo">
+  <div class="folha-caixa">
+    <div class="folha-topo">
+      <h2>Encerrar ajuda de custo</h2>
+      <button class="icone" id="btn-fechar-encerra" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <p class="explica" id="explica-encerra"></p>
+    <form id="form-encerra-ajuda" novalidate>
+      <label class="campo">
+        <span>Último dia *</span>
+        <input type="date" id="aj-fim" required>
+      </label>
+      <p class="aviso" id="aviso-encerra" hidden></p>
+      <p class="erro" id="erro-encerra" hidden></p>
+      <button class="btn btn-perigo" type="submit" id="btn-confirma-encerra">Encerrar</button>
     </form>
   </div>
 </div>

@@ -329,6 +329,17 @@ Estão aqui porque cada um custou tempo.
 9. **Testes comparando com o relógio da máquina** em vez do fuso da obra.
 10. **Concatenar HTML com texto vindo do banco.** Nome de fornecedor com
     `<` vira tag. Use `createElement` e `textContent`.
+11. **Ler pela view e nunca escrever na tabela.** O regime "ajuda de
+    custo" era mostrado e contado, mas o app não tinha como criar —
+    ficaria em zero para sempre. Ao usar uma view, confira se existe
+    caminho para gravar o que ela lê.
+12. **Aviso automático sem marco inicial.** O robô avisava "sem RDO"
+    nos 7 dias anteriores assim que a obra tivesse qualquer diário, e
+    a obra que começou ontem levou uma semana de alarme falso. Todo
+    aviso retroativo precisa de um marco: nada antes do primeiro
+    lançamento.
+13. **Comparar texto de botão diferenciando maiúscula** no teste. O CSS
+    põe em versalete.
 
 ---
 
@@ -341,8 +352,8 @@ Estão aqui porque cada um custou tempo.
 - **Sem importação de dados.** A planilha antiga foi zerada; o banco
   começou limpo, de propósito.
 - **Sem foto dentro do app.** Só link do Drive.
-- **`ajuda_custo`, `documento_notas` e `reuniao_pauta`** têm tabela mas
-  pouca ou nenhuma tela.
+- **`documento_notas` e `reuniao_pauta`** têm tabela mas pouca ou
+  nenhuma tela. (`ajuda_custo` já tem tela, dentro da ficha da pessoa.)
 - **Sem relatório consolidado** além do PDF do RDO: não há medição em PDF
   nem folha de efetivo para impressão.
 

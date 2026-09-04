@@ -1107,3 +1107,21 @@ textarea {
   width: 240px; opacity: .95; transform: rotate(-1.5deg);
   box-shadow: var(--sombra);
 }
+
+/* ---------- ajuda de custo ---------- */
+#bloco-ajuda { display: flex; flex-direction: column; gap: var(--e2); }
+.ajuda-ativa {
+  background: var(--accent-weak); border: 1px solid var(--accent-mark);
+  border-radius: var(--r-md); padding: var(--e3);
+  display: flex; align-items: center; gap: var(--e3); flex-wrap: wrap;
+}
+.ajuda-ativa .quanto {
+  font-family: var(--mono); font-weight: 600; font-size: 16px;
+  color: var(--accent-text); font-variant-numeric: tabular-nums;
+}
+.ajuda-ativa .desde { font-size: 13px; color: var(--ink-soft); flex: 1 1 auto; min-width: 0; }
+.ajuda-ativa .btn { flex: none; padding: 9px var(--e4); font-size: 15px; min-height: 42px; }
+.ajuda-passada {
+  font-size: 13px; color: var(--ink-soft);
+  border-left: 3px solid var(--line-forte); padding: 4px var(--e3);
+}

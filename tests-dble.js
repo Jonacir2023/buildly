@@ -13,7 +13,7 @@
     tarefas: [], epis: [], epi_entregas: [], nfs: [], nf_itens: [],
     contratos_comerciais: [], contrato_itens: [], medicoes: [], medicao_itens: [],
     reunioes: [], reuniao_participantes: [], reuniao_topicos: [], reuniao_pauta: [],
-    documentos: [], mural: [], avisos: [], solicitacoes: [],
+    documentos: [], mural: [], avisos: [], solicitacoes: [], ajuda_custo: [],
     rdos: [], rdo_presencas: [], rdo_atividades: [], rdo_fotos: [], rdo_equipamentos: [],
     perfis: [{id:'u1',nome:'Jonacir Cazelli',papel:'gestor'}]
   };
@@ -29,13 +29,16 @@
   function efetivo() {
     return B.contratos.filter(c => !c.desligamento).map(c => {
       const f = funcao(c.funcao_id);
+      const aj = B.ajuda_custo.find(a => a.contrato_id === c.id && !a.fim);
       return { contrato_id:c.id, nome:pessoa(c.pessoa_id).nome, matricula:c.matricula,
         cracha:c.cracha, funcao:f.nome, obra:'TESTE', admissao:c.admissao, alojado:c.alojado,
         fim_experiencia_1:mais(c.admissao,45), fim_experiencia_2:mais(c.admissao,90),
-        recebe_ajuda_custo:false, ajuda_custo_valor:null,
+        recebe_ajuda_custo: !!aj,
+        ajuda_custo_valor: aj ? aj.valor_mensal : null,
         periodicidade_viagem_dias:f.periodicidade_viagem_dias,
-        proxima_viagem: c.alojado ? mais(c.data_ultima_viagem||c.admissao, f.periodicidade_viagem_dias) : null,
-        regime: c.alojado ? 'viagem_familiar' : 'local' };
+        proxima_viagem: aj ? null
+          : (c.alojado ? mais(c.data_ultima_viagem||c.admissao, f.periodicidade_viagem_dias) : null),
+        regime: aj ? 'ajuda_moradia' : (c.alojado ? 'viagem_familiar' : 'local') };
     });
   }
   function resumoRDO() {
@@ -368,6 +371,12 @@
       return 'duplicate key value violates unique constraint "uq_presenca"';
     if (nome==='rdo_equipamentos' && outros.some(x=>x.rdo_id===l.rdo_id && x.equipamento_id===l.equipamento_id))
       return 'duplicate key value violates unique constraint "uq_rdo_equip"';
+    if (nome==='ajuda_custo') {
+      if (!l.fim && outros.some(a => a.contrato_id === l.contrato_id && !a.fim))
+        return 'duplicate key value violates unique constraint "uq_ajuda_ativa"';
+      if (l.fim && l.fim < l.inicio)
+        return 'new row violates check constraint "chk_periodo"';
+    }
     if (nome==='ocorrencias') {
       if (l.contrato_id == null && l.rdo_id == null)
         return 'new row violates check constraint "chk_ocorrencia_vinculo"';

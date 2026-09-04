@@ -106,5 +106,9 @@ Duas frentes, sempre, antes de qualquer `push`:
 2. **Navegador**, com o dublê do Supabase em memória. O dublê imita os
    índices únicos e as checagens; ele não substitui a frente 1.
 
+Texto de botão e de rótulo é posto em versalete pelo CSS
+(`text-transform: uppercase`). Teste que compara esse texto precisa
+comparar sem diferenciar caixa — já quebrou verificações três vezes.
+
 Erro que o banco devolve chega em inglês e falando de índice. Traduzir para
 português com o que fazer a seguir é parte da entrega, não enfeite.

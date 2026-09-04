@@ -287,6 +287,23 @@ Um aviso útil: "sem condição informada" em cinza é diário lançado sem
 preencher a condição de trabalho. Esse dia não entra na conta de dia
 perdido — se a chuva parou a obra, tem que estar marcado no RDO.
 
+Ajuda de custo
+--------------
+Dentro da ficha da pessoa, em Efetivo. Só aparece para quem já tem
+contrato — pessoa nova não tem a que prender a ajuda.
+
+"Conceder" registra desde quando, quanto por mês, o endereço da locação
+e quem autorizou. "Encerrar" pede o último dia e manda para o histórico
+— não apaga.
+
+ATENÇÃO A ESTA CONSEQUÊNCIA: quem recebe ajuda de custo SAI DO GIRO DE
+VIAGEM. O regime dele passa a ser "Ajuda de custo" no lugar de
+"Alojado", e o alerta de viagem deixa de aparecer. Ao encerrar, ele
+volta ao giro. A tela avisa disso nas duas horas.
+
+Uma ajuda aberta por pessoa. Para trocar o valor, encerre a atual e
+conceda outra — assim o histórico guarda quanto era e desde quando.
+
 Alertas
 -------
 Experiência de 45 e 90 dias e giro de viagem de quem está no efetivo.

@@ -755,6 +755,8 @@ function filtrarEfetivo() {
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.nome;
     const sub = document.createElement('span'); sub.className = 'sub';
     sub.textContent = [p.funcao, p.matricula ? 'mat. ' + p.matricula : null,
+                       p.regime === 'ajuda_moradia' && p.ajuda_custo_valor != null
+                         ? reais(p.ajuda_custo_valor) + '/mês' : null,
                        'desde ' + dataBR(p.admissao)].filter(Boolean).join(' · ');
     miolo.append(nm, sub);
 
@@ -847,6 +849,9 @@ function atualizarDicaAlojado() {
     : 'Marcando, entra no controle de viagem conforme a função.';
 }
 $('p-funcao').addEventListener('change', () => { atualizarDicaAlojado(); avisarExperiencia(); });
+$('p-alojado').addEventListener('change', () => {
+  if (!$('folha-ajuda').hidden) avisoDaAjuda();
+});
 
 // Mostra as duas datas de experiência antes de salvar, porque são
 // calculadas pelo banco e o usuário não as digita em lugar nenhum.
@@ -898,6 +903,7 @@ $('p-cpf').addEventListener('blur', async () => {
 async function abrirFolhaPessoa() {
   await carregarFuncoes();
   _editando = null;
+  $('bloco-ajuda').hidden = true;   // sem contrato ainda, não há a que prender ajuda
   $('form-pessoa').reset();
   $('titulo-pessoa').textContent = 'Nova pessoa';
   $('btn-desligar').hidden = true;
@@ -943,6 +949,7 @@ async function abrirPessoa(contratoId) {
   $('erro-pessoa').hidden = true;
   $('dica-cpf').hidden = true;
   $('folha-pessoa').hidden = false;
+  await carregarAjuda();
 }
 
 function fecharFolhaPessoa() { $('folha-pessoa').hidden = true; }
@@ -1773,7 +1780,7 @@ document.addEventListener('keydown', (ev) => {
   ['folha-atividade','folha-foto','folha-equip','folha-novo-rdo','folha-equipamento','folha-ocorrencia','folha-tarefa','folha-entrega','folha-epi',
    'folha-nova-nf','folha-item','folha-contrato','folha-ct-item',
    'folha-nova-medicao','folha-reuniao','folha-participante','folha-topico',
-   'folha-documento','folha-recado','folha-busca','folha-avisos','folha-pedido']
+   'folha-documento','folha-recado','folha-busca','folha-avisos','folha-pedido','folha-ajuda','folha-encerra-ajuda']
     .forEach(id => { $(id).hidden = true; });
 });
 
@@ -5508,3 +5515,184 @@ function ligarArrasto(cartao, t) {
     document.addEventListener('pointercancel', soltar);
   });
 }
+
+/* ============================================================
+   AJUDA DE CUSTO
+   Faltava: o app mostrava e contava o regime "ajuda de custo",
+   mas nunca conseguia criar — só lia pela vw_efetivo. O quadro
+   ficaria em zero para sempre.
+
+   Duas regras do banco mandam aqui: uq_ajuda_ativa permite UMA
+   ajuda aberta por contrato, e chk_periodo exige fim >= início.
+   ============================================================ */
+
+let _ajudas = [];
+
+async function carregarAjuda() {
+  const bloco = $('bloco-ajuda');
+  if (!_editando) { bloco.hidden = true; return; }   // pessoa nova não tem contrato ainda
+  bloco.hidden = false;
+
+  const { data, error } = await db.from('ajuda_custo')
+    .select('id, inicio, fim, valor_mensal, endereco_locacao, observacao, autorizado_por, data_autorizacao')
+    .eq('contrato_id', _editando.contrato_id).order('inicio', { ascending: false });
+
+  _ajudas = error ? [] : (data || []);
+  const ativa = _ajudas.find(a => !a.fim);
+
+  const area = $('ajuda-atual');
+  area.innerHTML = '';
+
+  if (ativa) {
+    const cx = document.createElement('div');
+    cx.className = 'ajuda-ativa';
+
+    const quanto = document.createElement('span');
+    quanto.className = 'quanto';
+    quanto.textContent = ativa.valor_mensal != null ? reais(ativa.valor_mensal) : 'sem valor';
+
+    const desde = document.createElement('span');
+    desde.className = 'desde';
+    desde.textContent = 'desde ' + dataBR(ativa.inicio) +
+      (ativa.endereco_locacao ? ' · ' + ativa.endereco_locacao : '');
+
+    const bt = document.createElement('button');
+    bt.type = 'button'; bt.className = 'btn btn-perigo';
+    bt.textContent = 'Encerrar';
+    bt.addEventListener('click', () => abrirEncerraAjuda(ativa));
+
+    cx.append(quanto, desde, bt);
+    area.appendChild(cx);
+  } else {
+    const bt = document.createElement('button');
+    bt.type = 'button'; bt.className = 'btn btn-secundario';
+    bt.style.width = '100%';
+    bt.textContent = '+ Conceder ajuda de custo';
+    bt.addEventListener('click', abrirFolhaAjuda);
+    area.appendChild(bt);
+  }
+
+  const hist = $('ajuda-historico');
+  hist.innerHTML = '';
+  _ajudas.filter(a => a.fim).forEach(a => {
+    const p = document.createElement('p');
+    p.className = 'ajuda-passada';
+    p.textContent = dataBR(a.inicio) + ' a ' + dataBR(a.fim) +
+      (a.valor_mensal != null ? ' · ' + reais(a.valor_mensal) : '') +
+      (a.autorizado_por ? ' · autorizado por ' + a.autorizado_por : '');
+    hist.appendChild(p);
+  });
+}
+
+// Consequência que não está à vista: na vw_efetivo, ajuda de custo tem
+// prioridade sobre alojamento, e quem recebe ajuda sai do giro de viagem.
+// Avisar antes é mais barato do que explicar depois.
+function avisoDaAjuda() {
+  const av = $('aviso-ajuda');
+  if ($('p-alojado').checked) {
+    av.textContent = 'Esta pessoa está marcada como alojada. Com ajuda de custo, ' +
+      'ela sai do giro de viagem — o alerta de viagem deixa de aparecer.';
+    av.hidden = false;
+  } else { av.hidden = true; }
+}
+
+function abrirFolhaAjuda() {
+  if (!_editando) return;
+  $('titulo-ajuda').textContent = 'Conceder ajuda de custo';
+  $('explica-ajuda').textContent =
+    'A empresa passa a pagar a moradia. Fica registrado desde quando, ' +
+    'quanto e quem autorizou.';
+  $('aj-inicio').value = hojeISO();
+  $('aj-valor').value = '';
+  $('aj-endereco').value = '';
+  $('aj-autorizador').value = _perfilNome || '';
+  $('aj-data-aut').value = hojeISO();
+  $('aj-observacao').value = '';
+  $('erro-ajuda').hidden = true;
+  avisoDaAjuda();
+  $('folha-ajuda').hidden = false;
+  $('aj-inicio').focus();
+}
+
+$('btn-fechar-ajuda').addEventListener('click', () => { $('folha-ajuda').hidden = true; });
+$('folha-ajuda').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-ajuda')) $('folha-ajuda').hidden = true;
+});
+
+$('form-ajuda').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-ajuda'); erro.hidden = true;
+  if (!_editando) return;
+
+  const inicio = $('aj-inicio').value;
+  if (!inicio) return falhar(erro, 'Informe desde quando vale a ajuda.');
+
+  const valor = $('aj-valor').value === '' ? null : Number($('aj-valor').value);
+  if (valor != null && valor < 0) return falhar(erro, 'O valor não pode ser negativo.');
+
+  const { error } = await db.from('ajuda_custo').insert({
+    contrato_id: _editando.contrato_id,
+    inicio,
+    valor_mensal: valor,
+    endereco_locacao: $('aj-endereco').value.trim() || null,
+    autorizado_por: $('aj-autorizador').value.trim() || null,
+    data_autorizacao: $('aj-data-aut').value || null,
+    observacao: $('aj-observacao').value.trim() || null
+  });
+
+  if (error) {
+    return falhar(erro, /uq_ajuda_ativa/.test(error.message)
+      ? 'Esta pessoa já tem uma ajuda de custo em aberto. Encerre a atual antes de conceder outra.'
+      : 'Não consegui conceder: ' + error.message);
+  }
+
+  $('folha-ajuda').hidden = true;
+  await carregarAjuda();
+  await carregarEfetivo();
+});
+
+/* ---------- encerrar ---------- */
+let _ajudaEncerrando = null;
+
+function abrirEncerraAjuda(a) {
+  _ajudaEncerrando = a;
+  $('explica-encerra').textContent =
+    `A ajuda vale desde ${dataBR(a.inicio)}. Encerrar não apaga: ela vai para o ` +
+    'histórico, e a pessoa volta ao regime que tiver — alojado ou local.';
+  $('aj-fim').value = hojeISO();
+  $('aj-fim').min = a.inicio;
+  $('erro-encerra').hidden = true;
+  const av = $('aviso-encerra');
+  if ($('p-alojado').checked) {
+    av.textContent = 'Como esta pessoa está alojada, ao encerrar ela volta ao giro de viagem.';
+    av.hidden = false;
+  } else { av.hidden = true; }
+  $('folha-encerra-ajuda').hidden = false;
+}
+
+$('btn-fechar-encerra').addEventListener('click', () => { $('folha-encerra-ajuda').hidden = true; });
+$('folha-encerra-ajuda').addEventListener('click', (ev) => {
+  if (ev.target === $('folha-encerra-ajuda')) $('folha-encerra-ajuda').hidden = true;
+});
+
+$('form-encerra-ajuda').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const erro = $('erro-encerra'); erro.hidden = true;
+  if (!_ajudaEncerrando) return;
+
+  const fim = $('aj-fim').value;
+  if (!fim) return falhar(erro, 'Informe o último dia da ajuda.');
+  if (fim < _ajudaEncerrando.inicio)
+    return falhar(erro, `O fim não pode ser antes do início (${dataBR(_ajudaEncerrando.inicio)}).`);
+
+  const { error } = await db.from('ajuda_custo').update({ fim }).eq('id', _ajudaEncerrando.id);
+  if (error) {
+    return falhar(erro, /chk_periodo/.test(error.message)
+      ? 'O fim não pode ser antes do início.'
+      : 'Não consegui encerrar: ' + error.message);
+  }
+
+  $('folha-encerra-ajuda').hidden = true;
+  await carregarAjuda();
+  await carregarEfetivo();
+});

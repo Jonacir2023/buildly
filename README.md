@@ -149,6 +149,20 @@ rola sozinho quando o ponteiro chega perto da borda.
 `concluido_em` continua vindo do gatilho: mover para Concluída no quadro
 não escreve a data pelo app.
 
+## Ajuda de custo
+
+Estava faltando: o app lia o regime `ajuda_moradia` pela `vw_efetivo`,
+mostrava e contava — mas nunca escrevia em `ajuda_custo`. O quadro
+ficaria em zero para sempre.
+
+`uq_ajuda_ativa` (parcial, `where fim is null`) permite **uma** ajuda
+aberta por contrato; `chk_periodo` exige `fim >= inicio`. Ambos viram
+mensagem em português.
+
+Na `vw_efetivo`, ajuda tem prioridade sobre alojamento e **zera
+`proxima_viagem`**. A tela avisa disso ao conceder e ao encerrar — é
+consequência que não está à vista.
+
 ## Robô de avisos
 
 `gerar_avisos()` roda por `pg_cron` às 09:00 UTC (06:00 em São Paulo) e
@@ -158,6 +172,10 @@ existir mesmo que ninguém abra o app.
 `uq_aviso (obra_id, tipo, referencia, data_ref)` com `on conflict do
 nothing`: o robô roda todo dia, e sem essa chave o mesmo prazo viraria
 aviso novo a cada manhã.
+
+O aviso de "sem RDO" só olha dias **iguais ou posteriores ao primeiro
+diário da obra**. Sem isso, obra que lança o primeiro RDO hoje recebe
+uma semana de alarme falso — aconteceu de verdade na primeira rodada.
 
 `limpar_avisos_antigos()` roda aos domingos e apaga só o que foi lido há
 mais de 60 dias. Não lido nunca é apagado.
