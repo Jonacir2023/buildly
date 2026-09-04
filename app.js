@@ -2046,7 +2046,24 @@ async function abrirEscolherAtividades() {
 
   if (error) { area.innerHTML = vazioHTML('Não consegui ler o cadastro.', error.message); return; }
   _escolhaAtiv = data || [];
+  estadoInicialDaEscolha();
   renderEscolhaAtiv();
+}
+
+/* O que está marcado e o que foi digitado em cada atividade. Começa do
+   que já está no diário; o Salvar compara com isso e grava só a diferença. */
+let _escolhaEstado = new Map();
+
+function estadoInicialDaEscolha() {
+  _escolhaEstado = new Map();
+  _escolhaAtiv.forEach(a => {
+    const noDia = _atividades.find(x => x.atividade_id === a.id);
+    _escolhaEstado.set(a.id, {
+      marcada: !!noDia,
+      quantidade: noDia && noDia.quantidade != null ? String(noDia.quantidade) : '',
+      local: noDia ? (noDia.local || '') : (a.local || '')
+    });
+  });
 }
 
 function renderEscolhaAtiv() {
@@ -2064,8 +2081,10 @@ function renderEscolhaAtiv() {
       irPara('atividades');
     });
     area.appendChild(ir);
+    $('btn-salvar-escolha-ativ').hidden = true;
     return;
   }
+  $('btn-salvar-escolha-ativ').hidden = false;
 
   const termo = ($('busca-escolher-ativ').value || '').trim().toLowerCase();
   const lista = _escolhaAtiv.filter(a => !termo ||
@@ -2078,18 +2097,20 @@ function renderEscolhaAtiv() {
 
   const pilha = document.createElement('div'); pilha.className = 'pilha';
   lista.forEach(a => {
+    const est = _escolhaEstado.get(a.id);
     const noDia = _atividades.find(x => x.atividade_id === a.id);
+
+    const bloco = document.createElement('div'); bloco.className = 'ativ-bloco';
+    bloco.dataset.marcada = est.marcada ? 'sim' : 'nao';
+
     const rot = document.createElement('label');
-    rot.className = noDia ? 'marca-caixa ativ-marcada' : 'marca-caixa';
-
+    rot.className = est.marcada ? 'marca-caixa ativ-marcada' : 'marca-caixa';
     const cx = document.createElement('input');
-    cx.type = 'checkbox'; cx.checked = !!noDia;
-
+    cx.type = 'checkbox'; cx.checked = est.marcada;
     const txt = document.createElement('span');
     const nome = document.createElement('b'); nome.textContent = a.descricao;
     txt.appendChild(nome);
     const partes = [];
-    if (a.local)   partes.push(a.local);
     if (a.unidade) partes.push('medida em ' + a.unidade);
     if (noDia && noDia.quantidade != null)
       partes.push('hoje: ' + numBR(noDia.quantidade) + (a.unidade ? ' ' + a.unidade : ''));
@@ -2097,44 +2118,123 @@ function renderEscolhaAtiv() {
       const s = document.createElement('small'); s.textContent = partes.join(' · ');
       txt.appendChild(s);
     }
-
-    cx.addEventListener('change', () => marcarAtividadeDoDia(a, cx));
     rot.append(cx, txt);
-    pilha.appendChild(rot);
+
+    // Campos que abrem com a marcação, como no Buildly 3: quantidade e local.
+    const campos = document.createElement('div'); campos.className = 'ativ-campos';
+    const cq = document.createElement('label'); cq.className = 'campo';
+    const rq = document.createElement('span');
+    rq.textContent = 'Quantidade' + (a.unidade ? ' (' + a.unidade + ')' : '');
+    const iq = document.createElement('input');
+    iq.type = 'number'; iq.inputMode = 'decimal'; iq.min = '0'; iq.step = 'any';
+    iq.placeholder = 'Ex: 10'; iq.value = est.quantidade;
+    iq.addEventListener('input', () => { est.quantidade = iq.value; });
+    cq.append(rq, iq);
+    const cl = document.createElement('label'); cl.className = 'campo';
+    const rl = document.createElement('span'); rl.textContent = 'Local de execução';
+    const il = document.createElement('input');
+    il.type = 'text'; il.placeholder = a.local || 'Ex: Bloco A'; il.value = est.local;
+    il.addEventListener('input', () => { est.local = il.value; });
+    cl.append(rl, il);
+    campos.append(cq, cl);
+
+    cx.addEventListener('change', () => {
+      est.marcada = cx.checked;
+      bloco.dataset.marcada = cx.checked ? 'sim' : 'nao';
+      rot.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      // Desmarcar o que já tem lançamento não some calado: avisa que o
+      // Salvar vai apagar, e quem decide é quem está lançando.
+      const velho = bloco.querySelector('.aviso-apaga');
+      if (velho) velho.remove();
+      if (!cx.checked && noDia && (noDia.quantidade != null || noDia.percentual_executado != null)) {
+        const av = document.createElement('p'); av.className = 'aviso-apaga';
+        av.textContent = 'Já tem ' + (noDia.quantidade != null
+          ? numBR(noDia.quantidade) + (a.unidade ? ' ' + a.unidade : '') : 'percentual') +
+          ' lançado hoje. Salvar assim apaga esse lançamento.';
+        bloco.appendChild(av);
+        bloco.dataset.marcada = 'nao';
+      }
+      if (cx.checked) iq.focus();
+    });
+
+    bloco.append(rot, campos);
+    pilha.appendChild(bloco);
   });
   area.appendChild(pilha);
 }
 
-async function marcarAtividadeDoDia(a, caixa) {
+function marcarTodasAtiv(marcar) {
+  _escolhaAtiv.forEach(a => {
+    const est = _escolhaEstado.get(a.id);
+    const noDia = _atividades.find(x => x.atividade_id === a.id);
+    // Desmarcar em bloco não derruba o que já tem número lançado.
+    if (!marcar && noDia && (noDia.quantidade != null || noDia.percentual_executado != null)) return;
+    est.marcada = marcar;
+  });
+  renderEscolhaAtiv();
+}
+
+/* Salvar compara o que está na tela com o que está no diário e grava só
+   a diferença: entra o que foi marcado, atualiza o que mudou, sai o que
+   foi desmarcado. Uma gravação, várias atividades — é isso que a obra
+   faz no fim do dia. */
+async function salvarEscolhaAtiv() {
   const erro = $('erro-escolher-ativ'); erro.hidden = true;
-  const noDia = _atividades.find(x => x.atividade_id === a.id);
+  const b = $('btn-salvar-escolha-ativ');
+  b.disabled = true;
 
-  if (caixa.checked && !noDia) {
-    // A descrição, o local e a unidade viajam para o diário. Ele fica
-    // completo sozinho, sem depender do cadastro para ser lido depois.
-    const { error } = await db.from('rdo_atividades').insert({
-      rdo_id: _rdo.id, atividade_id: a.id,
-      descricao: a.descricao, local: a.local || null, unidade: a.unidade || null
-    });
-    if (error) { caixa.checked = false; return falhar(erro, 'Não consegui marcar: ' + error.message); }
-
-  } else if (!caixa.checked && noDia) {
-    // Desmarcar aqui apagaria o que já foi digitado. O app não perde
-    // informação por um toque: quem quer apagar de verdade abre a linha
-    // no diário, onde o botão de apagar diz o que faz.
-    if (noDia.quantidade != null || noDia.percentual_executado != null) {
-      caixa.checked = true;
-      return falhar(erro, '"' + a.descricao + '" já tem lançamento de hoje. ' +
-        'Para tirar, toque nela na lista do diário e use Apagar.');
+  const entram = [], mudam = [], saem = [];
+  _escolhaAtiv.forEach(a => {
+    const est = _escolhaEstado.get(a.id);
+    const noDia = _atividades.find(x => x.atividade_id === a.id);
+    const qtd = est.quantidade === '' ? null : Number(est.quantidade);
+    if (qtd != null && (Number.isNaN(qtd) || qtd < 0)) {
+      erro.textContent = 'Quantidade inválida em "' + a.descricao + '".'; erro.hidden = false;
+      return;
     }
-    const { error } = await db.from('rdo_atividades').delete().eq('id', noDia.id);
-    if (error) { caixa.checked = true; return falhar(erro, 'Não consegui tirar: ' + error.message); }
+    const local = est.local.trim() || null;
+    if (est.marcada && !noDia) {
+      entram.push({ rdo_id: _rdo.id, atividade_id: a.id, descricao: a.descricao,
+                    unidade: a.unidade || null, quantidade: qtd, local });
+    } else if (est.marcada && noDia) {
+      const qAntes = noDia.quantidade == null ? null : Number(noDia.quantidade);
+      if (qAntes !== qtd || (noDia.local || null) !== local)
+        mudam.push({ id: noDia.id, quantidade: qtd, local });
+    } else if (!est.marcada && noDia) {
+      saem.push(noDia.id);
+    }
+  });
+  if (!erro.hidden) { b.disabled = false; return; }
+
+  let falha = null;
+  if (entram.length) {
+    const r = await db.from('rdo_atividades').insert(entram);
+    if (r.error) falha = r.error;
+  }
+  for (const m of mudam) {
+    if (falha) break;
+    const r = await db.from('rdo_atividades').update({ quantidade: m.quantidade, local: m.local }).eq('id', m.id);
+    if (r.error) falha = r.error;
+  }
+  for (const id of saem) {
+    if (falha) break;
+    const r = await db.from('rdo_atividades').delete().eq('id', id);
+    if (r.error) falha = r.error;
   }
 
+  b.disabled = false;
   await carregarAtividades();
-  renderEscolhaAtiv();
+  if (falha) {
+    estadoInicialDaEscolha(); renderEscolhaAtiv();
+    return falhar(erro, 'Gravei parte e parei: ' + falha.message + ' Confira a lista do diário.');
+  }
+  $('folha-escolher-ativ').hidden = true;
   avisarGravado();
 }
+
+$('btn-salvar-escolha-ativ').addEventListener('click', salvarEscolhaAtiv);
+$('btn-marcar-todas-ativ').addEventListener('click', () => marcarTodasAtiv(true));
+$('btn-desmarcar-ativ').addEventListener('click', () => marcarTodasAtiv(false));
 
 $('btn-escolher-atividade').addEventListener('click', abrirEscolherAtividades);
 $('busca-escolher-ativ').addEventListener('input', renderEscolhaAtiv);

@@ -135,11 +135,14 @@ O que entra no diário:
 O resumo no alto da chamada mostra "presentes de total · homem-hora",
 e é a mesma conta que aparece na lista de diários.
 
-AS ATIVIDADES TÊM DUAS PORTAS. "Da lista" abre a lista cadastrada em
-Cadastro > Atividades: marque o que a obra executou hoje e elas entram no
-diário de uma vez. Depois é só tocar em cada uma para lançar a
-quantidade — a unidade já vem do cadastro, e o número soma no acumulado
-da semana, do mês e do ano.
+AS ATIVIDADES TÊM DUAS PORTAS. "Escolher da lista" abre a lista
+cadastrada em Cadastro > Atividades, do jeito que o Buildly 3 fazia: marque
+o que a obra executou hoje e cada marcada abre, ali mesmo, QUANTIDADE e
+LOCAL DE EXECUÇÃO — o local já vem preenchido com o padrão do cadastro, e
+o rótulo da quantidade mostra a unidade. "Marcar todas" e "Desmarcar" para
+o dia inteiro de uma vez. Um único "Salvar atividades do dia" grava tudo:
+entra o que foi marcado, atualiza o que mudou, sai o que foi desmarcado.
+A quantidade soma no acumulado da semana, do mês e do ano.
 
 "+ Avulsa" é para o que não estava previsto: escreve-se na hora, o
 diário aceita, e a linha fica marcada como avulsa. Ela não soma em
@@ -151,10 +154,10 @@ acumulado se partiria. O que o diário guarda é uma CÓPIA da descrição,
 do local e da unidade: mexer no cadastro amanhã não reescreve o diário
 que a obra assinou ontem.
 
-Desmarcar uma atividade que já tem lançamento do dia NÃO apaga nada: a
-marca volta sozinha e a tela explica que, para tirar de verdade, é preciso
-tocar nela na lista do diário e usar "Apagar". Um toque errado na lista de
-escolha não pode levar embora o que já foi digitado.
+Desmarcar uma atividade que já tem quantidade lançada mostra, em
+vermelho, "salvar assim apaga esse lançamento" — e só apaga se você
+salvar. "Desmarcar" em bloco nunca derruba as que têm número. Um toque
+errado não leva embora o que já foi digitado; só uma decisão sua leva.
 
 O EQUIPAMENTO FUNCIONA IGUAL. "Da lista" abre a frota cadastrada: marque
 as máquinas que trabalharam hoje e elas entram no diário com zero hora.

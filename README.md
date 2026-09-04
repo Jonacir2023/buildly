@@ -155,10 +155,14 @@ que o cadastro mudar; o vínculo é o que faz o acumulado somar. Por isso a
 descrição de uma linha vinda do catálogo é somente leitura dentro do
 diário.
 
-Desmarcar na folha de escolha uma atividade que já tem `quantidade` ou
-`percentual_executado` é recusado: a marca volta e a tela manda apagar
-pela linha do diário. O app não tem `confirm()` em lugar nenhum — perder
-o que já foi digitado por um toque errado não é opção que se ofereça.
+A folha de escolha segue o padrão do Buildly 3: caixa marcada abre
+`quantidade` e `local` embaixo, e um único **Salvar atividades do dia**
+compara o estado da tela (`_escolhaEstado`) com `_atividades` e grava só
+a diferença — insert do que entrou, update do que mudou, delete do que
+saiu. Desmarcar uma linha com lançamento mostra o aviso "salvar assim
+apaga" em vez de recusar; "Desmarcar" em bloco pula as que têm número. O
+app continua sem `confirm()`: o aviso fica na tela, e a decisão é o
+Salvar.
 
 Os equipamentos do dia seguem o mesmo desenho: "Da lista" marca as
 máquinas da frota e cria a linha com zero hora; "+ Um a um" abre a folha

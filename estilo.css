@@ -1138,6 +1138,22 @@ textarea {
    com trinta atividades cadastradas o botão de fechar sai da tela */
 .folha-alta .rolagem { flex: 1 1 auto; overflow-y: auto; }
 .marca-caixa.ativ-marcada { border-color: var(--accent-mark); background: var(--accent-weak); }
+/* atividade marcada abre os campos embaixo, dentro da mesma caixa */
+.ativ-bloco { display: flex; flex-direction: column; gap: 0; }
+.ativ-bloco .marca-caixa { border-radius: var(--r-md); }
+.ativ-bloco[data-marcada="sim"] .marca-caixa { border-radius: var(--r-md) var(--r-md) 0 0; border-bottom: none; }
+.ativ-campos {
+  display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--e3);
+  background: var(--accent-weak); border: 1px solid var(--accent-mark); border-top: none;
+  border-radius: 0 0 var(--r-md) var(--r-md); padding: var(--e3) var(--e4) var(--e4);
+}
+.ativ-campos .campo { margin: 0; }
+.ativ-campos .campo input { min-height: 42px; font-size: 15px; }
+.ativ-campos .aviso-apaga {
+  grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--danger);
+}
+.ativ-bloco[data-marcada="nao"] .ativ-campos { display: none; }
+
 .ativ-usada {
   font-size: 13px; color: var(--ink-soft); font-family: var(--sans);
   border: none; border-left: 3px solid var(--line-forte); background: none;

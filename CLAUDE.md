@@ -87,6 +87,12 @@ que a obra assinou ontem; o vínculo serve só para somar o acumulado
 Atividade sai de uso por `ativo = false`, nunca por `delete`: os diários
 antigos apontam para ela.
 
+A escolha das atividades do dia é **uma tela, um Salvar**: caixa marcada
+abre quantidade e local embaixo (padrão do Buildly 3, pedido do dono), e
+o Salvar grava só a diferença entre a tela e o diário. Não voltar ao
+desenho de "marca aqui, digita depois em outro lugar" — foi o que ele
+rejeitou.
+
 ## EPI é do cadastro, e conhece a função
 
 `epi_funcao` liga cada EPI às funções que o exigem. Na admissão, a ficha

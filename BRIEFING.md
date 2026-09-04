@@ -260,16 +260,19 @@ o acumulado em dois, e não há conserto depois — só quem lançou sabe que
 "Concretagem" e "concretagem laje" eram a mesma coisa, e daqui a um mês
 nem ele.
 
-**Marcar primeiro, medir depois.** Atividade e equipamento entram no dia
-por caixinha, e a quantidade ou a hora entra num segundo toque. É a ordem
-do canteiro: de manhã se sabe o que vai ser feito e quais máquinas saíram;
-quanto rendeu, só no fim do dia.
+**Atividades do dia: marcar abre os campos, um Salvar grava tudo.** É o
+padrão do Buildly 3, que o dono pediu de volta depois de ver a versão em
+dois toques: caixa marcada abre quantidade e local ali mesmo, "Marcar
+todas" para o dia inteiro, e um único Salvar grava a diferença. Várias
+atividades acontecem no mesmo dia; a tela tem que aceitar todas de uma
+vez. (Equipamento ainda está em dois toques — marcar, depois horas.)
 
-**Desmarcar não apaga o que já foi digitado.** Tirar a marca de uma
-atividade com quantidade, ou de uma máquina com hora, é recusado com o
-caminho escrito: abrir a linha no diário e usar Apagar. O app **não tem
-`confirm()` em lugar nenhum** — caixa do navegador em cima de dedo de
-luva não é confirmação, é sorteio.
+**Desmarcar avisa antes de apagar, e só apaga no Salvar.** Tirar a marca
+de uma atividade com quantidade mostra em vermelho "salvar assim apaga
+esse lançamento"; "Desmarcar" em bloco pula as que têm número. O app
+**não tem `confirm()` em lugar nenhum** — caixa do navegador em cima de
+dedo de luva não é confirmação, é sorteio. O aviso fica na tela e a
+decisão é o botão.
 
 **O diário guarda cópia, não referência.** Escolhendo do cadastro, a
 descrição, o local e a unidade são copiados para `rdo_atividades`. Mexer
@@ -326,7 +329,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **649 verificações de tela** em 19 suítes,
+Duas frentes, sempre. Hoje são **659 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
