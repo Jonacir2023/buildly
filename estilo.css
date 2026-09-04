@@ -1156,6 +1156,43 @@ textarea {
 .epi-linha[data-estado="vencida"] .quando { color: var(--danger); }
 .epi-linha[data-estado="sem-assinatura"] { border-left-color: var(--warn); }
 
+/* ---------- custos: previsto × realizado ---------- */
+.pxr { padding: var(--e3) 0; }
+.pxr + .pxr { border-top: 1px solid var(--line); }
+.pxr-topo { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3); }
+.pxr-topo b { font-weight: 500; overflow-wrap: anywhere; }
+.pxr-topo small { color: var(--ink-soft); font-size: 13px; display: block; }
+.pxr-pct {
+  font-family: var(--mono); font-weight: 600; font-size: 15px; flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.pxr-trilho {
+  height: 10px; border-radius: 5px; background: var(--surface-2);
+  border: 1px solid var(--line); overflow: hidden; margin-top: 6px;
+}
+.pxr-cheio { height: 100%; background: var(--accent-mark); }
+.pxr[data-estado="estourou"] .pxr-cheio { background: var(--danger); }
+.pxr[data-estado="estourou"] .pxr-pct  { color: var(--danger); }
+.pxr-valores {
+  display: flex; justify-content: space-between; gap: var(--e3);
+  font-size: 13px; color: var(--ink-soft); margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.pxr-tipo {
+  font-family: var(--cond); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-text); margin-right: 6px;
+}
+/* a curva é um SVG desenhado à mão: sem biblioteca, como o resto */
+.curva { margin-top: var(--e3); }
+.curva svg { width: 100%; height: auto; display: block; }
+.curva .eixo   { stroke: var(--line-forte); stroke-width: 1; }
+.curva .meta   { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 4 4; }
+.curva .linha  { stroke: var(--accent-text); stroke-width: 2.5; fill: none;
+                 stroke-linejoin: round; stroke-linecap: round; }
+.curva .ponto  { fill: var(--accent-text); }
+.curva text    { font-family: var(--mono); font-size: 10px; fill: var(--ink-soft); }
+.curva-legenda { font-size: 13px; color: var(--ink-soft); margin: 4px 0 0; }
+
 /* ---------- relatórios ---------- */
 #tela-relatorios { display: flex; flex-direction: column; gap: var(--e4); }
 #tela-relatorios .cartao .btn { width: 100%; }

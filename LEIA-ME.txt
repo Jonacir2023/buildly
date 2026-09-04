@@ -316,6 +316,23 @@ O nome do arquivo já vem sugerido: RDO 12 - TESTE - 2026-09-04.
 
 Relatórios
 ----------
+CUSTOS · PREVISTO × REALIZADO. O terceiro cartão da aba junta o dinheiro
+da obra: quanto foi medido do cliente no período (a receber), quanto foi
+medido dos empreiteiros (a pagar), quanto entrou de nota fiscal, e quanto
+ainda falta medir do contrato com o cliente. Embaixo, cada contrato
+comercial com a sua barra — contratado × medido, e o percentual. Barra que
+passa de 100% fica vermelha: mediu mais do que contratou.
+
+A curva mostra o medido acumulado do cliente, mês a mês, nos últimos doze
+meses, contra o total do contrato (linha tracejada). É a "curva S" do
+possível hoje: não há cronograma físico-financeiro cadastrado, então não
+existe previsto por mês para comparar — a pergunta que ela responde é
+"quanto já andou". O PDF sai no mesmo padrão dos outros, assinado pelo
+engenheiro e pela diretoria.
+
+Nada disso se digita. Sai do que já foi lançado em Medições e em Notas
+fiscais; medição em aberto entra pelo que já tem lançado e é marcada.
+
 Aba própria, no fim dos módulos. Três coisas na tela:
 
 1. PERÍODO: Semana, Mês ou Ano. As setas ‹ › voltam um período — é

@@ -201,7 +201,7 @@ Dez abas no trilho, todas funcionando. Nenhuma "em construção".
 | **Notas fiscais** | cabeçalho e itens, total pelo gatilho | `nfs`, `nf_itens` |
 | **Medições** | contrato → itens → boletim mensal acumulado, com PDF em paisagem | `contratos_comerciais`, `contrato_itens`, `medicoes`, `medicao_itens` |
 | **Reuniões** | ata, participantes, tópicos que viram tarefa | `reunioes`, `reuniao_*` |
-| **Relatórios** | semana, mês e ano; diários e efetivo, chuva e paralisação, cada um com PDF | `vw_rdo_dia` |
+| **Relatórios** | semana, mês e ano; diários e efetivo, chuva e paralisação, custos previsto × realizado com curva de acumulado — cada um com PDF | `vw_rdo_dia`, `vw_lancamento_financeiro`, `vw_contrato_saldo` |
 | **Documentos** | links e mural | `documentos`, `mural`, `documento_notas` |
 
 Dentro do **Cadastro** (`const CADASTROS` no `app.js`), quatro telas que
@@ -319,7 +319,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **588 verificações de tela** em 17 suítes,
+Duas frentes, sempre. Hoje são **622 verificações de tela** em 18 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
@@ -425,6 +425,10 @@ Estão aqui porque cada um custou tempo.
 - **Sem folha de efetivo para impressão** — a lista de presença em papel,
   para assinar no canteiro. O PDF do diário, o do boletim de medição e os
   dos relatórios de período já existem.
+- **Sem cronograma físico-financeiro.** Por isso a curva de custos mostra
+  só o medido acumulado contra o total do contrato — não existe "previsto
+  por mês" para comparar. Cadastrar o cronograma (valor previsto por mês
+  por contrato) é o passo que transforma a curva numa curva S de verdade.
 - **Atividade avulsa não soma em acumulado**, de propósito: sem cadastro
   atrás, não há o que somar. Quem quiser o acumulado cadastra a
   atividade e escolhe da lista.

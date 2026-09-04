@@ -119,6 +119,8 @@ outro caminho (N8N, SQL, importação) deixaria o número mentindo.
 | `contrato_itens.valor_total` | coluna calculada |
 | `tarefas.concluido_em` | gatilho `tarefas_conclusao` |
 | acumulado da medição | `vw_medicao_item`, com janela sobre o número |
+| valor de cada medição e nota, com data | `vw_lancamento_financeiro` |
+| contratado × medido por contrato | `vw_contrato_saldo` |
 
 ## Data é sempre no fuso da obra
 

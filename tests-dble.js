@@ -237,13 +237,33 @@
     });
   }
 
+  function lancamentoFinanceiro() {
+    const saida = [];
+    B.medicoes.forEach(m => {
+      const cc = B.contratos_comerciais.find(c => c.id === m.contrato_id); if (!cc) return;
+      const valor = B.medicao_itens.filter(mi => mi.medicao_id === m.id).reduce((s, mi) => {
+        const i = B.contrato_itens.find(x => x.id === mi.item_id);
+        return i ? s + Math.round(Number(mi.quantidade) * Number(i.valor_unitario) * 100) / 100 : s;
+      }, 0);
+      saida.push({ obra:'TESTE', data: m.data_fim,
+        tipo: cc.tipo === 'cliente' ? 'medicao_receber' : 'medicao_pagar',
+        referencia: cc.nome + ' · medição ' + m.numero, parte: cc.empresa || null,
+        valor, fechada: !!m.fechada, contrato_id: cc.id, origem_id: m.id });
+    });
+    B.nfs.forEach(n => saida.push({ obra:'TESTE', data: n.data, tipo:'nota_fiscal',
+      referencia: 'NF ' + n.numero + (n.categoria ? ' · ' + n.categoria : ''),
+      parte: n.fornecedor, valor: Number(n.total || 0), fechada: true, contrato_id: null, origem_id: n.id }));
+    return saida;
+  }
+
   const VIRTUAIS = { vw_efetivo: efetivo, vw_rdo_resumo: resumoRDO,
                      vw_status_obra: statusObra, vw_alertas: () => [],
                      vw_disponibilidade_equipamento: disponibilidade,
                      vw_ficha_epi: fichaEpi, vw_medicao_item: medicaoItem,
                      vw_contrato_saldo: contratoSaldo, vw_chuva_mes: chuvaMes,
                      vw_rdo_dia: rdoDia,
-                     vw_atividade_acumulado: atividadeAcumulado };
+                     vw_atividade_acumulado: atividadeAcumulado,
+                     vw_lancamento_financeiro: lancamentoFinanceiro };
 
   function tabela(nome) {
     const cond = [];   // funções de filtro

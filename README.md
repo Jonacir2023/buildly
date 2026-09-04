@@ -330,6 +330,25 @@ O boletim de medição sai em paisagem via `@page paisagem` mais a classe
 `.imp-paisagem` na folha; as outras folhas limpam a classe antes de
 montar.
 
+### Custos · previsto × realizado
+
+`vw_lancamento_financeiro` dá uma linha por dinheiro com data: medição de
+cliente (`medicao_receber`), medição de empreiteiro (`medicao_pagar`) e
+nota fiscal (`nota_fiscal`), com `valor` somado no banco. Medição sem item
+entra com zero, não some. `vw_contrato_saldo` continua sendo a fonte do
+contratado × medido por contrato.
+
+O app lê os lançamentos da obra **até o fim do período, sem começo** —
+a curva de acumulado precisa do que veio antes da janela — e filtra o
+período na tela. A curva é um SVG desenhado à mão (polyline), sem
+biblioteca, doze meses, medido acumulado do cliente contra o total
+contratado. Não há previsto por mês porque não há cronograma cadastrado;
+a linha tracejada é o total do contrato.
+
+Os valores grandes nos quadros saem em "R$ 38 mil" / "R$ 1,2 mi"
+(`reaisCurto`), sem decimal na casa do milhar — com decimal quebrava em
+duas linhas no celular.
+
 ## Calendário do RDO
 
 Grade do mês em `tela-rdo`, acima da lista. Consulta `rdos` por

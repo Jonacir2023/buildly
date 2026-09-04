@@ -6614,12 +6614,24 @@ async function carregarRelatorios() {
   $('per-rotulo').textContent = rot;
   $('per-depois').disabled = _deslocamento === 0;
 
-  const { data, error } = await db.from('vw_rdo_dia')
-    .select('*').eq('obra', _obra.codigo).gte('data', ini).lte('data', fim).order('data');
+  const [dias, lanc, saldos] = await Promise.all([
+    db.from('vw_rdo_dia')
+      .select('*').eq('obra', _obra.codigo).gte('data', ini).lte('data', fim).order('data'),
+    // até o fim do período, sem começo: a curva precisa do acumulado anterior
+    db.from('vw_lancamento_financeiro')
+      .select('data, tipo, referencia, parte, valor, fechada, contrato_id')
+      .eq('obra', _obra.codigo).lte('data', fim).order('data'),
+    db.from('vw_contrato_saldo')
+      .select('contrato_id, tipo, nome, empresa, valor_contratado, valor_medido, valor_saldo, medicoes_lancadas')
+      .eq('obra', _obra.codigo).order('nome')
+  ]);
 
-  _diasRel = error ? [] : (data || []);
+  _diasRel   = dias.error   ? [] : (dias.data   || []);
+  _lancRel   = lanc.error   ? [] : (lanc.data   || []);
+  _saldosRel = saldos.error ? [] : (saldos.data || []);
   renderRelatorioRDO(ini, fim);
   renderRelatorioChuva(ini, fim);
+  renderRelatorioCusto(ini, fim);
 }
 
 const somaRel = (campo) => _diasRel.reduce((s, d) => s + Number(d[campo] || 0), 0);
@@ -6706,6 +6718,177 @@ function renderRelatorioChuva(ini, fim) {
     { que:'Chuva à tarde',           qto: _diasRel.filter(d => e_chuva_js(d.clima_tarde)).length }
   ]);
 }
+
+/* ---------- custos: previsto × realizado ----------
+   Previsto é o contratado (soma dos itens de cada contrato comercial);
+   realizado é o medido. Cliente é "a receber", empreiteiro é "a pagar".
+   Nota fiscal entra como saída do período. Tudo somado no banco
+   (vw_lancamento_financeiro e vw_contrato_saldo); aqui só se filtra o
+   período e se desenha. */
+let _lancRel  = [];   // lançamentos da obra até o fim do período
+let _saldosRel = [];  // vw_contrato_saldo da obra
+
+const somaLanc = (lista, tipo) =>
+  lista.filter(l => l.tipo === tipo).reduce((s, l) => s + Number(l.valor || 0), 0);
+
+function renderRelatorioCusto(ini, fim) {
+  const noPeriodo = _lancRel.filter(l => l.data >= ini && l.data <= fim);
+  const receber = somaLanc(noPeriodo, 'medicao_receber');
+  const pagar   = somaLanc(noPeriodo, 'medicao_pagar');
+  const nfs     = noPeriodo.filter(l => l.tipo === 'nota_fiscal');
+  const nfTotal = somaLanc(noPeriodo, 'nota_fiscal');
+  const abertas = noPeriodo.filter(l => l.tipo !== 'nota_fiscal' && !l.fechada).length;
+
+  const clientes = _saldosRel.filter(s => s.tipo === 'cliente');
+  const saldoReceber = clientes.reduce((s, c) => s + Number(c.valor_saldo || 0), 0);
+  const contratadoReceber = clientes.reduce((s, c) => s + Number(c.valor_contratado || 0), 0);
+
+  tilesEm('rl-numeros-custo', [
+    { rot:'A receber', val: reaisCurto(receber), sub:'medido de cliente no período' },
+    { rot:'A pagar',   val: reaisCurto(pagar),   sub:'medido de empreiteiro' },
+    { rot:'Notas fiscais', val: reaisCurto(nfTotal),
+      sub: nfs.length ? plural(nfs.length, 'nota no período', 'notas no período') : 'nenhuma no período' },
+    { rot:'Falta medir', val: reaisCurto(saldoReceber),
+      sub: contratadoReceber ? 'do contratado com o cliente' : 'sem contrato de cliente',
+      urgente: saldoReceber < 0 }
+  ]);
+
+  renderContratosPxR();
+  renderCurvaMedicao(fim);
+
+  linhasEm('rl-detalhe-custo', [
+    { que:'Contratos comerciais',      qto: _saldosRel.length, forte:true },
+    { que:'Medições no período',       qto: noPeriodo.filter(l => l.tipo !== 'nota_fiscal').length },
+    { que:'Medições ainda em aberto',  qto: abertas, aviso: abertas > 0 },
+    { que:'Notas fiscais no período',  qto: nfs.length },
+    { que:'Resultado do período (recebido − pago − notas)',
+      qto: reais(receber - pagar - nfTotal), aviso: receber - pagar - nfTotal < 0 }
+  ]);
+}
+
+// R$ 1.234.567 fica grande demais no quadro pequeno; em milhar vira legível.
+function reaisCurto(v) {
+  const n = Number(v || 0);
+  if (Math.abs(n) >= 1e6) return 'R$ ' + (n / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' mi';
+  if (Math.abs(n) >= 1e4) return 'R$ ' + (n / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil';
+  return reais(n);
+}
+
+function renderContratosPxR() {
+  const area = $('rl-contratos-custo');
+  area.innerHTML = '';
+  if (!_saldosRel.length) {
+    area.innerHTML = vazioHTML('Nenhum contrato comercial cadastrado.',
+      'Cadastre em Medições: contrato, itens e boletins. O previsto × realizado sai daqui.');
+    return;
+  }
+  _saldosRel.forEach(s => {
+    const contratado = Number(s.valor_contratado || 0);
+    const medido     = Number(s.valor_medido || 0);
+    const pct = contratado ? Math.round(medido / contratado * 1000) / 10 : 0;
+
+    const linha = document.createElement('div'); linha.className = 'pxr';
+    if (medido > contratado && contratado) linha.dataset.estado = 'estourou';
+
+    const topo = document.createElement('div'); topo.className = 'pxr-topo';
+    const nome = document.createElement('div');
+    const b = document.createElement('b');
+    const tipo = document.createElement('span'); tipo.className = 'pxr-tipo';
+    tipo.textContent = s.tipo === 'cliente' ? 'a receber' : 'a pagar';
+    b.append(tipo, document.createTextNode(s.nome));
+    const sub = document.createElement('small');
+    sub.textContent = [s.empresa, plural(Number(s.medicoes_lancadas || 0), 'medição', 'medições')]
+      .filter(Boolean).join(' · ');
+    nome.append(b, sub);
+    const p = document.createElement('span'); p.className = 'pxr-pct';
+    p.textContent = contratado ? pct.toLocaleString('pt-BR') + '%' : '—';
+    topo.append(nome, p);
+
+    const trilho = document.createElement('div'); trilho.className = 'pxr-trilho';
+    const cheio = document.createElement('div'); cheio.className = 'pxr-cheio';
+    cheio.style.width = Math.min(pct, 100) + '%';
+    trilho.appendChild(cheio);
+
+    const vals = document.createElement('div'); vals.className = 'pxr-valores';
+    const v1 = document.createElement('span'); v1.textContent = 'medido ' + reais(medido);
+    const v2 = document.createElement('span'); v2.textContent = 'contratado ' + reais(contratado);
+    vals.append(v1, v2);
+
+    linha.append(topo, trilho, vals);
+    area.appendChild(linha);
+  });
+}
+
+/* Curva S simplificada: medido acumulado de cliente, mês a mês, contra o
+   contratado. Não há cronograma físico-financeiro cadastrado, então não
+   existe "previsto por mês" para comparar — a linha tracejada é o total
+   do contrato, e a pergunta que a curva responde é "quanto já andou". */
+function renderCurvaMedicao(fim) {
+  const area = $('rl-curva-custo');
+  area.innerHTML = '';
+  const contratado = _saldosRel.filter(s => s.tipo === 'cliente')
+    .reduce((s, c) => s + Number(c.valor_contratado || 0), 0);
+  const medicoes = _lancRel.filter(l => l.tipo === 'medicao_receber');
+  if (!contratado || !medicoes.length) return;
+
+  const fimD = new Date(fim + 'T12:00:00Z');
+  const meses = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(Date.UTC(fimD.getUTCFullYear(), fimD.getUTCMonth() - i, 1));
+    meses.push(d.toISOString().slice(0, 7));
+  }
+  const antesDaJanela = medicoes.filter(l => l.data.slice(0, 7) < meses[0])
+    .reduce((s, l) => s + Number(l.valor), 0);
+  let acum = antesDaJanela;
+  const pontos = meses.map(m => {
+    acum += medicoes.filter(l => l.data.slice(0, 7) === m).reduce((s, l) => s + Number(l.valor), 0);
+    return { mes: m, acum, pct: Math.min(acum / contratado * 100, 100) };
+  });
+
+  const W = 600, H = 200, mx = 44, my = 16, md = 30, gw = W - mx - md, gh = H - my - 28;
+  const x = (i) => mx + gw * i / (meses.length - 1);
+  const y = (pct) => my + gh - gh * pct / 100;
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Medido acumulado por mês em relação ao contratado');
+
+  const el = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  };
+  svg.appendChild(el('line', { x1: mx, y1: y(0), x2: W - md, y2: y(0), class: 'eixo' }));
+  svg.appendChild(el('line', { x1: mx, y1: y(100), x2: W - md, y2: y(100), class: 'meta' }));
+  [0, 50, 100].forEach(p => {
+    const t = el('text', { x: mx - 6, y: y(p) + 3, 'text-anchor': 'end' });
+    t.textContent = p + '%'; svg.appendChild(t);
+  });
+  const linha = el('polyline', { class: 'linha',
+    points: pontos.map((p, i) => x(i) + ',' + y(p.pct)).join(' ') });
+  svg.appendChild(linha);
+  pontos.forEach((p, i) => {
+    svg.appendChild(el('circle', { cx: x(i), cy: y(p.pct), r: 3, class: 'ponto' }));
+    if (i % 2 === (meses.length - 1) % 2) {
+      const t = el('text', { x: x(i), y: H - 8, 'text-anchor': 'middle' });
+      t.textContent = mesCurto(p.mes); svg.appendChild(t);
+    }
+  });
+
+  const caixa = document.createElement('div'); caixa.className = 'curva';
+  caixa.appendChild(svg);
+  const leg = document.createElement('p'); leg.className = 'curva-legenda';
+  const ultimo = pontos[pontos.length - 1];
+  leg.textContent = 'Medido acumulado do cliente: ' + reais(ultimo.acum) + ' de ' + reais(contratado) +
+    ' (' + (Math.round(ultimo.acum / contratado * 1000) / 10).toLocaleString('pt-BR') + '%), últimos 12 meses.';
+  caixa.appendChild(leg);
+  area.appendChild(caixa);
+}
+
+const mesCurto = (aaaamm) =>
+  new Intl.DateTimeFormat('pt-BR', { timeZone:'UTC', month:'short' })
+    .format(new Date(aaaamm + '-01T12:00:00Z')).replace('.', '') + '/' + aaaamm.slice(2, 4);
 
 // Mesma regra da função e_chuva() do banco: sem caixa, sem acento.
 function e_chuva_js(txt) {
@@ -6906,6 +7089,87 @@ $('btn-pdf-chuva').addEventListener('click', () => {
   folha.appendChild(assinaturasImp('Engenheiro responsável', 'Fiscalização'));
   folha.appendChild(rodapeImp('Relatório de chuva · ' + rot));
   imprimirFolha(`Chuva - ${_obra.codigo} - ${ini}_a_${fim}`);
+});
+
+/* ---------- PDF de custos ---------- */
+const TIPO_LANC = { medicao_receber: 'Medição · a receber', medicao_pagar: 'Medição · a pagar', nota_fiscal: 'Nota fiscal' };
+
+$('btn-pdf-custo').addEventListener('click', () => {
+  const { ini, fim, rot } = limitesDoPeriodo();
+  const folha = $('folha-impressao');
+  folha.className = '';
+  folha.innerHTML = '';
+  folha.appendChild(cabecalhoImp('Relatório de Custos · Previsto × Realizado',
+    dataBR(ini) + ' a ' + dataBR(fim), rot));
+
+  const noPeriodo = _lancRel.filter(l => l.data >= ini && l.data <= fim)
+    .slice().sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0);
+  const receber = somaLanc(noPeriodo, 'medicao_receber');
+  const pagar   = somaLanc(noPeriodo, 'medicao_pagar');
+  const nfTotal = somaLanc(noPeriodo, 'nota_fiscal');
+
+  const s1 = secaoImp('Resumo do período');
+  const g = document.createElement('div'); g.className = 'imp-campos';
+  g.append(
+    campoImp('Medido de cliente (a receber)', reais(receber)),
+    campoImp('Medido de empreiteiro (a pagar)', reais(pagar)),
+    campoImp('Notas fiscais', reais(nfTotal)),
+    campoImp('RESULTADO DO PERÍODO', reais(receber - pagar - nfTotal)));
+  s1.appendChild(g);
+  const nota = document.createElement('p'); nota.className = 'imp-texto';
+  nota.style.marginTop = '5pt';
+  nota.textContent = 'Previsto é o valor contratado (soma dos itens de cada contrato). Realizado é o ' +
+    'medido nos boletins. Os valores saem do que foi lançado, não de estimativa; medição em ' +
+    'aberto entra pelo que já tem lançado.';
+  s1.appendChild(nota);
+  folha.appendChild(s1);
+
+  const s2 = secaoImp('Contratos — previsto × realizado');
+  if (_saldosRel.length) {
+    const tot = (campo) => _saldosRel.reduce((s, c) => s + Number(c[campo] || 0), 0);
+    s2.appendChild(tabelaImp(
+      [{ rot:'Contrato', campo:'nome' }, { rot:'Parte', campo:'empresa' }, { rot:'Tipo', campo:'tipo' },
+       { rot:'Contratado', campo:'contratado', num:true }, { rot:'Medido', campo:'medido', num:true },
+       { rot:'Saldo', campo:'saldo', num:true }, { rot:'%', campo:'pct', num:true }],
+      _saldosRel.map(s => ({
+        nome: s.nome, empresa: s.empresa || '',
+        tipo: s.tipo === 'cliente' ? 'A receber' : 'A pagar',
+        contratado: reais(s.valor_contratado), medido: reais(s.valor_medido), saldo: reais(s.valor_saldo),
+        pct: Number(s.valor_contratado)
+          ? (Math.round(Number(s.valor_medido) / Number(s.valor_contratado) * 1000) / 10).toLocaleString('pt-BR') + '%'
+          : '—'
+      })),
+      [{ txt:'Total', span:3 },
+       { txt: reais(tot('valor_contratado')), num:true }, { txt: reais(tot('valor_medido')), num:true },
+       { txt: reais(tot('valor_saldo')), num:true }, { txt:'', num:true }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhum contrato comercial cadastrado.';
+    s2.appendChild(p);
+  }
+  folha.appendChild(s2);
+
+  const s3 = secaoImp('Lançamentos do período');
+  if (noPeriodo.length) {
+    s3.appendChild(tabelaImp(
+      [{ rot:'Data', campo:'data' }, { rot:'Tipo', campo:'tipo' }, { rot:'Referência', campo:'ref' },
+       { rot:'Parte', campo:'parte' }, { rot:'Situação', campo:'sit' }, { rot:'Valor', campo:'valor', num:true }],
+      noPeriodo.map(l => ({
+        data: dataBR(l.data), tipo: TIPO_LANC[l.tipo] || l.tipo, ref: l.referencia, parte: l.parte || '',
+        sit: l.tipo === 'nota_fiscal' ? '—' : (l.fechada ? 'fechada' : 'em aberto'),
+        valor: reais(l.valor)
+      })),
+      [{ txt:'Entradas − saídas', span:5 }, { txt: reais(receber - pagar - nfTotal), num:true }]));
+  } else {
+    const p = document.createElement('p'); p.className = 'imp-texto';
+    p.textContent = 'Nenhuma medição ou nota fiscal neste período.';
+    s3.appendChild(p);
+  }
+  folha.appendChild(s3);
+
+  folha.appendChild(assinaturasImp('Engenheiro responsável', 'Diretoria'));
+  folha.appendChild(rodapeImp('Relatório de custos · ' + rot));
+  imprimirFolha(`Custos - ${_obra.codigo} - ${ini}_a_${fim}`);
 });
 
 /* ---------- PDF do boletim de medição ----------
