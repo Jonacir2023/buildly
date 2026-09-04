@@ -1287,63 +1287,7 @@ async function desenharEpiDaPessoa() {
       return;
     }
 
-    const funcaoId = $('p-funcao').value;
-    const funcao   = _funcoes.find(f => f.id === funcaoId);
-    const exigidos = funcaoId ? ativos.filter(e => funcoesDoEpi(e).has(funcaoId)) : [];
-    const outros   = ativos.filter(e => !exigidos.includes(e));
-
-    const caixa = (e) => {
-      const rot = document.createElement('label');
-      rot.className = _epiAdmissao.has(e.id) ? 'marca-caixa ativ-marcada' : 'marca-caixa';
-      const cx = document.createElement('input');
-      cx.type = 'checkbox'; cx.checked = _epiAdmissao.has(e.id);
-      cx.addEventListener('change', () => {
-        if (cx.checked) _epiAdmissao.add(e.id); else _epiAdmissao.delete(e.id);
-        rot.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
-      });
-      const txt = document.createElement('span');
-      const b = document.createElement('b'); b.textContent = e.nome;
-      txt.appendChild(b);
-      const det = [];
-      if (e.ca) det.push('CA ' + e.ca);
-      if (e.validade_uso_dias) det.push('troca a cada ' + plural(e.validade_uso_dias, 'dia', 'dias'));
-      if (det.length) {
-        const s = document.createElement('small'); s.textContent = det.join(' · ');
-        txt.appendChild(s);
-      }
-      rot.append(cx, txt);
-      return rot;
-    };
-
-    const grupo = (titulo, lista) => {
-      if (!lista.length) return;
-      const rot = document.createElement('p');
-      rot.className = 'rotulo'; rot.style.marginTop = 'var(--e3)';
-      rot.textContent = titulo;
-      const pilha = document.createElement('div'); pilha.className = 'pilha';
-      lista.forEach(e => pilha.appendChild(caixa(e)));
-      area.append(rot, pilha);
-    };
-
-    if (exigidos.length) {
-      // Marcar de uma vez o que a função exige é o caso comum da admissão;
-      // marcar um a um seis EPI no celular, com luva, não é.
-      const bt = document.createElement('button');
-      bt.type = 'button'; bt.className = 'btn btn-secundario';
-      bt.style.width = '100%';
-      bt.textContent = exigidos.length === 1
-        ? 'Marcar o exigido'
-        : 'Marcar os ' + exigidos.length + ' exigidos';
-      bt.addEventListener('click', () => {
-        exigidos.forEach(e => _epiAdmissao.add(e.id));
-        desenharEpiDaPessoa();
-      });
-      area.appendChild(bt);
-      grupo('Exigidos para ' + (funcao ? funcao.nome : 'a função'), exigidos);
-      grupo('Outros do catálogo', outros);
-    } else {
-      grupo(funcaoId ? 'Nenhum EPI ligado a esta função · catálogo inteiro' : 'Catálogo', outros);
-    }
+    listaDeEpis(area, $('p-funcao').value, _epiAdmissao);
     return;
   }
 
@@ -2978,7 +2922,7 @@ async function pintarVinculos(escolhido) {
 // em Ocorrências. Busco sem mexer na tela do efetivo.
 async function carregarEfetivoSilencioso() {
   const { data } = await db.from('vw_efetivo')
-    .select('contrato_id, nome, funcao').eq('obra', _obra.codigo).order('nome');
+    .select('contrato_id, nome, funcao, funcao_id').eq('obra', _obra.codigo).order('nome');
   _efetivo = data || [];
 }
 
@@ -3452,6 +3396,7 @@ let _fichas = [];
 let _catalogo = [];
 let _epiFiltro = 'todas';
 let _entregaEditando = null;
+let _epiEntrega = new Set();   // EPI marcados na folha de entrega
 let _epiCatEditando = null;
 let _epiFuncoes = new Set();   // funções marcadas na folha do catálogo
 
@@ -3464,7 +3409,7 @@ async function carregarEPI() {
   area.innerHTML = vazioHTML('Carregando…');
   const [fichas, cat] = await Promise.all([
     db.from('vw_ficha_epi')
-      .select('contrato_id, nome, epi, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
+      .select('contrato_id, nome, epi, epi_id, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
       .eq('obra', _obra.codigo).order('data_entrega', { ascending: false }).limit(500),
     db.from('epis').select('id, nome, ca, validade_uso_dias, ativo, epi_funcao(funcao_id)').order('nome')
   ]);
@@ -3715,43 +3660,136 @@ $('btn-desativar-epi').addEventListener('click', async () => {
 /* ---------- entrega ---------- */
 // Se a pessoa já recebeu esse EPI, o motivo padrão deixa de ser
 // "primeira entrega" — e a tela mostra quando foi a última.
-async function dicaDaEntrega() {
-  const dica = $('dica-troca');
-  const contrato = $('ep-contrato').value, epiId = $('ep-epi').value;
-  dica.hidden = true;
-  if (!contrato || !epiId) return;
+/* A lista de caixas é a mesma na admissão e na entrega avulsa: o que a
+   função exige em cima, o resto embaixo, e um botão que marca os
+   exigidos de uma vez. Escrever isso duas vezes daria duas telas que
+   divergem no primeiro ajuste. */
+function listaDeEpis(area, funcaoId, marcados, aoMudar) {
+  area.innerHTML = '';
+  const ativos = _catalogo.filter(e => e.ativo);
 
-  const epi = _catalogo.find(e => e.id === epiId);
-  const anteriores = _fichas.filter(f => f.contrato_id === contrato && epi && f.epi === epi.nome);
-  if (!anteriores.length) {
-    if (epi && epi.validade_uso_dias)
-      { dica.textContent = `Primeira entrega. Troca prevista em ${epi.validade_uso_dias} dias.`; dica.hidden = false; }
+  if (!ativos.length) {
+    area.innerHTML = vazioHTML('Nenhum EPI no catálogo.',
+      'Cadastre os tipos em Cadastro → EPI e eles passam a aparecer aqui.');
     return;
   }
-  const ultima = anteriores[0];
-  dica.textContent = `Já recebeu em ${dataBR(ultima.data_entrega)}` +
-    (ultima.troca_prevista ? ` — troca prevista para ${dataBR(ultima.troca_prevista)}.` : '.');
-  dica.hidden = false;
-  if ($('ep-motivo').value === 'primeira_entrega') $('ep-motivo').value = 'troca';
+
+  const funcao   = _funcoes.find(f => f.id === funcaoId);
+  const exigidos = funcaoId ? ativos.filter(e => funcoesDoEpi(e).has(funcaoId)) : [];
+  const outros   = ativos.filter(e => !exigidos.includes(e));
+
+  const caixa = (e) => {
+    const rot = document.createElement('label');
+    rot.className = marcados.has(e.id) ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+    const cx = document.createElement('input');
+    cx.type = 'checkbox'; cx.checked = marcados.has(e.id);
+    cx.addEventListener('change', () => {
+      if (cx.checked) marcados.add(e.id); else marcados.delete(e.id);
+      rot.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      if (aoMudar) aoMudar();
+    });
+    const txt = document.createElement('span');
+    const b = document.createElement('b'); b.textContent = e.nome;
+    txt.appendChild(b);
+    const det = [];
+    if (e.ca) det.push('CA ' + e.ca);
+    if (e.validade_uso_dias) det.push('troca a cada ' + plural(e.validade_uso_dias, 'dia', 'dias'));
+    if (det.length) {
+      const s = document.createElement('small'); s.textContent = det.join(' · ');
+      txt.appendChild(s);
+    }
+    rot.append(cx, txt);
+    return rot;
+  };
+
+  const grupo = (titulo, lista) => {
+    if (!lista.length) return;
+    const rot = document.createElement('p');
+    rot.className = 'rotulo'; rot.style.marginTop = 'var(--e3)';
+    rot.textContent = titulo;
+    const pilha = document.createElement('div'); pilha.className = 'pilha';
+    lista.forEach(e => pilha.appendChild(caixa(e)));
+    area.append(rot, pilha);
+  };
+
+  if (exigidos.length) {
+    // Marcar de uma vez o que a função exige é o caso comum; marcar um a
+    // um seis EPI no celular, com luva, não é.
+    const bt = document.createElement('button');
+    bt.type = 'button'; bt.className = 'btn btn-secundario';
+    bt.style.width = '100%';
+    bt.textContent = exigidos.length === 1
+      ? 'Marcar o exigido'
+      : 'Marcar os ' + exigidos.length + ' exigidos';
+    bt.addEventListener('click', () => {
+      exigidos.forEach(e => marcados.add(e.id));
+      listaDeEpis(area, funcaoId, marcados, aoMudar);
+      if (aoMudar) aoMudar();
+    });
+    area.appendChild(bt);
+    grupo('Exigidos para ' + (funcao ? funcao.nome : 'a função'), exigidos);
+    grupo('Outros do catálogo', outros);
+  } else {
+    grupo(funcaoId ? 'Nenhum EPI ligado a esta função · catálogo inteiro' : 'Catálogo', outros);
+  }
 }
-$('ep-contrato').addEventListener('change', dicaDaEntrega);
-$('ep-epi').addEventListener('change', dicaDaEntrega);
+
+/* Diz o que a pessoa JÁ recebeu entre os marcados. Antes o motivo virava
+   "troca" sozinho; com vários EPI de uma vez isso mentiria para os
+   outros, então agora o aviso informa e quem decide é quem entrega. */
+function dicaDaEntrega() {
+  const dica = $('dica-troca');
+  const contrato = $('ep-contrato').value;
+  dica.hidden = true;
+  if (!contrato || !_epiEntrega.size) return;
+
+  const repetidos = [];
+  _epiEntrega.forEach(id => {
+    const epi = _catalogo.find(e => e.id === id);
+    if (!epi) return;
+    const antes = _fichas.filter(f => f.contrato_id === contrato && f.epi_id === id);
+    if (antes.length) repetidos.push(epi.nome + ' (' + dataBR(antes[0].data_entrega) + ')');
+  });
+
+  if (!repetidos.length) return;
+  dica.textContent = 'Já recebeu antes: ' + repetidos.join(', ') +
+    '. Se for reposição, mude o motivo.';
+  dica.hidden = false;
+}
+
+function contratoEscolhido() {
+  return _efetivo.find(p => p.contrato_id === $('ep-contrato').value) || null;
+}
+
+function renderEpisDaEntrega() {
+  const p = contratoEscolhido();
+  listaDeEpis($('ep-epis'), p ? p.funcao_id : null, _epiEntrega, dicaDaEntrega);
+  dicaDaEntrega();
+}
+
+// Trocar de pessoa recomeça a escolha: é outra entrega, não a mesma.
+$('ep-contrato').addEventListener('change', () => {
+  _epiEntrega = new Set();
+  renderEpisDaEntrega();
+});
 
 /* Aceita um contrato: chamada de dentro do cadastro da pessoa, já vem
    com ela escolhida e travada — ninguém entrega EPI para o vizinho de
    lista por escorregar o dedo. */
 async function abrirEntrega(contratoId) {
   if (!_efetivo.length) await carregarEfetivoSilencioso();
+  await carregarFuncoes();
   await carregarCatalogoEPI();
   // A dica de "já recebeu em tal dia" lê as fichas; abrindo pela pessoa,
   // elas ainda não foram carregadas.
   if (!_fichas.length && _obra) {
     const { data } = await db.from('vw_ficha_epi')
-      .select('contrato_id, nome, epi, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
+      .select('contrato_id, nome, epi, epi_id, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
       .eq('obra', _obra.codigo).order('data_entrega', { ascending: false }).limit(500);
     _fichas = data || [];
   }
   _entregaEditando = null;
+  _epiEntrega = new Set();
 
   const sc = $('ep-contrato');
   sc.innerHTML = '<option value="">— escolha —</option>';
@@ -3763,13 +3801,7 @@ async function abrirEntrega(contratoId) {
   sc.value = contratoId || '';
   sc.disabled = !!contratoId;
 
-  const se = $('ep-epi');
-  se.innerHTML = '<option value="">— escolha —</option>';
-  _catalogo.filter(e => e.ativo).forEach(e => {
-    const o = document.createElement('option');
-    o.value = e.id; o.textContent = e.nome + (e.ca ? ' · CA ' + e.ca : '');
-    se.appendChild(o);
-  });
+  renderEpisDaEntrega();
 
   $('ep-data').value = hojeISO();
   $('ep-data').max = hojeISO();
@@ -3778,7 +3810,6 @@ async function abrirEntrega(contratoId) {
   $('ep-entregador').value = _perfilNome || '';
   $('ep-assinatura').checked = false;
   $('ep-obs').value = '';
-  $('dica-troca').hidden = true;
   $('erro-entrega').hidden = true;
   $('btn-apagar-entrega').hidden = true;
   $('folha-entrega').hidden = false;
@@ -3796,21 +3827,24 @@ $('folha-entrega').addEventListener('click', (ev) => {
 $('form-entrega').addEventListener('submit', async (ev) => {
   ev.preventDefault();
   const erro = $('erro-entrega'); erro.hidden = true;
-  const contrato = $('ep-contrato').value, epiId = $('ep-epi').value;
+  const contrato = $('ep-contrato').value;
   if (!contrato) return falhar(erro, 'Escolha para quem é a entrega.');
-  if (!epiId)    return falhar(erro, 'Escolha o EPI. Se não estiver na lista, cadastre no catálogo.');
+  if (!_epiEntrega.size)
+    return falhar(erro, 'Marque pelo menos um EPI. Se não estiver na lista, cadastre em Cadastro → EPI.');
   const qtd = Number($('ep-qtd').value || 0);
   if (!(qtd > 0)) return falhar(erro, 'A quantidade tem que ser pelo menos 1.');
 
-  const { error } = await db.from('epi_entregas').insert({
-    contrato_id: contrato, epi_id: epiId,
+  const comum = {
+    contrato_id:  contrato,
     data_entrega: $('ep-data').value || hojeISO(),
-    quantidade: qtd,
-    motivo: $('ep-motivo').value,
+    quantidade:   qtd,
+    motivo:       $('ep-motivo').value,
     entregue_por: $('ep-entregador').value.trim() || null,
     assinatura_ok: $('ep-assinatura').checked,
-    observacao: $('ep-obs').value.trim() || null
-  });
+    observacao:   $('ep-obs').value.trim() || null
+  };
+  const { error } = await db.from('epi_entregas')
+    .insert([..._epiEntrega].map(epiId => ({ ...comum, epi_id: epiId })));
   if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
   $('folha-entrega').hidden = true;
   $('ep-contrato').disabled = false;

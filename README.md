@@ -113,6 +113,18 @@ Numa pessoa já cadastrada, o mesmo lugar mostra o histórico com a troca
 prevista e abre a ficha de entrega com o contrato já escolhido e o seletor
 travado.
 
+A ficha de entrega escolhe **vários EPI de uma vez**: a mesma
+`listaDeEpis()` da admissão, e o submit faz um `insert` com o vetor das
+linhas — mesma data, motivo, quantidade e assinatura para todas. Trocar
+de pessoa limpa as marcas, porque é outra entrega. O motivo **não** muda
+sozinho para "troca" como antes: com vários itens, ele mentiria para os
+que a pessoa nunca recebeu; a tela avisa quais são repetição e quem
+entrega decide.
+
+`vw_efetivo` passou a expor `funcao_id` para essa lista poder separar o
+exigido do opcional — casar por nome de função quebraria calado no dia em
+que alguém renomeasse uma.
+
 ## RDO
 
 Grava por parte, sem botão de salvar: campo do cabeçalho grava no

@@ -1407,13 +1407,15 @@
     <form id="form-entrega" novalidate>
       <label class="campo"><span>Para quem *</span>
         <select id="ep-contrato" required></select></label>
-      <label class="campo"><span>EPI *</span>
-        <select id="ep-epi" required></select></label>
+      <p class="rotulo secao">Quais EPI estão sendo entregues *</p>
+      <p class="explica">Marque tudo que sai do almoxarifado agora. Vira uma
+         entrega para cada item, todas na mesma data e com o mesmo motivo.</p>
+      <div id="ep-epis"></div>
       <p class="dica" id="dica-troca" hidden></p>
       <div class="frow-2">
         <label class="campo"><span>Data *</span>
           <input type="date" id="ep-data" required></label>
-        <label class="campo"><span>Quantidade *</span>
+        <label class="campo"><span>Quantidade de cada *</span>
           <input type="number" id="ep-qtd" min="1" step="1" value="1" inputmode="numeric"></label>
       </div>
       <label class="campo"><span>Motivo</span>

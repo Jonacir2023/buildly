@@ -439,8 +439,18 @@ função marcada aparece para todo mundo, como opcional.
 O catálogo é comum a todas as obras: capacete é capacete em qualquer
 canteiro e o CA é nacional. Não se recadastra o mesmo EPI obra a obra.
 
-Se a pessoa já recebeu aquele EPI, o motivo muda sozinho de "primeira
-entrega" para "troca", e a tela mostra quando foi a última.
+A ENTREGA É POR CAIXINHA, VÁRIOS EPI DE UMA VEZ. Escolhe-se a pessoa e
+marca-se tudo que está saindo do almoxarifado agora: o sistema grava uma
+entrega para cada item, todas na mesma data, com o mesmo motivo e a mesma
+quantidade. Entregar capacete, bota, luva e protetor vira um toque em
+cada caixinha e um Salvar, não quatro telas.
+
+A lista da entrega também separa o que a função da pessoa exige do resto
+do catálogo, com o mesmo botão de marcar todos os exigidos.
+
+Se a pessoa já recebeu algum dos marcados, a tela avisa quais e quando —
+e deixa você mudar o motivo para "troca". O motivo não muda sozinho:
+entregando quatro EPI de uma vez, ele mentiria para os outros três.
 
 ENTREGA SEM ASSINATURA FICA MARCADA EM VERMELHO. Ficha não assinada não
 prova fornecimento.

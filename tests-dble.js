@@ -32,7 +32,8 @@
       const f = funcao(c.funcao_id);
       const aj = B.ajuda_custo.find(a => a.contrato_id === c.id && !a.fim);
       return { contrato_id:c.id, nome:pessoa(c.pessoa_id).nome, matricula:c.matricula,
-        cracha:c.cracha, funcao:f.nome, obra:'TESTE', admissao:c.admissao, alojado:c.alojado,
+        cracha:c.cracha, funcao:f.nome, funcao_id:c.funcao_id, obra:'TESTE',
+        admissao:c.admissao, alojado:c.alojado,
         fim_experiencia_1:mais(c.admissao,45), fim_experiencia_2:mais(c.admissao,90),
         recebe_ajuda_custo: !!aj,
         ajuda_custo_valor: aj ? aj.valor_mensal : null,
@@ -153,7 +154,7 @@
       const p = c && pessoa(c.pessoa_id);
       const epi = B.epis.find(x => x.id === e.epi_id);
       return { contrato_id: e.contrato_id, nome: p ? p.nome : '?', obra: 'TESTE',
-        epi: epi ? epi.nome : '?', ca: epi ? epi.ca : null,
+        epi: epi ? epi.nome : '?', epi_id: e.epi_id, ca: epi ? epi.ca : null,
         data_entrega: e.data_entrega, quantidade: e.quantidade, motivo: e.motivo,
         assinatura_ok: e.assinatura_ok,
         troca_prevista: epi && epi.validade_uso_dias

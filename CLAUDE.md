@@ -98,6 +98,15 @@ almoxarifado.
 O catálogo `epis` é comum a todas as obras (sem `obra_id`): capacete é
 capacete em qualquer canteiro, e o CA é nacional.
 
+A entrega marca **vários EPI de uma vez** (uma linha de `epi_entregas`
+por item, mesma data e motivo). Por isso o motivo não vira "troca"
+sozinho: com quatro itens marcados, ele mentiria para os três que a
+pessoa nunca recebeu. A tela avisa quais são repetição e quem entrega
+decide.
+
+`vw_efetivo` expõe `funcao_id` além do nome da função — é o que a lista
+de EPI usa para separar exigido de opcional.
+
 ## Dado derivado mora no banco
 
 Nenhum total é somado pelo app. Se o app somasse, qualquer gravação por

@@ -210,7 +210,7 @@ saíram do trilho porque cadastro não é trabalho do dia:
 | Tela | O que faz | Tabelas |
 |---|---|---|
 | **Efetivo** | pessoas, contratos, regime de moradia, ajuda de custo, EPI da admissão, baixa | `pessoas`, `contratos`, `funcoes`, `ajuda_custo`, `epi_entregas` |
-| **EPI** | catálogo por função, ficha de entrega, troca prevista | `epis`, `epi_funcao`, `epi_entregas` |
+| **EPI** | catálogo por função, entrega de vários itens de uma vez, troca prevista | `epis`, `epi_funcao`, `epi_entregas` |
 | **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
 | **Atividades** | catálogo do que a obra executa, com unidade e acumulado | `atividades`, `vw_atividade_acumulado` |
 
@@ -236,6 +236,10 @@ tamanho perde o dia inteiro de apontamento quando o sinal cai no canteiro.
 
 **Lista fechada, nunca texto livre**, onde o banco tem `check`. O seletor
 existe para o dado nascer certo.
+
+**Entrega de EPI é por caixinha, várias de uma vez.** Uma linha de
+`epi_entregas` por item, mesma data, motivo e quantidade. Quem entrega
+quatro EPI na admissão de um pedreiro não abre quatro telas.
 
 **O EPI conhece a função.** `epi_funcao` diz qual EPI cada função exige,
 e a ficha da pessoa separa "Exigidos para Pedreiro" do resto do catálogo,
@@ -315,7 +319,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **575 verificações de tela** em 17 suítes,
+Duas frentes, sempre. Hoje são **588 verificações de tela** em 17 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
