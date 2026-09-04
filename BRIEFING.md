@@ -189,14 +189,13 @@ prazo viraria aviso novo todo dia.
 
 ## 4. Os módulos
 
-Onze abas no trilho, todas funcionando. Nenhuma "em construção".
+Dez abas no trilho, todas funcionando. Nenhuma "em construção".
 
 | Módulo | O que faz | Tabelas |
 |---|---|---|
 | **RDO** | diário: calendário do mês, condições, DSS, chamada, atividades, equipamentos, fotos, PDF, resumo de chuva | `rdos`, `rdo_presencas`, `rdo_atividades`, `rdo_equipamentos`, `rdo_fotos` |
-| **Cadastro** | aba que reúne Efetivo, Equipamentos e Atividades | — |
+| **Cadastro** | aba que reúne Efetivo, EPI, Equipamentos e Atividades | — |
 | **Alertas** | prazos até 60 dias (o painel mostra 7) | `vw_efetivo` |
-| **EPI** | catálogo e ficha de entrega, troca prevista | `epis`, `epi_entregas` |
 | **Ocorrências** | segurança e disciplina, 8 tipos, elogio incluído | `ocorrencias` |
 | **Tarefas** | quadro (kanban) e lista, mais os pedidos recebidos | `tarefas`, `solicitacoes` |
 | **Notas fiscais** | cabeçalho e itens, total pelo gatilho | `nfs`, `nf_itens` |
@@ -205,12 +204,13 @@ Onze abas no trilho, todas funcionando. Nenhuma "em construção".
 | **Relatórios** | semana, mês e ano; diários e efetivo, chuva e paralisação, cada um com PDF | `vw_rdo_dia` |
 | **Documentos** | links e mural | `documentos`, `mural`, `documento_notas` |
 
-Dentro do **Cadastro** (`const CADASTROS` no `app.js`), três telas que
+Dentro do **Cadastro** (`const CADASTROS` no `app.js`), quatro telas que
 saíram do trilho porque cadastro não é trabalho do dia:
 
 | Tela | O que faz | Tabelas |
 |---|---|---|
 | **Efetivo** | pessoas, contratos, regime de moradia, ajuda de custo, EPI da admissão, baixa | `pessoas`, `contratos`, `funcoes`, `ajuda_custo`, `epi_entregas` |
+| **EPI** | catálogo por função, ficha de entrega, troca prevista | `epis`, `epi_funcao`, `epi_entregas` |
 | **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
 | **Atividades** | catálogo do que a obra executa, com unidade e acumulado | `atividades`, `vw_atividade_acumulado` |
 
@@ -236,6 +236,12 @@ tamanho perde o dia inteiro de apontamento quando o sinal cai no canteiro.
 
 **Lista fechada, nunca texto livre**, onde o banco tem `check`. O seletor
 existe para o dado nascer certo.
+
+**O EPI conhece a função.** `epi_funcao` diz qual EPI cada função exige,
+e a ficha da pessoa separa "Exigidos para Pedreiro" do resto do catálogo,
+com um botão que marca todos os exigidos. **Marcar sozinho, nunca**:
+entrega registrada é entrega feita, e o app não pode afirmar que o
+capacete saiu do almoxarifado.
 
 **No diário não se digita nome de nada.** Gente, máquina e serviço entram
 por escolha de uma lista cadastrada. Duas grafias do mesmo serviço partem
@@ -309,8 +315,8 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **550 verificações de tela** em 16 suítes,
-e 17 em SQL.
+Duas frentes, sempre. Hoje são **575 verificações de tela** em 17 suítes,
+e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
 
@@ -432,7 +438,7 @@ O dono já está usando. Não é banco vazio.
 - 1 equipamento na frota
 - 1 tarefa
 - 1 perfil: Jonacir Cazelli, papel `gestor`
-- `atividades`, `epis` e `epi_entregas` ainda vazias
+- `atividades`, `epis`, `epi_funcao` e `epi_entregas` ainda vazias
 
 **Todo teste destrutivo tem que ser desfeito.** Confira as contagens
 depois.

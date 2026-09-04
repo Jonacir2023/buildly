@@ -64,7 +64,7 @@ dividiriam o mesmo armazenamento.
 ## Como as abas são organizadas
 
 O trilho de módulos é a operação do dia. **Cadastro** é a aba que junta o
-que se cadastra uma vez e depois só se escolhe: **Efetivo**,
+que se cadastra uma vez e depois só se escolhe: **Efetivo**, **EPI**,
 **Equipamentos** e **Atividades**. Essas três telas continuam existindo
 inteiras — só saíram do trilho principal e passaram a ser abertas por
 dentro do Cadastro (`const CADASTROS` no `app.js`). O botão voltar, de
@@ -86,6 +86,17 @@ que a obra assinou ontem; o vínculo serve só para somar o acumulado
 
 Atividade sai de uso por `ativo = false`, nunca por `delete`: os diários
 antigos apontam para ela.
+
+## EPI é do cadastro, e conhece a função
+
+`epi_funcao` liga cada EPI às funções que o exigem. Na admissão, a ficha
+da pessoa separa "Exigidos para {função}" do resto do catálogo e oferece
+marcar todos de uma vez — mas **nunca marca sozinha**: entrega registrada
+é entrega feita, e o app não pode afirmar que o capacete saiu do
+almoxarifado.
+
+O catálogo `epis` é comum a todas as obras (sem `obra_id`): capacete é
+capacete em qualquer canteiro, e o CA é nacional.
 
 ## Dado derivado mora no banco
 

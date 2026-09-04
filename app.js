@@ -30,9 +30,8 @@ const PAPEIS = {
    "conta" diz de qual número da obra o módulo tira o contador. */
 const MODULOS = [
   { ic: 'i-rdo',        nome: 'RDO',           desc: 'Diário de obra',      pronto: true, tela: 'rdo', conta: 'rdos_30_dias' },
-  { ic: 'i-cadastro',   nome: 'Cadastro',      desc: 'Gente, frota e serviços', pronto: true, tela: 'cadastro' },
+  { ic: 'i-cadastro',   nome: 'Cadastro',      desc: 'Gente, EPI, frota e serviço', pronto: true, tela: 'cadastro' },
   { ic: 'i-alerta',     nome: 'Alertas',       desc: 'Prazos em 60 dias', pronto: true, tela: 'alertas' },
-  { ic: 'i-epi',        nome: 'EPI',           desc: 'Ficha de entrega',    pronto: true, tela: 'epi', },
   { ic: 'i-ocorrencia', nome: 'Ocorrências',   desc: 'Segurança',           pronto: true, tela: 'ocorrencias', conta: 'ocorrencias_30_dias' },
   { ic: 'i-tarefa',     nome: 'Tarefas',       desc: 'Pauta e prazo',       pronto: true, tela: 'tarefas', conta: 'tarefas_abertas' },
   { ic: 'i-nf',         nome: 'Notas fiscais', desc: 'Cabeçalho e itens',   pronto: true, tela: 'nfs', },
@@ -49,6 +48,8 @@ const MODULOS = [
 const CADASTROS = [
   { ic: 'i-efetivo',   nome: 'Efetivo',      desc: 'Pessoas e contratos',
     tela: 'efetivo',      conta: 'efetivo_ativo',         unid: ['pessoa ativa', 'pessoas ativas'] },
+  { ic: 'i-epi',       nome: 'EPI',          desc: 'Catálogo e ficha de entrega',
+    tela: 'epi',          conta: 'epis_no_catalogo',      unid: ['tipo de EPI', 'tipos de EPI'] },
   { ic: 'i-equip',     nome: 'Equipamentos', desc: 'Frota e horas',
     tela: 'equipamentos', conta: 'equipamentos_ativos',   unid: ['na frota', 'na frota'] },
   { ic: 'i-atividade', nome: 'Atividades',   desc: 'A lista que o diário usa',
@@ -903,6 +904,8 @@ let _efetivo   = [];
 let _desligados = [];
 let _editando  = null;   // { contrato_id, pessoa_id } quando é edição
 
+const NOME_CATEGORIA = { lideranca: 'Liderança', operacional: 'Operacional', tecnica: 'Técnica' };
+
 const REGIME = {
   local:           'Local',
   viagem_familiar: 'Alojado',
@@ -1110,10 +1113,9 @@ function pintarFuncoes(escolhida) {
   sel.innerHTML = '<option value="">— escolha —</option>';
   const grupos = {};
   _funcoes.forEach(f => { (grupos[f.categoria] = grupos[f.categoria] || []).push(f); });
-  const NOME_GRUPO = { lideranca: 'Liderança', operacional: 'Operacional', tecnica: 'Técnica' };
   Object.keys(grupos).sort().forEach(cat => {
     const g = document.createElement('optgroup');
-    g.label = NOME_GRUPO[cat] || cat;
+    g.label = NOME_CATEGORIA[cat] || cat;
     grupos[cat].forEach(f => {
       const o = document.createElement('option');
       o.value = f.id;
@@ -1257,16 +1259,23 @@ function somarDias(iso, n) {
 async function carregarCatalogoEPI() {
   if (_catalogo.length) return _catalogo;
   const { data } = await db.from('epis')
-    .select('id, nome, ca, validade_uso_dias, ativo').order('nome');
+    .select('id, nome, ca, validade_uso_dias, ativo, epi_funcao(funcao_id)').order('nome');
   _catalogo = data || [];
   return _catalogo;
 }
 
 async function carregarEpiDaPessoa() {
+  _epiAdmissao = new Set();
+  await carregarFuncoes();
+  await carregarCatalogoEPI();
+  await desenharEpiDaPessoa();
+}
+
+/* Separado do carregar porque trocar a função na ficha redesenha a lista
+   — e o que já foi marcado não pode sumir por causa disso. */
+async function desenharEpiDaPessoa() {
   const area = $('epi-do-contrato');
   area.innerHTML = '';
-  _epiAdmissao = new Set();
-  await carregarCatalogoEPI();
   const ativos = _catalogo.filter(e => e.ativo);
 
   /* pessoa nova: marca-se o que sai do almoxarifado junto com a admissão */
@@ -1274,13 +1283,20 @@ async function carregarEpiDaPessoa() {
     $('epi-explica').hidden = !ativos.length;
     if (!ativos.length) {
       area.innerHTML = vazioHTML('Nenhum EPI no catálogo.',
-        'Cadastre os tipos no módulo EPI e eles passam a aparecer aqui, na admissão.');
+        'Cadastre os tipos em Cadastro → EPI e eles passam a aparecer aqui, na admissão.');
       return;
     }
-    const pilha = document.createElement('div'); pilha.className = 'pilha';
-    ativos.forEach(e => {
-      const rot = document.createElement('label'); rot.className = 'marca-caixa';
-      const cx = document.createElement('input'); cx.type = 'checkbox';
+
+    const funcaoId = $('p-funcao').value;
+    const funcao   = _funcoes.find(f => f.id === funcaoId);
+    const exigidos = funcaoId ? ativos.filter(e => funcoesDoEpi(e).has(funcaoId)) : [];
+    const outros   = ativos.filter(e => !exigidos.includes(e));
+
+    const caixa = (e) => {
+      const rot = document.createElement('label');
+      rot.className = _epiAdmissao.has(e.id) ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      const cx = document.createElement('input');
+      cx.type = 'checkbox'; cx.checked = _epiAdmissao.has(e.id);
       cx.addEventListener('change', () => {
         if (cx.checked) _epiAdmissao.add(e.id); else _epiAdmissao.delete(e.id);
         rot.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
@@ -1296,9 +1312,38 @@ async function carregarEpiDaPessoa() {
         txt.appendChild(s);
       }
       rot.append(cx, txt);
-      pilha.appendChild(rot);
-    });
-    area.appendChild(pilha);
+      return rot;
+    };
+
+    const grupo = (titulo, lista) => {
+      if (!lista.length) return;
+      const rot = document.createElement('p');
+      rot.className = 'rotulo'; rot.style.marginTop = 'var(--e3)';
+      rot.textContent = titulo;
+      const pilha = document.createElement('div'); pilha.className = 'pilha';
+      lista.forEach(e => pilha.appendChild(caixa(e)));
+      area.append(rot, pilha);
+    };
+
+    if (exigidos.length) {
+      // Marcar de uma vez o que a função exige é o caso comum da admissão;
+      // marcar um a um seis EPI no celular, com luva, não é.
+      const bt = document.createElement('button');
+      bt.type = 'button'; bt.className = 'btn btn-secundario';
+      bt.style.width = '100%';
+      bt.textContent = exigidos.length === 1
+        ? 'Marcar o exigido'
+        : 'Marcar os ' + exigidos.length + ' exigidos';
+      bt.addEventListener('click', () => {
+        exigidos.forEach(e => _epiAdmissao.add(e.id));
+        desenharEpiDaPessoa();
+      });
+      area.appendChild(bt);
+      grupo('Exigidos para ' + (funcao ? funcao.nome : 'a função'), exigidos);
+      grupo('Outros do catálogo', outros);
+    } else {
+      grupo(funcaoId ? 'Nenhum EPI ligado a esta função · catálogo inteiro' : 'Catálogo', outros);
+    }
     return;
   }
 
@@ -1348,6 +1393,10 @@ async function carregarEpiDaPessoa() {
   bt.addEventListener('click', () => abrirEntrega(_editando.contrato_id));
   area.appendChild(bt);
 }
+
+$('p-funcao').addEventListener('change', () => {
+  if (!_editando && !$('folha-pessoa').hidden) desenharEpiDaPessoa();
+});
 
 $('btn-nova-pessoa').addEventListener('click', abrirFolhaPessoa);
 $('btn-fechar-pessoa').addEventListener('click', fecharFolhaPessoa);
@@ -3404,9 +3453,11 @@ let _catalogo = [];
 let _epiFiltro = 'todas';
 let _entregaEditando = null;
 let _epiCatEditando = null;
+let _epiFuncoes = new Set();   // funções marcadas na folha do catálogo
 
 async function carregarEPI() {
   $('epi-titulo').textContent = _obra ? _obra.nome : '—';
+  await carregarFuncoes();
   const area = $('epi-lista');
   if (!_obra) { area.innerHTML = vazioHTML('Nenhuma obra escolhida.'); return; }
 
@@ -3415,7 +3466,7 @@ async function carregarEPI() {
     db.from('vw_ficha_epi')
       .select('contrato_id, nome, epi, ca, data_entrega, quantidade, motivo, assinatura_ok, troca_prevista')
       .eq('obra', _obra.codigo).order('data_entrega', { ascending: false }).limit(500),
-    db.from('epis').select('id, nome, ca, validade_uso_dias, ativo').order('nome')
+    db.from('epis').select('id, nome, ca, validade_uso_dias, ativo, epi_funcao(funcao_id)').order('nome')
   ]);
 
   if (fichas.error) { area.innerHTML = vazioHTML('Não consegui ler as fichas.', fichas.error.message); return; }
@@ -3540,8 +3591,10 @@ function renderCatalogo() {
     const corpo = document.createElement('span'); corpo.className='corpo';
     const t = document.createElement('b'); t.textContent = e.nome + (e.ativo ? '' : ' (inativo)');
     const s = document.createElement('small');
+    const quais = _funcoes.filter(f => funcoesDoEpi(e).has(f.id)).map(f => f.nome);
     s.textContent = [e.ca ? 'CA ' + e.ca : null,
-                     e.validade_uso_dias ? 'troca a cada ' + e.validade_uso_dias + ' dias' : 'sem troca programada']
+                     e.validade_uso_dias ? 'troca a cada ' + e.validade_uso_dias + ' dias' : 'sem troca programada',
+                     quais.length ? quais.join(', ') : 'sem função ligada']
                     .filter(Boolean).join(' · ');
     corpo.append(t, s); b.appendChild(corpo);
     b.addEventListener('click', () => abrirEpiCatalogo(e));
@@ -3556,6 +3609,10 @@ $('btn-catalogo').addEventListener('click', () => {
 });
 
 /* ---------- catálogo ---------- */
+function funcoesDoEpi(e) {
+  return new Set(((e && e.epi_funcao) || []).map(v => v.funcao_id));
+}
+
 function abrirEpiCatalogo(e) {
   _epiCatEditando = e || null;
   $('titulo-epi-cat').textContent = e ? e.nome : 'Novo EPI';
@@ -3564,7 +3621,49 @@ function abrirEpiCatalogo(e) {
   $('ec-validade').value = e && e.validade_uso_dias ? e.validade_uso_dias : '';
   $('btn-desativar-epi').hidden = !e || !e.ativo;
   $('erro-epi-cat').hidden = true;
+  renderFuncoesDoEpi(funcoesDoEpi(e));
   $('folha-epi').hidden = false;
+}
+
+/* As funções vêm agrupadas por categoria, como no cadastro da pessoa:
+   numa obra com quinze funções, lista corrida não se lê. */
+function renderFuncoesDoEpi(marcadas) {
+  _epiFuncoes = new Set(marcadas);
+  const area = $('epi-funcoes');
+  area.innerHTML = '';
+
+  if (!_funcoes.length) {
+    area.innerHTML = vazioHTML('Nenhuma função cadastrada ainda.');
+    return;
+  }
+
+  const grupos = {};
+  _funcoes.forEach(f => { (grupos[f.categoria] = grupos[f.categoria] || []).push(f); });
+
+  Object.keys(grupos).sort().forEach(cat => {
+    const rot = document.createElement('p');
+    rot.className = 'rotulo'; rot.style.marginTop = 'var(--e3)';
+    rot.textContent = NOME_CATEGORIA[cat] || cat;
+    area.appendChild(rot);
+
+    const pilha = document.createElement('div'); pilha.className = 'pilha';
+    grupos[cat].forEach(f => {
+      const l = document.createElement('label');
+      l.className = _epiFuncoes.has(f.id) ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      const cx = document.createElement('input');
+      cx.type = 'checkbox'; cx.checked = _epiFuncoes.has(f.id);
+      cx.addEventListener('change', () => {
+        if (cx.checked) _epiFuncoes.add(f.id); else _epiFuncoes.delete(f.id);
+        l.className = cx.checked ? 'marca-caixa ativ-marcada' : 'marca-caixa';
+      });
+      const txt = document.createElement('span');
+      const b = document.createElement('b'); b.textContent = f.nome;
+      txt.appendChild(b);
+      l.append(cx, txt);
+      pilha.appendChild(l);
+    });
+    area.appendChild(pilha);
+  });
 }
 $('btn-fechar-epi').addEventListener('click', () => { $('folha-epi').hidden = true; });
 $('folha-epi').addEventListener('click', (ev) => {
@@ -3580,11 +3679,29 @@ $('form-epi').addEventListener('submit', async (ev) => {
   if (dias != null && dias < 1) return falhar(erro, 'Os dias de troca têm que ser maiores que zero.');
 
   const linha = { nome, ca: $('ec-ca').value.trim() || null, validade_uso_dias: dias };
-  const { error } = _epiCatEditando
-    ? await db.from('epis').update(linha).eq('id', _epiCatEditando.id)
-    : await db.from('epis').insert({ ...linha, ativo: true });
-  if (error) return falhar(erro, 'Não consegui salvar: ' + error.message);
+  let epiId = _epiCatEditando ? _epiCatEditando.id : null;
+
+  if (epiId) {
+    const r = await db.from('epis').update(linha).eq('id', epiId);
+    if (r.error) return falhar(erro, 'Não consegui salvar: ' + r.error.message);
+  } else {
+    const r = await db.from('epis').insert({ ...linha, ativo: true }).select('id').single();
+    if (r.error) return falhar(erro, 'Não consegui salvar: ' + r.error.message);
+    epiId = r.data.id;
+  }
+
+  // Troco a lista inteira de funções: apago as que havia e gravo as
+  // marcadas. Comparar diferença aqui daria o mesmo resultado com mais
+  // chance de errar, e são poucas linhas.
+  await db.from('epi_funcao').delete().eq('epi_id', epiId);
+  if (_epiFuncoes.size) {
+    const r = await db.from('epi_funcao')
+      .insert([..._epiFuncoes].map(fid => ({ epi_id: epiId, funcao_id: fid })));
+    if (r.error) return falhar(erro, 'Salvei o EPI, mas não as funções: ' + r.error.message);
+  }
+
   $('folha-epi').hidden = true;
+  _catalogo = [];
   await carregarEPI();
 });
 

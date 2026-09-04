@@ -40,7 +40,7 @@ de experiência e viagem já com os dias restantes.
 ## Cadastro
 
 Aba que reúne o que se cadastra uma vez e depois só se escolhe: **Efetivo**,
-**Equipamentos** e **Atividades**. As três telas continuam inteiras; saíram
+**EPI**, **Equipamentos** e **Atividades**. As três telas continuam inteiras; saíram
 do trilho de módulos (`MODULOS`) e passaram a ser abertas por dentro do
 Cadastro (`CADASTROS`). Voltando de qualquer uma delas, o roteador cai no
 Cadastro, e o trilho acende o Cadastro enquanto se está lá dentro.
@@ -91,6 +91,16 @@ Regras que viram mensagem em português em vez de erro cru:
 
 Baixa é lógica: grava `desligamento` e `motivo_desligamento`, some do
 efetivo e aparece em "Desligados". Nada é apagado.
+
+`epi_funcao` (`epi_id`, `funcao_id`, chave primária nos dois) diz qual EPI
+cada função exige, com `on delete cascade` dos dois lados. A ficha da
+pessoa usa isso para separar exigido de opcional; salvar o EPI troca a
+lista inteira de vínculos (apaga e regrava), que dá o mesmo resultado de
+comparar diferença com menos chance de errar.
+
+O catálogo `epis` **não tem `obra_id`**: é comum a todas as obras, porque
+capacete é capacete em qualquer canteiro e o CA é nacional. Por isso
+`vw_status_obra.epis_no_catalogo` conta sem filtrar por obra.
 
 **EPI entra junto do cadastro da pessoa.** Numa pessoa nova, o catálogo de
 EPI ativo aparece em caixas no pé da ficha; o que for marcado vira

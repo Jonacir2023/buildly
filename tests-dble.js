@@ -15,7 +15,7 @@
     reunioes: [], reuniao_participantes: [], reuniao_topicos: [], reuniao_pauta: [],
     documentos: [], mural: [], avisos: [], solicitacoes: [], ajuda_custo: [],
     rdos: [], rdo_presencas: [], rdo_atividades: [], rdo_fotos: [], rdo_equipamentos: [],
-    atividades: [],
+    atividades: [], epi_funcao: [],
     perfis: [{id:'u1',nome:'Jonacir Cazelli',papel:'gestor'}]
   };
   const hoje = () => new Date().toISOString().slice(0,10);
@@ -117,7 +117,8 @@
         reunioes_30_dias: B.reunioes.filter(r => r.data >= d30()).length }))
       .map(x => ({ ...x,
         equipamentos_ativos: B.equipamentos.filter(e=>e.ativo && e.obra_id==='o1').length,
-        atividades_cadastradas: B.atividades.filter(a=>a.ativo!==false && a.obra_id==='o1').length }));
+        atividades_cadastradas: B.atividades.filter(a=>a.ativo!==false && a.obra_id==='o1').length,
+        epis_no_catalogo: B.epis.filter(e=>e.ativo!==false).length }));
   }
 
   // embutidos: o app pede pessoa:pessoas(...) e funcao:funcoes(...)
@@ -141,6 +142,8 @@
       equipamento: B.equipamentos.find(e => e.id === linha.equipamento_id) };
     if (nome === 'epi_entregas') return { ...linha,
       epi: B.epis.find(e => e.id === linha.epi_id) || null };
+    if (nome === 'epis') return { ...linha,
+      epi_funcao: B.epi_funcao.filter(v => v.epi_id === linha.id).map(v => ({ funcao_id: v.funcao_id })) };
     return linha;
   }
 
@@ -328,6 +331,7 @@
         if (nome === 'nf_itens') indo.forEach(r => recalcularNF(r.nf_id));
         if (nome === 'rdos') ['rdo_presencas','rdo_atividades','rdo_fotos','rdo_equipamentos']
           .forEach(t => { B[t] = B[t].filter(r => String(r.rdo_id) !== String(v)); });
+        if (nome === 'epis') B.epi_funcao = B.epi_funcao.filter(r => String(r.epi_id) !== String(v));
         return Promise.resolve({ error: null });
       }})
     };
@@ -421,6 +425,8 @@
       if (outros.some(a => a.obra_id===l.obra_id && chave(a.descricao)===chave(l.descricao)))
         return 'duplicate key value violates unique constraint "uq_atividade_obra_desc"';
     }
+    if (nome==='epi_funcao' && outros.some(v=>v.epi_id===l.epi_id && v.funcao_id===l.funcao_id))
+      return 'duplicate key value violates unique constraint "epi_funcao_pkey"';
     if (nome==='rdo_atividades' && l.atividade_id &&
         outros.some(x=>x.rdo_id===l.rdo_id && x.atividade_id===l.atividade_id))
       return 'duplicate key value violates unique constraint "uq_rdo_atividade"';

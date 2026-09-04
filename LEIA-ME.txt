@@ -40,7 +40,7 @@ Nada é inventado: com o banco vazio, a tela diz que está vazio.
 Cadastro
 --------
 A aba que junta o que se cadastra uma vez e depois só se escolhe:
-EFETIVO, EQUIPAMENTOS e ATIVIDADES. Elas saíram do trilho de módulos e
+EFETIVO, EPI, EQUIPAMENTOS e ATIVIDADES. Elas saíram do trilho de módulos e
 passaram a morar aqui dentro, porque cadastro não é trabalho do dia: abre
 quando entra gente, máquina ou serviço novo, e o resto do mês fica quieto.
 
@@ -424,8 +424,20 @@ em que ainda dá para agir.
 
 EPI
 ---
-Ficha de entrega. Primeiro cadastre os tipos no "Catálogo de EPI" — com
-os dias de troca, o sistema calcula a troca prevista de cada entrega.
+Em Cadastro > EPI. Duas coisas na mesma tela: o CATÁLOGO, onde se criam
+os tipos de EPI da obra, e a FICHA, com tudo que já foi entregue.
+
+Primeiro cadastre os tipos no "Catálogo de EPI" — com os dias de troca,
+o sistema calcula a troca prevista de cada entrega.
+
+CADA EPI DIZ QUAIS FUNÇÕES O EXIGEM. Ao cadastrar o capacete, marque
+Pedreiro, Encarregado, Servente — quem precisar dele. Depois, na hora de
+admitir alguém, a ficha da pessoa já separa "Exigidos para Pedreiro" do
+resto do catálogo, e um botão marca todos os exigidos de uma vez. EPI sem
+função marcada aparece para todo mundo, como opcional.
+
+O catálogo é comum a todas as obras: capacete é capacete em qualquer
+canteiro e o CA é nacional. Não se recadastra o mesmo EPI obra a obra.
 
 Se a pessoa já recebeu aquele EPI, o motivo muda sozinho de "primeira
 entrega" para "troca", e a tela mostra quando foi a última.
