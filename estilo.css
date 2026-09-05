@@ -190,6 +190,20 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent-text); }
 }
 .icone:hover { color: var(--accent-text); border-color: var(--accent-text); }
 
+/* No celular o cabeçalho não pode passar da tela: marca menor, ícones de
+   40px e o seletor de obra encolhe até caber (o nome ganha reticências).
+   Antes ele somava 524px numa tela de 390 e a página inteira rolava de
+   lado sem ninguém pedir. */
+@media (max-width: 559px) {
+  .topo { gap: var(--e2); padding-left: var(--e3); padding-right: var(--e3); }
+  .marca-topo { font-size: 18px; }
+  .obra-btn { max-width: none; flex: 1 1 0; min-width: 0; padding: 4px 8px 4px 5px; min-height: 36px; }
+  .obra-btn .cod { font-size: 11px; padding: 2px 6px; }
+  .obra-btn .nm { font-size: 14px; }
+  .topo-dir { gap: 6px; flex: none; }
+  .icone { min-width: 40px; min-height: 40px; }
+}
+
 /* ============================================================
    MOLDURA — trilho de módulos + painel
    ============================================================ */
@@ -1040,24 +1054,36 @@ textarea {
 }
 .vista[aria-pressed="true"] { background: var(--surface); color: var(--accent-text); }
 
+/* As três colunas cabem na tela do celular, lado a lado. Rolar de lado
+   para ver "Concluída" escondia metade do quadro; o dono pediu tudo à
+   vista. No celular o cartão fica em pé (título em cima, seta embaixo)
+   e mostra só o prazo — responsável e setor ficam para o toque. */
 .kanban {
-  display: grid; grid-auto-flow: column; grid-auto-columns: 78vw;
-  gap: var(--e3); overflow-x: auto; padding-bottom: var(--e2);
-  scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--e2); padding-bottom: var(--e2);
 }
-@media (min-width: 720px)  { .kanban { grid-auto-columns: 1fr; overflow-x: visible; } }
 
 .coluna {
-  scroll-snap-align: start;
   background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: var(--r-lg); padding: var(--e3);
+  border-radius: var(--r-lg); padding: 6px;
   display: flex; flex-direction: column; gap: var(--e2);
-  min-height: 140px;
+  min-height: 140px; min-width: 0;
 }
 .coluna > header {
-  display: flex; align-items: baseline; gap: var(--e2);
-  font-family: var(--cond); font-weight: 700; font-size: 16px;
+  display: flex; align-items: baseline; gap: 4px;
+  font-family: var(--cond); font-weight: 700; font-size: 12px; line-height: 1.15;
   padding: 0 2px var(--e1);
+}
+.coluna > header .rot-longo { display: none; }
+.coluna > header .rot-curto { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 720px) {
+  .coluna > header .rot-longo { display: inline; }
+  .coluna > header .rot-curto { display: none; }
+}
+@media (min-width: 720px) {
+  .kanban { gap: var(--e3); }
+  .coluna { padding: var(--e3); }
+  .coluna > header { font-size: 16px; gap: var(--e2); }
 }
 .coluna > header .quantos {
   font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
@@ -1076,9 +1102,12 @@ textarea {
 .cartao-tarefa {
   background: var(--surface); border: 1px solid var(--line);
   border-left: 4px solid var(--line-forte);
-  border-radius: var(--r-md); padding: var(--e3);
-  display: flex; align-items: flex-start; gap: var(--e2);
-  touch-action: pan-y;
+  border-radius: var(--r-md); padding: 6px 6px 6px 7px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  touch-action: pan-y; min-width: 0;
+}
+@media (min-width: 720px) {
+  .cartao-tarefa { flex-direction: row; align-items: flex-start; padding: var(--e3); }
 }
 .cartao-tarefa[data-prio="alta"]  { border-left-color: var(--danger); }
 .cartao-tarefa[data-prio="media"] { border-left-color: var(--warn); }
@@ -1091,17 +1120,38 @@ textarea {
   text-align: left; font-family: var(--sans); font-size: 15px; color: var(--ink);
   cursor: pointer; min-height: 0;
 }
-.cartao-tarefa .corpo b { display: block; font-weight: 500; overflow-wrap: anywhere; }
-.cartao-tarefa .corpo small { display: block; font-size: 13px; color: var(--ink-soft); }
+.cartao-tarefa .corpo b {
+  display: block; font-weight: 500; overflow-wrap: break-word; hyphens: auto;
+  font-size: 12.5px; line-height: 1.25; letter-spacing: -.01em;
+}
+.cartao-tarefa .corpo small { display: block; font-size: 12px; color: var(--ink-soft); }
+.cartao-tarefa .corpo .quem { display: none; }
+.cartao-tarefa .corpo .data-longa { display: none; }
 .cartao-tarefa .corpo .venceu { color: var(--danger); font-weight: 600; }
+@media (min-width: 720px) {
+  .cartao-tarefa .corpo b { font-size: 15px; line-height: 1.3; }
+  .cartao-tarefa .corpo small { font-size: 13px; }
+  .cartao-tarefa .corpo .quem { display: inline; }
+  .cartao-tarefa .corpo .data-longa { display: inline; }
+  .cartao-tarefa .corpo .data-curta { display: none; }
+}
 
 .empurra {
-  flex: none; width: 40px; min-height: 40px; padding: 0;
+  flex: none; width: 100%; min-height: 34px; padding: 0;
   background: var(--surface-2); border: 1px solid var(--line-forte);
   border-radius: var(--r-sm); color: var(--accent-text);
-  font-size: 20px; line-height: 1; cursor: pointer;
+  font-size: 18px; line-height: 1; cursor: pointer;
 }
-.empurra:disabled { visibility: hidden; }
+.empurra:disabled { display: none; }
+@media (min-width: 720px) {
+  .empurra { width: 40px; min-height: 40px; font-size: 20px; }
+  .empurra:disabled { display: block; visibility: hidden; }
+}
+
+/* canceladas ficam fora do quadro, num bloco que abre por toque: não
+   são fluxo, e uma quarta coluna não cabe no celular */
+.canceladas { margin-top: var(--e3); }
+.canceladas .lista-cancel { display: flex; flex-direction: column; gap: var(--e2); margin-top: var(--e2); }
 
 /* o cartão que segue o dedo enquanto arrasta */
 .fantasma {

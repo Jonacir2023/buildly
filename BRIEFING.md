@@ -282,6 +282,11 @@ vínculo `atividade_id` fica só para somar o acumulado.
 **Duas formas de mover o cartão no quadro.** Seta de um toque para o
 canteiro, arrastar para o computador. Arrastar com luva, no sol, falha.
 
+**As três colunas do quadro cabem no celular.** Aberta, Andamento e
+Concluída lado a lado, sem rolar para o lado — pedido do dono. Cartão em
+pé no celular, com prazo curto; cancelada vira bloco fechado embaixo, não
+quarta coluna.
+
 **O calendário mostra o dia que FALTA.** Lista só mostra o que existe, e o
 buraco não aparece. Dia passado sem diário fica vermelho e clicável.
 
@@ -329,7 +334,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **659 verificações de tela** em 19 suítes,
+Duas frentes, sempre. Hoje são **664 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
@@ -414,6 +419,10 @@ Estão aqui porque cada um custou tempo.
     que atrapalha o PostgREST — **não abaixa a caixa**. "concret" não
     achava "Concretagem". Filtro local compara com `.toLowerCase()` dos
     dois lados, como no efetivo e na frota.
+18. **Tela mais larga que o celular sem ninguém perceber.** O cabeçalho
+    somava 524 px numa tela de 390 e a página rolava de lado. Nenhum
+    teste media `document.documentElement.scrollWidth`; agora o do
+    quadro mede. Toda tela nova: conferir a largura no viewport de 390.
 17. **`pg.reload()` depois de semear o dublê.** O banco do dublê é
     memória: recarregar a página o recria vazio e o teste passa a medir
     uma tela sem dado nenhum. Semeie e chame `carregarPainel()`, não

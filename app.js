@@ -6291,11 +6291,13 @@ $('btn-recusar-pedido').addEventListener('click', async () => {
    para quem está no canteiro — arrastar com luva, no sol, falha.
    ============================================================ */
 
+// [valor, rótulo, rótulo curto]. O curto é o que cabe na coluna de um
+// terço de celular; o longo aparece no monitor.
 const COLUNAS_TF = [
-  ['aberta',       'Aberta'],
-  ['em_andamento', 'Em andamento'],
-  ['concluida',    'Concluída'],
-  ['cancelada',    'Cancelada']
+  ['aberta',       'Aberta',       'Aberta'],
+  ['em_andamento', 'Em andamento', 'Andamento'],
+  ['concluida',    'Concluída',    'Concluída'],
+  ['cancelada',    'Cancelada',    'Cancelada']
 ];
 // Para onde a seta empurra. Cancelada não tem seguinte: sair dela é
 // decisão, não fluxo, e se faz abrindo a tarefa.
@@ -6332,23 +6334,24 @@ function renderQuadro() {
     return;
   }
 
-  // Coluna vazia de cancelada não aparece: quadro com coluna morta
-  // rouba largura de tela no celular.
-  const colunas = COLUNAS_TF.filter(([v]) =>
-    v !== 'cancelada' || vistas.some(t => t.status === 'cancelada'));
+  // Cancelada não é coluna: não é fluxo, e uma quarta coluna não cabe
+  // no celular. Fica num bloco embaixo do quadro, fechado por padrão.
+  const colunas = COLUNAS_TF.filter(([v]) => v !== 'cancelada');
+  const canceladas = vistas.filter(t => t.status === 'cancelada');
 
   area.innerHTML = '<div class="kanban"></div>';
   const k = area.firstElementChild;
 
-  colunas.forEach(([valor, rot]) => {
+  colunas.forEach(([valor, rot, curto]) => {
     const col = document.createElement('section');
     col.className = 'coluna';
     col.dataset.col = valor;
 
     const cab = document.createElement('header');
-    const nome = document.createElement('span'); nome.textContent = rot;
+    const nome = document.createElement('span'); nome.className = 'rot-longo'; nome.textContent = rot;
+    const nomeC = document.createElement('span'); nomeC.className = 'rot-curto'; nomeC.textContent = curto;
     const qtd = document.createElement('span'); qtd.className = 'quantos';
-    cab.append(nome, qtd);
+    cab.append(nome, nomeC, qtd);
     col.appendChild(cab);
 
     const dela = vistas.filter(t => t.status === valor).sort((a, b) => {
@@ -6366,6 +6369,22 @@ function renderQuadro() {
     }
     k.appendChild(col);
   });
+
+  if (canceladas.length) {
+    const bloco = document.createElement('div'); bloco.className = 'bloco canceladas';
+    const abre = document.createElement('button');
+    abre.type = 'button'; abre.className = 'btn-texto btn-abre';
+    abre.textContent = 'Canceladas (' + canceladas.length + ')';
+    abre.setAttribute('aria-expanded', 'false');
+    const lista = document.createElement('div'); lista.className = 'lista-cancel'; lista.hidden = true;
+    canceladas.forEach(t => lista.appendChild(cartaoTarefa(t)));
+    abre.addEventListener('click', () => {
+      lista.hidden = !lista.hidden;
+      abre.setAttribute('aria-expanded', String(!lista.hidden));
+    });
+    bloco.append(abre, lista);
+    area.appendChild(bloco);
+  }
 }
 
 function cartaoTarefa(t) {
@@ -6381,9 +6400,15 @@ function cartaoTarefa(t) {
   if (t.data_termino) {
     const pedaco = document.createElement('span');
     if (tfAtrasada(t)) pedaco.className = 'venceu';
-    pedaco.textContent = (tfAtrasada(t) ? 'venceu ' : 'prazo ') + dataBR(t.data_termino);
-    s.append(document.createTextNode([t.responsavel, t.setor].filter(Boolean).join(' · ')));
-    if (t.responsavel || t.setor) s.append(document.createTextNode(' · '));
+    // No celular a data vai curta (dd/mm) para caber na coluna estreita.
+    const dl = document.createElement('span'); dl.className = 'data-longa';
+    dl.textContent = dataBR(t.data_termino);
+    const dc = document.createElement('span'); dc.className = 'data-curta';
+    dc.textContent = dataBR(t.data_termino).slice(0, 5);
+    pedaco.append(document.createTextNode(tfAtrasada(t) ? 'venceu ' : 'prazo '), dl, dc);
+    const quem = document.createElement('span'); quem.className = 'quem';
+    quem.textContent = [t.responsavel, t.setor].filter(Boolean).join(' · ');
+    if (quem.textContent) { quem.textContent += ' · '; s.appendChild(quem); }
     s.appendChild(pedaco);
   } else {
     s.textContent = [t.responsavel, t.setor].filter(Boolean).join(' · ') || 'sem responsável';

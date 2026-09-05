@@ -219,8 +219,18 @@ dois vínculos.
 
 ## Quadro de tarefas
 
-Colunas por `status`. A vista escolhida fica em `localStorage` sob
-`p3::tf-vista`.
+Três colunas fixas (`grid-template-columns: repeat(3, minmax(0, 1fr))`),
+que cabem em 390 px sem rolagem lateral — o dono pediu tudo à vista.
+Abaixo de 720 px o cartão fica em coluna (título, prazo curto `dd/mm`,
+seta de largura inteira) e esconde responsável e setor (`.quem`); o
+cabeçalho da coluna usa o rótulo curto (`Andamento`). Cancelada não é
+coluna: vai para um bloco `.canceladas` fechado embaixo do quadro.
+
+A vista escolhida fica em `localStorage` sob `p3::tf-vista`.
+
+O cabeçalho do app também foi apertado abaixo de 560 px (marca menor,
+ícones de 40 px, seletor de obra que encolhe): antes somava 524 px numa
+tela de 390 e a página inteira rolava de lado.
 
 Mover é possível de duas formas de propósito: a seta de um toque (o
 caminho do canteiro — arrastar com luva ao sol falha) e o arrasto por

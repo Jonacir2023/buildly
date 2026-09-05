@@ -219,6 +219,15 @@ acidentes dos últimos 90 dias.
 
 Tarefas
 -------
+O QUADRO CABE NA TELA DO CELULAR: as três colunas — Aberta, Andamento,
+Concluída — ficam lado a lado, sem rolar para o lado. No celular o cartão
+fica em pé (título em cima, seta embaixo) e mostra só o prazo; responsável
+e setor aparecem ao tocar. No monitor volta o cartão largo com tudo.
+
+Tarefa cancelada não é coluna: fica num bloco "Canceladas (N)" embaixo do
+quadro, fechado, que abre por toque. Uma quarta coluna não caberia no
+celular, e cancelar não é fluxo — é decisão.
+
 O que ficou combinado e precisa de alguém. Duas formas de ver, e o botão
 QUADRO / LISTA no alto escolhe. O app lembra a sua escolha.
 
