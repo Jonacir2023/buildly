@@ -334,7 +334,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **676 verificações de tela** em 19 suítes,
+Duas frentes, sempre. Hoje são **684 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:
@@ -419,6 +419,10 @@ Estão aqui porque cada um custou tempo.
     que atrapalha o PostgREST — **não abaixa a caixa**. "concret" não
     achava "Concretagem". Filtro local compara com `.toLowerCase()` dos
     dois lados, como no efetivo e na frota.
+19. **Caixa de entrada fechada por padrão.** O pedido chegou, a caixa
+    "Pedidos recebidos (1 a responder)" ficou fechada embaixo do quadro,
+    e o dono concluiu que o formulário não funcionava. O que espera
+    resposta vem aberto, destacado e em cima — sempre.
 18. **Tela mais larga que o celular sem ninguém perceber.** O cabeçalho
     somava 524 px numa tela de 390 e a página rolava de lado. Nenhum
     teste media `document.documentElement.scrollWidth`; agora o do

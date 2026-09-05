@@ -239,6 +239,15 @@ Tarefa cancelada não é coluna: fica num bloco "Canceladas (N)" embaixo do
 quadro, fechado, que abre por toque. Uma quarta coluna não caberia no
 celular, e cancelar não é fluxo — é decisão.
 
+PEDIDOS PELO FORMULÁRIO NÃO VIRAM TAREFA SOZINHOS. O link do cartão
+"Formulário de pedidos" é para quem não tem login pedir uma tarefa. O
+pedido chega em "Pedidos recebidos", NO ALTO da tela de Tarefas: com
+pedido esperando, a caixa vem aberta e destacada em amarelo. Você toca no
+pedido, ajusta assunto, responsável e prazo, e "Aceitar e virar tarefa" —
+aí sim ele entra no quadro. Ou recusa, dizendo o motivo num campo da
+própria folha. Nada entra no quadro sem alguém da obra dizer sim: é a
+mesma regra de quem pode escrever no banco sem login.
+
 O que ficou combinado e precisa de alguém. Duas formas de ver, e o botão
 QUADRO / LISTA no alto escolhe. O app lembra a sua escolha.
 

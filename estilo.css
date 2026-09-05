@@ -1160,6 +1160,14 @@ textarea {
   box-shadow: var(--sombra);
 }
 
+/* pedido a responder: caixa destacada em cima do quadro */
+#bloco-pedidos[data-pendentes="sim"] {
+  background: var(--warn-weak); border: 1px solid var(--warn);
+  border-radius: var(--r-lg); padding: var(--e3) var(--e4);
+}
+#bloco-pedidos[data-pendentes="sim"] .btn-abre { color: var(--warn); }
+#bloco-pedidos .explica { margin: var(--e2) 0 0; font-size: 14px; }
+
 /* ---------- ajuda de custo ---------- */
 #bloco-ajuda { display: flex; flex-direction: column; gap: var(--e2); }
 .ajuda-ativa {

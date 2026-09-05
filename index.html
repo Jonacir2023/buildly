@@ -293,19 +293,26 @@
       <label class="busca"><span class="sr">Buscar</span>
         <input type="search" id="busca-tf" autocomplete="off"
                placeholder="Buscar por assunto, responsável ou setor"></label>
-      <div id="tf-quadro"></div>
-      <div id="tf-lista" hidden></div>
-
+      <!-- Pedido novo fica ACIMA do quadro, aberto e destacado: escondido
+           num bloco fechado embaixo, o dono achou que o formulário não
+           funcionava. -->
       <div class="bloco" id="bloco-pedidos" hidden>
         <button class="btn-texto btn-abre" id="btn-pedidos" type="button"
                 aria-expanded="false">Pedidos recebidos (0)</button>
+        <p class="explica" id="pedidos-explica" hidden>Chegaram pelo formulário e ainda não viraram
+           tarefa. Toque em um para aceitar (vira tarefa no quadro) ou recusar.</p>
         <div id="pedidos-lista" hidden></div>
       </div>
 
+      <div id="tf-quadro"></div>
+      <div id="tf-lista" hidden></div>
+
       <section class="cartao">
-        <h2>Link do formulário</h2>
-        <p class="explica">Quem não tem login pede por aqui. O pedido não vira tarefa
-           sozinho: cai na caixa acima e você decide.</p>
+        <h2>Formulário de pedidos</h2>
+        <p class="explica">Para quem não tem login pedir uma tarefa: mande este link.
+           O pedido chega em "Pedidos recebidos", no alto desta tela — você abre,
+           aceita e ele vira tarefa no quadro. Nada entra no quadro sem alguém
+           da obra dizer sim.</p>
         <p class="link-form" id="link-formulario">—</p>
         <button class="btn btn-secundario" type="button" id="btn-copiar-link">Copiar link</button>
       </section>
@@ -1837,6 +1844,11 @@
       <button class="btn btn-primario" type="submit" id="btn-aceitar-pedido">
         Aceitar e virar tarefa
       </button>
+      <label class="campo" id="campo-recusa" hidden>
+        <span>Por que está recusando</span>
+        <input type="text" id="pd-motivo-recusa" maxlength="200"
+               placeholder="Aparece no histórico e para quem pediu">
+      </label>
       <button class="btn btn-perigo" type="button" id="btn-recusar-pedido">Recusar</button>
     </form>
   </div>

@@ -6231,6 +6231,14 @@ async function carregarPedidos() {
     ? 'Pedidos recebidos (' + pendentes.length + ' a responder)'
     : 'Pedidos recebidos (' + _pedidos.length + ', todos respondidos)';
 
+  // Com pedido esperando resposta, a caixa vem aberta e destacada. Fechada,
+  // o dono achou que o formulário não funcionava — o pedido estava lá.
+  const temPendente = pendentes.length > 0;
+  $('bloco-pedidos').dataset.pendentes = temPendente ? 'sim' : 'nao';
+  $('pedidos-explica').hidden = !temPendente;
+  $('pedidos-lista').hidden = !temPendente;
+  $('btn-pedidos').setAttribute('aria-expanded', String(temPendente));
+
   const area = $('pedidos-lista');
   area.innerHTML = '<div class="lista"></div>';
   const cx = area.firstElementChild;
@@ -6296,6 +6304,8 @@ function abrirPedido(p) {
   const pendente = p.status === 'pendente';
   $('btn-aceitar-pedido').hidden = !pendente;
   $('btn-recusar-pedido').hidden = !pendente;
+  $('campo-recusa').hidden = !pendente;
+  $('pd-motivo-recusa').value = '';
   ['pd-assunto','pd-descricao','pd-responsavel','pd-prazo']
     .forEach(id => { $(id).disabled = !pendente; });
   $('erro-pedido-av').hidden = true;
@@ -6347,12 +6357,15 @@ $('form-pedido-avaliar').addEventListener('submit', async (ev) => {
   await carregarPainel();
 });
 
+// O motivo vem de um campo na folha, não de prompt(): o app não abre caixa
+// do navegador em lugar nenhum, e quem pediu merece saber o porquê.
 $('btn-recusar-pedido').addEventListener('click', async () => {
   if (!_pdEditando) return;
-  const motivo = prompt('Por que está recusando? (aparece no histórico)');
-  if (motivo === null) return;
+  const erro = $('erro-pedido-av'); erro.hidden = true;
+  const motivo = $('pd-motivo-recusa').value.trim();
+  if (!motivo) { $('pd-motivo-recusa').focus(); return falhar(erro, 'Diga por que está recusando — quem pediu vai ler.'); }
   const { error } = await db.from('solicitacoes').update({
-    status: 'recusada', motivo_recusa: motivo.trim() || null,
+    status: 'recusada', motivo_recusa: motivo,
     avaliado_por: _perfilNome || null, avaliado_em: new Date().toISOString()
   }).eq('id', _pdEditando.id);
   if (error) return falhar($('erro-pedido-av'), 'Não consegui recusar: ' + error.message);

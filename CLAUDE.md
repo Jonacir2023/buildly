@@ -164,6 +164,13 @@ isso, e o app estava certo.
 
 Agendado por `pg_cron`. Ver com `select * from cron.job`.
 
+## O que espera resposta vem aberto e em cima
+
+Pedido pendente, aviso não lido, atividade sem unidade: o que precisa de
+alguém não fica num bloco fechado no pé da tela. Já custou uma rodada de
+"não está funcionando" com o formulário de pedidos — o pedido estava lá,
+fechado, embaixo do quadro.
+
 ## Escrita por quem não tem login
 
 Só `solicitacoes` aceita `anon`, e só INSERT. Qualquer tabela nova que
