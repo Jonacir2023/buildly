@@ -118,7 +118,7 @@
         reunioes_30_dias: B.reunioes.filter(r => r.data >= d30()).length }))
       .map(x => ({ ...x,
         equipamentos_ativos: B.equipamentos.filter(e=>e.ativo && e.obra_id==='o1').length,
-        atividades_cadastradas: B.atividades.filter(a=>a.ativo!==false && a.obra_id==='o1').length,
+        atividades_cadastradas: B.atividades.filter(a=>a.ativo!==false).length,
         epis_no_catalogo: B.epis.filter(e=>e.ativo!==false).length }));
   }
 
@@ -228,7 +228,7 @@
     return B.atividades.map(a => {
       const usos = B.rdo_atividades.filter(x => x.atividade_id === a.id);
       const dias = usos.map(u => (B.rdos.find(r => r.id === u.rdo_id) || {}).data).filter(Boolean);
-      return { atividade_id: a.id, obra_id: a.obra_id, obra: 'TESTE',
+      return { atividade_id: a.id, obra_id: 'o1', obra: 'TESTE',
         descricao: a.descricao, local: a.local || null, unidade: a.unidade || null,
         ativo: a.ativo !== false,
         quantidade_total: usos.reduce((s,u) => s + Number(u.quantidade || 0), 0),
@@ -443,8 +443,8 @@
       return 'duplicate key value violates unique constraint "uq_rdo_equip"';
     if (nome==='atividades') {
       const chave = (s) => String(s||'').trim().toLowerCase();
-      if (outros.some(a => a.obra_id===l.obra_id && chave(a.descricao)===chave(l.descricao)))
-        return 'duplicate key value violates unique constraint "uq_atividade_obra_desc"';
+      if (outros.some(a => chave(a.descricao)===chave(l.descricao)))
+        return 'duplicate key value violates unique constraint "uq_atividade_desc"';
     }
     if (nome==='emissoes') {
       if (!['rdo','diarios','chuva','medicao','custos'].includes(l.tipo))

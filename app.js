@@ -714,9 +714,9 @@ function renderAtivNumeros() {
   const semUnid = emUso.filter(a => !a.unidade).length;
   const fora    = _atividadesCad.length - emUso.length;
   const tiles = [
-    { rot:'No cadastro',  val: emUso.length, sub: 'aparecem no diário' },
+    { rot:'No cadastro',  val: emUso.length, sub: 'comum a todas as obras' },
     { rot:'Já lançadas',  val: usadas,
-      sub: usadas ? 'com quantidade somando' : 'nenhuma lançada ainda' },
+      sub: usadas ? 'nesta obra, somando' : 'nenhuma nesta obra ainda' },
     { rot:'Sem unidade',  val: semUnid,
       sub: semUnid ? 'não viram acumulado' : 'todas medem alguma coisa',
       urgente: semUnid > 0 },
@@ -785,7 +785,7 @@ function filtrarAtividades() {
     area.innerHTML = emUso.length
       ? vazioHTML('Nada com esse termo.', 'Foram procuradas ' + emUso.length + ' atividades.')
       : vazioHTML('Nenhuma atividade cadastrada.',
-                  'Cadastre o que a obra executa e o diário passa a oferecer a lista.');
+                  'Cadastre o que a obra executa e o diário passa a oferecer a lista — nesta e nas próximas obras.');
   } else {
     const pilha = document.createElement('div'); pilha.className = 'pilha';
     lista.forEach(a => pilha.appendChild(linhaAtividade(a)));
@@ -861,11 +861,11 @@ $('form-ativ-cad').addEventListener('submit', async (ev) => {
 
   const { error } = _ativCadEditando
     ? await db.from('atividades').update(linha).eq('id', _ativCadEditando.atividade_id)
-    : await db.from('atividades').insert({ ...linha, obra_id: _obra.id });
+    : await db.from('atividades').insert(linha);
 
   if (error) {
-    if (/uq_atividade_obra_desc/.test(error.message))
-      return falhar(erro, '"' + descricao + '" já está cadastrada nesta obra. ' +
+    if (/uq_atividade_desc/.test(error.message))
+      return falhar(erro, '"' + descricao + '" já está cadastrada — o catálogo é o mesmo em todas as obras. ' +
                           'Se estiver fora de uso, abra a lista de fora de uso e traga de volta.');
     return falhar(erro, 'Não consegui salvar: ' + error.message);
   }
@@ -2040,9 +2040,10 @@ async function abrirEscolherAtividades() {
   const area = $('escolher-ativ-lista');
   area.innerHTML = vazioHTML('Carregando…');
 
+  // O catálogo é comum a todas as obras: o que uma cadastrou serve à próxima.
   const { data, error } = await db.from('atividades')
     .select('id, descricao, local, unidade')
-    .eq('obra_id', _obra.id).eq('ativo', true).order('descricao');
+    .eq('ativo', true).order('descricao');
 
   if (error) { area.innerHTML = vazioHTML('Não consegui ler o cadastro.', error.message); return; }
   _escolhaAtiv = data || [];
@@ -2071,8 +2072,8 @@ function renderEscolhaAtiv() {
   area.innerHTML = '';
 
   if (!_escolhaAtiv.length) {
-    area.innerHTML = vazioHTML('Nenhuma atividade cadastrada nesta obra.',
-      'Cadastre em Cadastro → Atividades e ela passa a aparecer aqui todos os dias.');
+    area.innerHTML = vazioHTML('Nenhuma atividade cadastrada.',
+      'Cadastre em Cadastro → Atividades e ela passa a aparecer aqui, nesta e nas próximas obras.');
     const ir = document.createElement('button');
     ir.type = 'button'; ir.className = 'btn btn-secundario';
     ir.textContent = 'Abrir o cadastro de atividades';

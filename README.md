@@ -52,22 +52,25 @@ deixaria de ser conferida.
 
 ## Atividades
 
-`atividades` é o catálogo por obra: `descricao`, `local`, `unidade`,
-`ativo`. O índice `uq_atividade_obra_desc` compara
-`lower(btrim(descricao))`, então grafia diferente do mesmo serviço é
-recusada em vez de partir o acumulado em dois.
+`atividades` é o catálogo **comum a todas as obras** — sem `obra_id`, como
+`epis` — e acumulativo: o que uma obra cadastrou já serve à próxima
+(pedido do dono). Colunas: `descricao`, `local`, `unidade`, `ativo`. O
+índice `uq_atividade_desc` compara `lower(btrim(descricao))`, então grafia
+diferente do mesmo serviço é recusada em vez de partir o acumulado em dois.
 
 Baixa é lógica (`ativo = false`): os diários antigos apontam para a
 atividade, e apagar quebraria o histórico.
 
-`vw_atividade_acumulado` soma `rdo_atividades.quantidade` por atividade e
-conta os dias lançados. **O aplicativo não soma nada disso** — dois
+`vw_atividade_acumulado` dá uma linha por **atividade × obra** (cross join
+com `obras`), somando `rdo_atividades.quantidade` e contando dias daquela
+obra — com zero para a atividade que a obra nunca lançou, porque a tela do
+cadastro lista o catálogo inteiro. O app filtra por `obra_id`. **O aplicativo não soma nada disso** — dois
 apontadores lançando no mesmo dia fariam a conta do aplicativo mentir para
 os dois.
 
 | Regra do banco | O que o usuário lê |
 |---|---|
-| `uq_atividade_obra_desc` | já está cadastrada; veja o bloco "fora de uso" |
+| `uq_atividade_desc` | já está cadastrada (catálogo comum a todas as obras); veja "fora de uso" |
 | `uq_rdo_atividade` | a mesma atividade não entra duas vezes no mesmo dia |
 | `quantidade >= 0` | barrado na tela antes de mandar |
 

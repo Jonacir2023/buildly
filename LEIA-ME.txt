@@ -61,10 +61,14 @@ medida (m³, m², kg, un, h...). A unidade é o que permite somar depois;
 sem ela a quantidade do dia fica solta e não vira acumulado do mês. A
 tela avisa quantas ficaram sem unidade.
 
-A mesma descrição não entra duas vezes na mesma obra — a comparação
-ignora maiúscula e espaço nas pontas, então "Concretagem" e
-" concretagem " são a mesma coisa e a segunda é recusada com o motivo
-escrito em português.
+O CATÁLOGO É COMUM A TODAS AS OBRAS E VAI ACUMULANDO: o que uma obra
+cadastrou já está pronto para a próxima — ninguém redigita "Concretagem de
+laje" a cada canteiro. O que é de cada obra é o acumulado (quanto já foi
+executado e em quantos dias), mostrado na obra que está aberta.
+
+A mesma descrição não entra duas vezes — a comparação ignora maiúscula e
+espaço nas pontas, então "Concretagem" e " concretagem " são a mesma coisa
+e a segunda é recusada com o motivo escrito em português.
 
 TIRAR DE USO não apaga: a atividade sai da lista que o diário oferece e
 vai para o bloco "Fora de uso", no pé da tela, de onde volta com um

@@ -130,7 +130,7 @@ a seguir é parte da entrega, não enfeite.
 | `medicoes (contrato_id, numero)` | numeração sequencial por contrato |
 | `reuniao_participantes (reuniao_id, nome)` | já está na lista |
 
-`uq_atividade_obra_desc` compara `lower(btrim(descricao))`: "Concretagem"
+`uq_atividade_desc` compara `lower(btrim(descricao))`: "Concretagem"
 e " concretagem " são a mesma atividade. `uq_rdo_atividade` impede a mesma
 atividade do catálogo duas vezes no mesmo diário — atividade avulsa
 (`atividade_id` nulo) fica livre, porque ali cada linha é uma coisa.
@@ -212,7 +212,7 @@ saíram do trilho porque cadastro não é trabalho do dia:
 | **Efetivo** | pessoas, contratos, regime de moradia, ajuda de custo, EPI da admissão, baixa | `pessoas`, `contratos`, `funcoes`, `ajuda_custo`, `epi_entregas` |
 | **EPI** | catálogo por função, entrega de vários itens de uma vez, troca prevista | `epis`, `epi_funcao`, `epi_entregas` |
 | **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
-| **Atividades** | catálogo do que a obra executa, com unidade e acumulado | `atividades`, `vw_atividade_acumulado` |
+| **Atividades** | catálogo comum a todas as obras (acumulativo), com unidade; acumulado por obra | `atividades`, `vw_atividade_acumulado` |
 
 A regra por trás dessa aba: **no diário não se digita nome de nada** —
 nem de gente, nem de máquina, nem de serviço. Tudo entra por escolha de

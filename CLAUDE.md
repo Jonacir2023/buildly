@@ -51,11 +51,16 @@ e trata a recusa do índice único recalculando.
 Índices únicos que viram mensagem em português, nunca erro cru:
 `uq_contrato_ativo`, `pessoas_cpf_key`, `uq_rdo_obra_data`,
 `uq_rdo_obra_numero`, `uq_presenca`, `uq_rdo_equip`,
-`uq_atividade_obra_desc`, `uq_rdo_atividade`.
+`uq_atividade_desc`, `uq_rdo_atividade`.
 
-`uq_atividade_obra_desc` compara **sem caixa e sem espaço nas pontas**
+`uq_atividade_desc` compara **sem caixa e sem espaço nas pontas**
 (`lower(btrim(descricao))`): "Concretagem" e " concretagem " são a mesma
 atividade, e duas grafias partiriam o acumulado em dois.
+
+**O catálogo `atividades` é comum a todas as obras** (sem `obra_id`, como
+`epis`): pedido do dono — acumulativo, o que uma obra cadastrou serve à
+próxima. O que é por obra é o acumulado: `vw_atividade_acumulado` dá uma
+linha por atividade × obra, com zero para o que a obra nunca lançou.
 
 Tudo que o app guarda no navegador leva o prefixo **`p3::`**. Os apps do
 usuário dividem a mesma origem (`jonacir2023.github.io`) e sem prefixo
