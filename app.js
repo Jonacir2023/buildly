@@ -6220,7 +6220,7 @@ async function carregarPedidos() {
 
   const { data, error } = await db.from('solicitacoes')
     .select('id, solicitante, contato, assunto, descricao, setor, prioridade, ' +
-            'status, criado_em, tarefa_id, motivo_recusa, avaliado_por')
+            'status, criado_em, tarefa_id, motivo_recusa, avaliado_por, responsavel, prazo')
     .eq('obra_id', _obra.id).order('criado_em', { ascending: false }).limit(100);
 
   _pedidos = error ? [] : (data || []);
@@ -6299,14 +6299,27 @@ function abrirPedido(p) {
 
   $('pd-assunto').value = p.assunto;
   $('pd-descricao').value = p.descricao || '';
-  $('pd-responsavel').value = '';
-  $('pd-prazo').value = '';
+  // O pedido já traz responsável, prazo, setor e prioridade: aceitar vira
+  // tarefa completa. Aqui só se confere e ajusta.
+  $('pd-responsavel').value = p.responsavel || '';
+  $('pd-prazo').value = p.prazo || '';
+  // Os setores vêm da lista SETORES (o select da tarefa também é montado
+  // por código, não no HTML — copiar o innerHTML dele dava lista vazia).
+  const sel = $('pd-setor');
+  sel.innerHTML = '<option value="">— sem setor —</option>';
+  const lista = SETORES.slice();
+  if (p.setor && !lista.includes(p.setor)) lista.push(p.setor);
+  lista.forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o);
+  });
+  sel.value = p.setor || '';
+  $('pd-prioridade').value = p.prioridade || 'media';
   const pendente = p.status === 'pendente';
   $('btn-aceitar-pedido').hidden = !pendente;
   $('btn-recusar-pedido').hidden = !pendente;
   $('campo-recusa').hidden = !pendente;
   $('pd-motivo-recusa').value = '';
-  ['pd-assunto','pd-descricao','pd-responsavel','pd-prazo']
+  ['pd-assunto','pd-descricao','pd-responsavel','pd-prazo','pd-setor','pd-prioridade']
     .forEach(id => { $(id).disabled = !pendente; });
   $('erro-pedido-av').hidden = true;
   $('folha-pedido').hidden = false;
@@ -6334,8 +6347,8 @@ $('form-pedido-avaliar').addEventListener('submit', async (ev) => {
                .filter(Boolean).join('\n\n'),
     criador: _pdEditando.solicitante,
     responsavel: $('pd-responsavel').value.trim() || null,
-    setor: _pdEditando.setor || null,
-    prioridade: _pdEditando.prioridade,
+    setor: $('pd-setor').value || null,
+    prioridade: $('pd-prioridade').value,
     status: 'aberta',
     data_lancamento: hojeISO(),
     data_termino: $('pd-prazo').value || null,

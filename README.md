@@ -295,6 +295,13 @@ externo com chave, que o dono precisa contratar.
 
 ## Pedidos por formulário
 
+`solicitacoes` carrega os mesmos campos da tarefa — `responsavel` e
+`prazo` entraram depois, a pedido do dono: aceitar pedido com responsável
+e prazo vazios exigia adivinhar. A folha de aceite (`abrirPedido`) vem
+pré-preenchida com tudo (setor e prioridade agora editáveis ali, com os
+`option` de setor clonados de `#t-setor`) e o insert em `tarefas` lê da
+folha, não do pedido cru — o que o avaliador ajustou é o que vale.
+
 `pedido.html` é público e usa a mesma chave publicável. A política de
 `solicitacoes` dá ao papel `anon` **só INSERT**, e ainda exige `status =
 'pendente' and tarefa_id is null` no `with check`. Anon não lê nada.

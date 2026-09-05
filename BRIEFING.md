@@ -334,7 +334,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **684 verificações de tela** em 19 suítes,
+Duas frentes, sempre. Hoje são **695 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:

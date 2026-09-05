@@ -49,6 +49,9 @@ $('form-pedido').addEventListener('submit', async (ev) => {
   const assunto = $('s-assunto').value.trim();
   if (nome.length < 2)    return falhar('Escreva seu nome completo.');
   if (assunto.length < 3) return falhar('Diga o que você precisa, em poucas palavras.');
+  const hoje = new Date().toISOString().slice(0, 10);
+  if ($('s-prazo').value && $('s-prazo').value < hoje)
+    return falhar('O prazo desejado já passou. Escolha uma data de hoje em diante.');
 
   const botao = $('btn-enviar');
   botao.disabled = true; botao.textContent = 'Enviando…';
@@ -62,7 +65,9 @@ $('form-pedido').addEventListener('submit', async (ev) => {
     assunto,
     descricao:   $('s-descricao').value.trim() || null,
     setor:       $('s-setor').value || null,
-    prioridade:  $('s-prioridade').value
+    prioridade:  $('s-prioridade').value,
+    responsavel: $('s-responsavel').value.trim() || null,
+    prazo:       $('s-prazo').value || null
   });
 
   botao.disabled = false; botao.textContent = 'Enviar pedido';

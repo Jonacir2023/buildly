@@ -239,6 +239,13 @@ Tarefa cancelada não é coluna: fica num bloco "Canceladas (N)" embaixo do
 quadro, fechado, que abre por toque. Uma quarta coluna não caberia no
 celular, e cancelar não é fluxo — é decisão.
 
+O FORMULÁRIO PEDE TUDO QUE UMA TAREFA TEM: assunto, detalhe, setor,
+prioridade, quem deve fazer e prazo desejado. Quando alguém da obra
+aceita, a folha já vem inteira preenchida com o que veio do pedido — só
+se confere, ajusta o que precisar e aceita. A tarefa entra no quadro
+completa, sem ninguém ter que adivinhar responsável e prazo. Responsável
+e prazo são sugestões de quem pediu: quem aceita é quem decide.
+
 PEDIDOS PELO FORMULÁRIO NÃO VIRAM TAREFA SOZINHOS. O link do cartão
 "Formulário de pedidos" é para quem não tem login pedir uma tarefa. O
 pedido chega em "Pedidos recebidos", NO ALTO da tela de Tarefas: com
