@@ -57,6 +57,11 @@ e trata a recusa do índice único recalculando.
 (`lower(btrim(descricao))`): "Concretagem" e " concretagem " são a mesma
 atividade, e duas grafias partiriam o acumulado em dois.
 
+**A frota `equipamentos` é comum a todas as obras.** `obra_id` é onde a
+máquina está hoje (uma de cada vez), não a quem pertence. A tela lê a frota
+inteira e separa; o RDO lista tudo e, ao marcar máquina de outra obra,
+traz ela para esta (`update obra_id`) antes de lançar as horas.
+
 **O catálogo `atividades` é comum a todas as obras** (sem `obra_id`, como
 `epis`): pedido do dono — acumulativo, o que uma obra cadastrou serve à
 próxima. O que é por obra é o acumulado: `vw_atividade_acumulado` dá uma

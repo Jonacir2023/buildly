@@ -2326,12 +2326,15 @@ async function carregarEquipRDO() {
       .select('id, equipamento_id, horas_operando, horas_paradas, motivo_parada, ' +
               'equipamento:equipamentos(prefixo, tipo, modelo)')
       .eq('rdo_id', _rdo.id),
-    db.from('equipamentos').select('id, prefixo, tipo, modelo')
-      .eq('obra_id', _obra.id).eq('ativo', true).order('prefixo')
+    // A frota é comum a todas as obras: a lista traz tudo que está ativo,
+    // e o que está nesta obra vem primeiro.
+    db.from('equipamentos').select('id, prefixo, tipo, modelo, obra_id')
+      .eq('ativo', true).order('prefixo')
   ]);
 
   _equipRDO  = noRdo.data || [];
-  _equipObra = daObra.data || [];
+  _equipObra = (daObra.data || []).sort((a, b) =>
+    (a.obra_id === _obra.id ? 0 : 1) - (b.obra_id === _obra.id ? 0 : 1));
 
   const area = $('equip-lista');
   $('acoes-equip').hidden = !_equipObra.length;
@@ -2372,15 +2375,22 @@ function abrirEquip(e) {
   sel.innerHTML = '<option value="">— escolha —</option>';
   // Equipamento que já está no dia não reaparece na lista: o banco tem
   // índice único por (rdo, equipamento) e recusaria o segundo lançamento.
+  // A frota inteira, em dois grupos: o que está nesta obra e o resto.
+  // Escolher uma máquina do resto traz ela para cá ao salvar.
+  const gAqui = document.createElement('optgroup'); gAqui.label = 'Nesta obra';
+  const gResto = document.createElement('optgroup'); gResto.label = 'Em outras obras ou sem obra · traz para cá';
   _equipObra
     .filter(q => !_equipRDO.some(x => x.equipamento_id === q.id) || (e && e.equipamento_id === q.id))
     .forEach(q => {
       const o = document.createElement('option');
       o.value = q.id;
-      o.textContent = [q.prefixo, q.tipo, q.modelo].filter(Boolean).join(' · ');
+      o.textContent = [q.prefixo, q.tipo, q.modelo].filter(Boolean).join(' · ') +
+        (q.obra_id && q.obra_id !== _obra.id ? ' · em ' + codigoDaObra(q.obra_id) : '');
       if (e && e.equipamento_id === q.id) o.selected = true;
-      sel.appendChild(o);
+      (q.obra_id === _obra.id ? gAqui : gResto).appendChild(o);
     });
+  if (gAqui.children.length)  sel.appendChild(gAqui);
+  if (gResto.children.length) sel.appendChild(gResto);
 
   $('e-operando').value = e ? Number(e.horas_operando) : 0;
   $('e-paradas').value  = e ? Number(e.horas_paradas)  : 0;
@@ -2408,6 +2418,14 @@ $('form-equip').addEventListener('submit', async (ev) => {
   const par = Number($('e-paradas').value  || 0);
   if (op < 0 || par < 0) return falhar(erro, 'Horas não podem ser negativas.');
   if (op + par > 24) return falhar(erro, 'Operando mais paradas passa de 24 horas no mesmo dia.');
+
+  // Máquina de outra obra que trabalhou aqui passa a ser desta obra.
+  const maq = _equipObra.find(q => q.id === eq);
+  if (maq && maq.obra_id !== _obra.id) {
+    const r = await db.from('equipamentos').update({ obra_id: _obra.id }).eq('id', eq);
+    if (r.error) return falhar(erro, 'Não consegui trazer a máquina para esta obra: ' + r.error.message);
+    maq.obra_id = _obra.id;
+  }
 
   const linha = { equipamento_id: eq, horas_operando: op, horas_paradas: par,
                   motivo_parada: $('e-motivo').value.trim() || null };
@@ -2481,7 +2499,17 @@ function renderEscolhaEquip() {
   if (!lista.length) { area.innerHTML = vazioHTML('Nada com esse termo.'); return; }
 
   const pilha = document.createElement('div'); pilha.className = 'pilha';
+  let grupoAtual = null;
   lista.forEach(e => {
+    // Um rótulo separa o que está aqui do resto da frota.
+    const grupo = e.obra_id === _obra.id ? 'Nesta obra'
+                : e.obra_id ? 'Em outras obras · marcar traz para cá' : 'Sem obra · marcar traz para cá';
+    if (grupo !== grupoAtual) {
+      const r = document.createElement('p'); r.className = 'rotulo';
+      r.style.marginTop = pilha.children.length ? 'var(--e3)' : '0';
+      r.textContent = grupo; pilha.appendChild(r);
+      grupoAtual = grupo;
+    }
     const noDia = _equipRDO.find(x => x.equipamento_id === e.id);
     const rot = document.createElement('label');
     rot.className = noDia ? 'marca-caixa ativ-marcada' : 'marca-caixa';
@@ -2514,6 +2542,13 @@ async function marcarEquipDoDia(e, caixa) {
   const noDia = _equipRDO.find(x => x.equipamento_id === e.id);
 
   if (caixa.checked && !noDia) {
+    // Máquina de outra obra (ou sem obra) que trabalhou aqui hoje: passa a
+    // ser desta obra. É a realidade do canteiro — a máquina veio.
+    if (e.obra_id !== _obra.id) {
+      const r = await db.from('equipamentos').update({ obra_id: _obra.id }).eq('id', e.id);
+      if (r.error) { caixa.checked = false; return falhar(erro, 'Não consegui trazer a máquina: ' + r.error.message); }
+      e.obra_id = _obra.id;
+    }
     const { error } = await db.from('rdo_equipamentos').insert({
       rdo_id: _rdo.id, equipamento_id: e.id, horas_operando: 0, horas_paradas: 0
     });
@@ -2552,7 +2587,8 @@ $('folha-escolher-equip').addEventListener('click', (ev) => {
 const CATEGORIA_EQ  = { pesado:'Pesado', leve:'Leve', apoio:'Apoio', ferramenta:'Ferramenta' };
 const PROPRIEDADE_EQ = { proprio:'Próprio', locado:'Locado' };
 
-let _frota    = [];   // ativos desta obra
+let _frota    = [];
+let _outrasObras = [];   // ativos desta obra
 let _semObra  = [];   // ativos sem obra
 let _foraFrota = [];  // inativos desta obra
 let _disp     = {};   // disponibilidade do mês, por prefixo
@@ -2567,31 +2603,41 @@ async function carregarEquipamentos() {
 
   area.innerHTML = vazioHTML('Carregando…');
 
-  const [daObra, soltos, inativos, disp] = await Promise.all([
-    db.from('equipamentos').select('*').eq('obra_id', _obra.id).eq('ativo', true).order('prefixo'),
-    db.from('equipamentos').select('*').is('obra_id', null).eq('ativo', true).order('prefixo'),
-    db.from('equipamentos').select('*').eq('obra_id', _obra.id).eq('ativo', false).order('prefixo'),
+  // A frota é uma só, comum a todas as obras (pedido do dono, como o
+  // catálogo de atividades). Lê tudo e separa aqui: o que está nesta obra,
+  // o que está em outra, o que está sem obra e o que saiu da frota.
+  const [tudo, disp] = await Promise.all([
+    db.from('equipamentos').select('*').order('prefixo'),
     db.from('vw_disponibilidade_equipamento')
       .select('prefixo, horas_operando, horas_paradas, disponibilidade_pct')
       .eq('obra', _obra.codigo).eq('mes', mesAtualISO())
   ]);
 
-  if (daObra.error) {
-    area.innerHTML = vazioHTML('Não consegui ler a frota.', daObra.error.message);
+  if (tudo.error) {
+    area.innerHTML = vazioHTML('Não consegui ler a frota.', tudo.error.message);
     return;
   }
 
-  _frota     = daObra.data || [];
-  _semObra   = soltos.error   ? [] : (soltos.data   || []);
-  _foraFrota = inativos.error ? [] : (inativos.data || []);
+  const frota = tudo.data || [];
+  _frota       = frota.filter(e => e.ativo && e.obra_id === _obra.id);
+  _outrasObras = frota.filter(e => e.ativo && e.obra_id && e.obra_id !== _obra.id);
+  _semObra     = frota.filter(e => e.ativo && !e.obra_id);
+  _foraFrota   = frota.filter(e => !e.ativo);
 
   _disp = {};
   (disp.error ? [] : (disp.data || [])).forEach(d => { _disp[d.prefixo] = d; });
 
   renderEqNumeros();
   filtrarEq();
+  renderOutrasObras();
   renderSemObra();
   renderForaFrota();
+}
+
+// Código da obra onde a máquina está, para a linha dizer "em SUZANO".
+function codigoDaObra(obraId) {
+  const o = _obras.find(x => x.id === obraId);
+  return o ? o.codigo : 'outra obra';
 }
 
 function nivelDisp(pct) {
@@ -2608,9 +2654,12 @@ function renderEqNumeros() {
     ? Math.round(comDado.reduce((s, d) => s + Number(d.disponibilidade_pct || 0), 0) / comDado.length)
     : null;
 
+  const frotaInteira = _frota.length + _outrasObras.length + _semObra.length;
   const tiles = [
-    { rot: 'Na frota',      val: _frota.length,          sub: plural(_foraFrota.length, 'fora da frota', 'fora da frota') },
-    { rot: 'Próprios',      val: _frota.length - locados, sub: 'da empresa' },
+    { rot: 'Nesta obra',    val: _frota.length,
+      sub: frotaInteira === _frota.length ? 'a frota inteira está aqui'
+         : 'de ' + plural(frotaInteira, 'na frota', 'na frota') + ' em todas as obras' },
+    { rot: 'Próprios',      val: _frota.length - locados, sub: 'da empresa, nesta obra' },
     { rot: 'Locados',       val: locados,                sub: locados ? 'de terceiros' : 'nenhum' },
     { rot: 'Disponib. do mês', val: media == null ? '—' : media + '%',
       sub: comDado.length ? plural(comDado.length, 'com apontamento', 'com apontamento') : 'sem horas no RDO',
@@ -2635,6 +2684,7 @@ function linhaEquipamento(e, opcoes) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'pessoa' + (opcoes && opcoes.apagada ? ' baixada' : '');
+  if (opcoes && opcoes.onde) b.title = 'Hoje em ' + opcoes.onde;
 
   const tarja = document.createElement('span'); tarja.className = 'tarja';
   const pref  = document.createElement('span'); pref.className = 'pref'; pref.textContent = e.prefixo;
@@ -2648,6 +2698,11 @@ function linhaEquipamento(e, opcoes) {
   miolo.append(nm, sub);
 
   const lado = document.createElement('span'); lado.className = 'lado';
+  if (opcoes && opcoes.onde) {
+    const onde = document.createElement('span'); onde.className = 'chip';
+    onde.textContent = 'em ' + opcoes.onde;
+    lado.appendChild(onde);
+  }
   const prop = document.createElement('span');
   prop.className = 'chip'; prop.dataset.prop = e.propriedade;
   prop.textContent = PROPRIEDADE_EQ[e.propriedade] || e.propriedade;
@@ -2678,8 +2733,11 @@ function filtrarEq() {
   const area = $('eq-lista');
 
   if (!_frota.length) {
+    const resto = _outrasObras.length + _semObra.length;
     area.innerHTML = vazioHTML('Nenhum equipamento nesta obra.',
-      'Cadastre a frota aqui e ela passa a aparecer no RDO para apontar horas.');
+      resto ? 'A frota tem ' + plural(resto, 'máquina', 'máquinas') + ' em outra obra ou sem obra: abra uma ' +
+              'nos blocos abaixo e marque "Trazer para esta obra".'
+            : 'Cadastre a frota aqui. O cadastro é comum a todas as obras: o que entrar aqui serve à próxima.');
     return;
   }
   if (!vistos.length) {
@@ -2693,6 +2751,16 @@ function filtrarEq() {
 }
 
 $('busca-eq').addEventListener('input', filtrarEq);
+
+function renderOutrasObras() {
+  $('bloco-outras-obras').hidden = !_outrasObras.length;
+  if (!_outrasObras.length) return;
+  $('btn-outras-obras').textContent = 'Em outras obras (' + _outrasObras.length + ')';
+  const area = $('outras-obras-lista');
+  area.innerHTML = '<div class="lista"></div>';
+  const cx = area.firstElementChild;
+  _outrasObras.forEach(e => cx.appendChild(linhaEquipamento(e, { onde: codigoDaObra(e.obra_id) })));
+}
 
 function renderSemObra() {
   $('bloco-sem-obra').hidden = !_semObra.length;
@@ -2714,7 +2782,8 @@ function renderForaFrota() {
   _foraFrota.forEach(e => cx.appendChild(linhaEquipamento(e, { apagada: true })));
 }
 
-[['btn-sem-obra','sem-obra-lista'], ['btn-fora-frota','fora-frota-lista']].forEach(([bt, lst]) => {
+[['btn-outras-obras','outras-obras-lista'], ['btn-sem-obra','sem-obra-lista'],
+ ['btn-fora-frota','fora-frota-lista']].forEach(([bt, lst]) => {
   $(bt).addEventListener('click', () => {
     const area = $(lst);
     area.hidden = !area.hidden;
@@ -2743,6 +2812,12 @@ function abrirEquipamento(e) {
   $('q-placa').value       = e && e.placa ? e.placa : '';
   $('q-ano').value         = e && e.ano ? e.ano : '';
   $('q-nesta-obra').checked = e ? e.obra_id === _obra.id : true;
+  // Máquina que está em outra obra: a caixa vira "trazer", e diz de onde.
+  const emOutra = e && e.obra_id && e.obra_id !== _obra.id;
+  $('rot-nesta-obra').textContent = emOutra ? 'Trazer para esta obra' : 'Alocado nesta obra';
+  $('dica-obra-eq').textContent = emOutra
+    ? 'Hoje está em ' + codigoDaObra(e.obra_id) + '. Marcando, passa a apontar horas aqui.'
+    : 'Só equipamento alocado aparece para apontar no RDO. A frota é uma só para todas as obras.';
 
   $('btn-tirar-frota').hidden   = !e || !e.ativo;
   $('btn-voltar-frota').hidden  = !e || e.ativo;

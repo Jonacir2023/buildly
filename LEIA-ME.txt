@@ -173,16 +173,23 @@ toque na caixinha.
 
 Equipamentos
 ------------
-Em Cadastro > Equipamentos. A frota da obra. Cadastre aqui e o equipamento passa a aparecer no RDO
-para apontar horas.
+Em Cadastro > Equipamentos. A FROTA É UMA SÓ, COMUM A TODAS AS OBRAS,
+e vai acumulando: o que uma obra cadastrou já está na lista da próxima.
+A tela mostra o que está nesta obra e, embaixo, em blocos que abrem por
+toque, o que está "Em outras obras" (com o código da obra), o que está
+"Sem obra" e o que saiu da frota.
 
-O PREFIXO É ÚNICO EM TODAS AS OBRAS, não só nesta. Dois canteiros não
-podem chamar máquinas diferentes de ESC-01. Se repetir, o sistema recusa
-e diz isso.
+O PREFIXO É ÚNICO EM TODAS AS OBRAS. Dois canteiros não podem chamar
+máquinas diferentes de ESC-01. Se repetir, o sistema recusa e diz isso.
 
-"Alocado nesta obra" é o que decide se ele aparece no RDO. Equipamento
-sem obra fica no bloco "Sem obra" — é frota que existe mas não está em
-canteiro nenhum. Para trazer, abra e marque a caixa.
+Uma máquina está num lugar de cada vez. "Alocado nesta obra" é o que diz
+onde ela está — e, portanto, em qual RDO ela aparece primeiro. Máquina de
+outra obra abre com a caixa "Trazer para esta obra" e diz onde está hoje.
+
+No RDO, "Escolher da lista" mostra a frota inteira: as desta obra em
+cima, as de outras obras e sem obra embaixo. MARCAR UMA DE OUTRA OBRA
+TRAZ ELA PARA ESTA — porque se ela trabalhou aqui hoje, é aqui que ela
+está. A obra de onde saiu deixa de vê-la na lista principal.
 
 Fornecedor só aparece quando a propriedade é "Locado".
 

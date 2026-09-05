@@ -211,7 +211,7 @@ saíram do trilho porque cadastro não é trabalho do dia:
 |---|---|---|
 | **Efetivo** | pessoas, contratos, regime de moradia, ajuda de custo, EPI da admissão, baixa | `pessoas`, `contratos`, `funcoes`, `ajuda_custo`, `epi_entregas` |
 | **EPI** | catálogo por função, entrega de vários itens de uma vez, troca prevista | `epis`, `epi_funcao`, `epi_entregas` |
-| **Equipamentos** | frota, alocação, disponibilidade do mês | `equipamentos` |
+| **Equipamentos** | frota comum a todas as obras; `obra_id` é onde a máquina está; disponibilidade do mês | `equipamentos` |
 | **Atividades** | catálogo comum a todas as obras (acumulativo), com unidade; acumulado por obra | `atividades`, `vw_atividade_acumulado` |
 
 A regra por trás dessa aba: **no diário não se digita nome de nada** —
@@ -334,7 +334,7 @@ reprova em texto pequeno, por isso só aparece em marca e ícone.
 
 ## 6. Como testar — obrigatório antes de qualquer envio
 
-Duas frentes, sempre. Hoje são **664 verificações de tela** em 19 suítes,
+Duas frentes, sempre. Hoje são **676 verificações de tela** em 19 suítes,
 e 18 em SQL.
 
 **1. SQL contra o banco real**, dentro de um bloco que se desfaz:

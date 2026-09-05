@@ -234,6 +234,12 @@
 
       <div id="eq-lista"></div>
 
+      <div class="bloco" id="bloco-outras-obras" hidden>
+        <button class="btn-texto btn-abre" id="btn-outras-obras" type="button"
+                aria-expanded="false">Em outras obras (0)</button>
+        <div id="outras-obras-lista" hidden></div>
+      </div>
+
       <div class="bloco" id="bloco-sem-obra" hidden>
         <button class="btn-texto btn-abre" id="btn-sem-obra" type="button"
                 aria-expanded="false">Sem obra (0)</button>
@@ -1086,7 +1092,8 @@
              placeholder="Buscar por prefixo, tipo ou modelo">
     </label>
     <p class="explica">Marque o que trabalhou hoje. As horas entram depois,
-       tocando na máquina dentro do diário.</p>
+       tocando na máquina dentro do diário. A frota é uma só: máquina que está
+       em outra obra aparece embaixo, e marcar traz ela para esta.</p>
     <div class="rolagem" id="escolher-equip-lista"></div>
     <p class="erro" id="erro-escolher-equip" hidden></p>
   </div>
@@ -1263,7 +1270,7 @@
       <label class="marca-caixa">
         <input type="checkbox" id="q-nesta-obra" checked>
         <span>
-          <b>Alocado nesta obra</b>
+          <b id="rot-nesta-obra">Alocado nesta obra</b>
           <small id="dica-obra-eq">Só equipamento alocado aparece para apontar no RDO.</small>
         </span>
       </label>

@@ -177,6 +177,14 @@ consultas filtram pelo código, nunca pelo nome.
 
 ## Equipamentos
 
+A frota é **comum a todas as obras** e acumulativa (pedido do dono, como
+o catálogo de atividades). `equipamentos.obra_id` continua existindo, mas
+significa **onde a máquina está hoje**, não a quem pertence: a tela lê a
+frota inteira numa consulta e separa em nesta obra / em outras obras / sem
+obra / fora da frota. A escolha do RDO lista tudo que está ativo, com as
+desta obra primeiro; marcar uma máquina de outra obra faz
+`update equipamentos set obra_id = esta` antes de lançar — a máquina veio.
+
 `equipamentos.prefixo` é **UNIQUE global**, não por obra — a mensagem de
 erro diz isso, senão o usuário procuraria o conflito só dentro da obra.
 `obra_id` é anulável: existe frota não alocada, e só a alocada aparece no
